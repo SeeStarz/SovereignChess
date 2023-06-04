@@ -1,5 +1,6 @@
 #include "piece.h"
 #include "gamestate.h"
+#include "move.h"
 #include <array>
 #include <vector>
 
@@ -8,6 +9,11 @@ GameState::GameState(Texture &texture) : texture(texture)
     player1_color = 0;
     player2_color = 11;
     player1_to_move = true;
+    for (int i = 0; i < board.size(); i++)
+    {
+        for (int j = 0; j < board[i].size(); j++)
+            board[i][j] = NULL;
+    }
     {
         addPiece(0, 0, Piece::King, 8, 15);
         addPiece(11, 11, Piece::King, 8, 0);
@@ -124,9 +130,269 @@ GameState::GameState(Texture &texture) : texture(texture)
     }
 }
 
-void GameState::addPiece(int faction, int owner, Piece::Type type, int r, int c)
+std::vector<Move> GameState::getMoves()
 {
-    Piece piece(sf::Vector2i(r, c), faction, owner, type, texture);
-    board[r][c] = &piece;
+    int controlled;
+    if (player1_to_move)
+        controlled = player1_color;
+    else
+        controlled = player2_color;
+
+    std::vector<Move> moves;
+    for (int i = 0; i < pieces.size(); i++)
+    {
+        Piece &piece = pieces[i];
+        if (piece.owner != controlled)
+            continue;
+
+        switch (piece.type)
+        {
+        case Piece::King:
+            getKingMoves(moves, piece);
+            break;
+        case Piece::Queen:
+            getQueenMoves(moves, piece);
+            break;
+        case Piece::Rook:
+            getRookMoves(moves, piece);
+            break;
+        case Piece::Bishop:
+            getBishopMoves(moves, piece);
+            break;
+        case Piece::Knight:
+            getKnightMoves(moves, piece);
+            break;
+        case Piece::Pawn:
+            getPawnMoves(moves, piece);
+            break;
+        }
+    }
+
+    return moves;
+}
+
+void GameState::addPiece(int faction, int owner, Piece::Type type, int x, int y)
+{
+    Piece piece(sf::Vector2i(x, y), faction, owner, type, texture);
+    board[y][x] = &piece;
     pieces.push_back(piece);
+}
+
+void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
+{
+    int ally_color = piece.owner;
+    int enemy_color;
+    if (piece.owner == player1_color)
+        enemy_color = player2_color;
+    else
+        enemy_color = player1_color;
+
+    std::array<sf::Vector2i, 8> directions = {{{1, 1}, {1, 0}, {1, -1}, {0, 1}, {0, -1}, {-1, 1}, {-1, 0}, {-1, -1}}};
+
+    for (int i = 0; i < directions.size(); i++)
+    {
+        sf::Vector2i end_pos = piece.pos + directions[i];
+        if (!checkInBoard(end_pos))
+            continue;
+
+        Piece *target_piece = board[end_pos.y][end_pos.x];
+        if (target_piece == NULL)
+            moves.push_back(Move{piece.pos, end_pos, piece, false});
+        else if (target_piece->owner == enemy_color)
+            moves.push_back(Move{piece.pos, end_pos, piece, true});
+    }
+}
+void GameState::getQueenMoves(std::vector<Move> &moves, Piece piece)
+{
+    getRookMoves(moves, piece);
+    getBishopMoves(moves, piece);
+}
+void GameState::getRookMoves(std::vector<Move> &moves, Piece piece)
+{
+    int ally_color = piece.owner;
+    int enemy_color;
+    if (piece.owner == player1_color)
+        enemy_color = player2_color;
+    else
+        enemy_color = player1_color;
+
+    std::array<sf::Vector2i, 4> directions = {{{1, 0}, {0, 1}, {0, -1}, {-1, 0}}};
+
+    for (int i = 0; i < directions.size(); i++)
+    {
+        for (int j = 1; j <= 8; j++)
+        {
+            sf::Vector2i end_pos = piece.pos + directions[i] * j;
+            if (!checkInBoard(end_pos))
+                break;
+
+            Piece *target_piece = board[end_pos.y][end_pos.x];
+            if (target_piece == NULL)
+                moves.push_back(Move{piece.pos, end_pos, piece, false});
+            else if (target_piece->owner == enemy_color)
+                moves.push_back(Move{piece.pos, end_pos, piece, true});
+            else
+                break;
+        }
+    }
+}
+void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece)
+{
+    {
+        int ally_color = piece.owner;
+        int enemy_color;
+        if (piece.owner == player1_color)
+            enemy_color = player2_color;
+        else
+            enemy_color = player1_color;
+
+        std::array<sf::Vector2i, 4> directions = {{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}}};
+
+        for (int i = 0; i < directions.size(); i++)
+        {
+            for (int j = 1; j <= 8; j++)
+            {
+                sf::Vector2i end_pos = piece.pos + directions[i] * j;
+                if (!checkInBoard(end_pos))
+                    break;
+
+                Piece *target_piece = board[end_pos.y][end_pos.x];
+                if (target_piece == NULL)
+                    moves.push_back(Move{piece.pos, end_pos, piece, false});
+                else if (target_piece->owner == enemy_color)
+                    moves.push_back(Move{piece.pos, end_pos, piece, true});
+                else
+                    break;
+            }
+        }
+    }
+}
+void GameState::getKnightMoves(std::vector<Move> &moves, Piece piece)
+{
+    int ally_color = piece.owner;
+    int enemy_color;
+    if (piece.owner == player1_color)
+        enemy_color = player2_color;
+    else
+        enemy_color = player1_color;
+
+    std::array<sf::Vector2i, 8> directions = {{{2, 1}, {2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {-2, 1}, {-2, -1}}};
+
+    for (int i = 0; i < directions.size(); i++)
+    {
+        sf::Vector2i end_pos = piece.pos + directions[i];
+        if (!checkInBoard(end_pos))
+            continue;
+
+        Piece *target_piece = board[end_pos.y][end_pos.x];
+        if (target_piece == NULL)
+            moves.push_back(Move{piece.pos, end_pos, piece, false});
+        else if (target_piece->owner == enemy_color)
+            moves.push_back(Move{piece.pos, end_pos, piece, true});
+    }
+}
+void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
+{
+    int ally_color = piece.owner;
+    int enemy_color;
+    if (piece.owner == player1_color)
+        enemy_color = player2_color;
+    else
+        enemy_color = player1_color;
+
+    std::array<sf::Vector2i, 4> move_directions = {{{1, 0}, {0, 1}, {0, -1}, {-1, 0}}};
+    std::array<sf::Vector2i, 4> capture_directions = {{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}}};
+    std::array<bool, 4> valid_move_directions;
+    std::array<bool, 4> valid_capture_directions;
+    std::array<bool, 4> valid_double_directions;
+
+    if (piece.pos.x < 8 && piece.pos.y < 8)
+    {
+        valid_move_directions = {true, true, false, false};
+        valid_capture_directions = {true, true, true, false};
+        if ((piece.pos.x == 0 && piece.pos.y == 0) || (piece.pos.x == 1 && piece.pos.y == 1))
+            valid_double_directions = {true, true, false, false};
+        else if (piece.pos.x < 2)
+            valid_double_directions = {true, false, false, false};
+        else if (piece.pos.y < 2)
+            valid_double_directions = {false, true, false, false};
+    }
+
+    if (piece.pos.x > 7 && piece.pos.y < 8)
+    {
+        valid_move_directions = {false, true, false, true};
+        valid_capture_directions = {false, true, true, true};
+        if ((piece.pos.x == 15 && piece.pos.y == 0) || (piece.pos.x == 14 && piece.pos.y == 1))
+            valid_double_directions = {false, true, false, true};
+        else if (piece.pos.x > 13)
+            valid_double_directions = {false, false, false, true};
+        else if (piece.pos.y < 2)
+            valid_double_directions = {false, true, false, false};
+    }
+
+    if (piece.pos.x < 8 && piece.pos.y > 7)
+    {
+        valid_move_directions = {true, false, true, false};
+        valid_capture_directions = {true, true, false, true};
+        if ((piece.pos.x == 0 && piece.pos.y == 15) || (piece.pos.x == 1 && piece.pos.y == 14))
+            valid_double_directions = {true, false, true, false};
+        else if (piece.pos.x < 2)
+            valid_double_directions = {true, false, false, false};
+        else if (piece.pos.y > 13)
+            valid_double_directions = {false, false, true, false};
+    }
+
+    if (piece.pos.x > 7 && piece.pos.y > 7)
+    {
+        valid_move_directions = {false, false, true, true};
+        valid_capture_directions = {true, true, false, true};
+        if ((piece.pos.x == 15 && piece.pos.y == 15) || (piece.pos.x == 14 && piece.pos.y == 14))
+            valid_double_directions = {false, false, true, true};
+        else if (piece.pos.x > 13)
+            valid_double_directions = {false, false, false, true};
+        else if (piece.pos.y > 13)
+            valid_double_directions = {false, false, true, false};
+    }
+
+    for (int i = 0; i < move_directions.size(); i++)
+    {
+        if (!valid_move_directions[i])
+            continue;
+        sf::Vector2i end_pos = piece.pos + move_directions[i];
+
+        Piece *target_piece = board[end_pos.y][end_pos.x];
+        if (target_piece == NULL)
+        {
+            moves.push_back(Move{piece.pos, end_pos, piece, false});
+
+            // Double move
+            if (!valid_double_directions[i])
+                continue;
+            sf::Vector2i end_pos = piece.pos + move_directions[i] * 2;
+            Piece *target_piece = board[end_pos.y][end_pos.x];
+            if (target_piece == NULL)
+                moves.push_back(Move{piece.pos, end_pos, piece, false});
+        }
+    }
+
+    for (int i = 0; i < capture_directions.size(); i++)
+    {
+        if (!valid_capture_directions[i])
+            continue;
+        sf::Vector2i end_pos = piece.pos + capture_directions[i];
+        if (!checkInBoard(end_pos))
+            continue;
+        Piece *target_piece = board[end_pos.y][end_pos.x];
+        if (target_piece && target_piece->owner == enemy_color)
+            moves.push_back(Move{piece.pos, end_pos, piece, true});
+    }
+}
+
+bool GameState::checkInBoard(sf::Vector2i pos)
+{
+    if (pos.x < 0 || pos.y < 0)
+        return false;
+    if (pos.x > 15 || pos.y > 15)
+        return false;
+    return true;
 }

@@ -2,6 +2,7 @@
 #include "texture.h"
 #include "constants.cpp"
 #include "gamestate.h"
+#include "move.h"
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <vector>
@@ -100,7 +101,7 @@ void drawBoard(sf::RenderWindow &window)
     window.draw(promotion_border);
 }
 
-void drawPiece(sf::RenderWindow &window, std::vector<Piece> &pieces)
+void drawPieces(sf::RenderWindow &window, std::vector<Piece> &pieces)
 {
     for (int i = 0; i < pieces.size(); i++)
     {
@@ -116,7 +117,7 @@ void draw(sf::RenderWindow &window, std::vector<Piece> &pieces)
 {
     window.clear(sf::Color(255, 255, 255));
     drawBoard(window);
-    drawPiece(window, pieces);
+    drawPieces(window, pieces);
     window.display();
 }
 
@@ -125,6 +126,9 @@ int main()
     sf::RenderWindow window(sf::VideoMode(1600, 900), "Test For SFML");
     Texture texture;
     texture.load();
+
+    std::vector<Move> moves;
+    bool generated = false;
 
     GameState gamestate(texture);
 
@@ -135,11 +139,11 @@ int main()
         {
             if (event.type == sf::Event::Closed)
                 window.close();
-
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-            {
-                throw std::runtime_error("amogus");
-            }
+        }
+        if (!generated)
+        {
+            moves = gamestate.getMoves();
+            generated = true;
         }
 
         draw(window, gamestate.pieces);
