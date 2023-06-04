@@ -1,6 +1,7 @@
 #include "piece.h"
 #include "texture.h"
 #include "constants.cpp"
+#include "gamestate.h"
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <vector>
@@ -11,7 +12,7 @@ void drawSquare(sf::RenderWindow &window, int r, int c, sf::Color color)
 {
     sf::RectangleShape square = sf::RectangleShape(sf::Vector2f(48, 48));
     square.setFillColor(color);
-    square.setPosition(48 * r, 48 * c);
+    square.setPosition(48 * c, 48 * r);
     window.draw(square);
 }
 
@@ -22,9 +23,9 @@ void drawBoard(sf::RenderWindow &window)
         for (int j = 0; j < 16; j++)
         {
             if ((i + j) % 2 == 0)
-                drawSquare(window, j, i, sf::Color(194, 192, 161));
+                drawSquare(window, i, j, sf::Color(255, 248, 220));
             else
-                drawSquare(window, j, i, sf::Color(99, 96, 49));
+                drawSquare(window, i, j, sf::Color(222, 184, 135));
         }
     }
 
@@ -75,39 +76,43 @@ void drawBoard(sf::RenderWindow &window)
     board_border.setOutlineThickness(5);
     window.draw(board_border);
 
-    sf::RectangleShape promotion_border(sf::Vector2f(192, 192));
-    promotion_border.setPosition(288, 288);
-    promotion_border.setFillColor(sf::Color::Transparent);
-    promotion_border.setOutlineColor(sf::Color::Black);
-    promotion_border.setOutlineThickness(3);
-    window.draw(promotion_border);
-
-    sf::RectangleShape horizontal_pawn(sf::Vector2f(288, 6));
-    horizontal_pawn.setOrigin(0, 3);
+    sf::RectangleShape horizontal_pawn(sf::Vector2f(288, 4));
+    horizontal_pawn.setOrigin(0, 2);
     horizontal_pawn.setFillColor(sf::Color(66, 47, 43));
     horizontal_pawn.setPosition(0, 384);
     window.draw(horizontal_pawn);
     horizontal_pawn.setPosition(480, 384);
     window.draw(horizontal_pawn);
 
-    sf::RectangleShape vertical_pawn(sf::Vector2f(6, 288));
-    vertical_pawn.setOrigin(3, 0);
+    sf::RectangleShape vertical_pawn(sf::Vector2f(4, 288));
+    vertical_pawn.setOrigin(2, 0);
     vertical_pawn.setFillColor(sf::Color(66, 47, 43));
     vertical_pawn.setPosition(384, 0);
     window.draw(vertical_pawn);
     vertical_pawn.setPosition(384, 480);
     window.draw(vertical_pawn);
+
+    sf::RectangleShape promotion_border(sf::Vector2f(192, 192));
+    promotion_border.setPosition(288, 288);
+    promotion_border.setFillColor(sf::Color::Transparent);
+    promotion_border.setOutlineColor(sf::Color::Black);
+    promotion_border.setOutlineThickness(3);
+    window.draw(promotion_border);
 }
 
-void drawPiece(sf::RenderWindow &window, const std::vector<Piece> &pieces)
+void drawPiece(sf::RenderWindow &window, std::vector<Piece> &pieces)
 {
     for (int i = 0; i < pieces.size(); i++)
     {
+        pieces[i].main_sprite.setScale(3, 3);
+        pieces[i].main_sprite.setPosition(pieces[i].pos.x * 48, pieces[i].pos.y * 48);
+        pieces[i].base_sprite.setScale(3, 3);
+        pieces[i].base_sprite.setPosition(pieces[i].pos.x * 48, pieces[i].pos.y * 48);
         window.draw(pieces[i].main_sprite);
         window.draw(pieces[i].base_sprite);
     }
 }
-void draw(sf::RenderWindow &window, const std::vector<Piece> &pieces)
+void draw(sf::RenderWindow &window, std::vector<Piece> &pieces)
 {
     window.clear(sf::Color(255, 255, 255));
     drawBoard(window);
@@ -121,10 +126,7 @@ int main()
     Texture texture;
     texture.load();
 
-    std::vector<Piece> pieces;
-    pieces.push_back(Piece(sf::Vector2i(1, 1), 11, 11, Piece::Type::Rook, texture));
-    pieces[0].base_sprite.setScale(3, 3);
-    pieces[0].main_sprite.setScale(3, 3);
+    GameState gamestate(texture);
 
     while (window.isOpen())
     {
@@ -140,7 +142,7 @@ int main()
             }
         }
 
-        draw(window, pieces);
+        draw(window, gamestate.pieces);
     }
 
     return 0;

@@ -11,7 +11,6 @@ public:
     std::array<sf::Texture, 6> piece_main;
     std::array<sf::Texture, 6> piece_base;
     std::array<sf::Texture, 6> piece_neutral;
-    sf::Texture test;
 
     void load();
 };

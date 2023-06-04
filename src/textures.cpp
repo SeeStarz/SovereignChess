@@ -1,6 +1,12 @@
-#include "texture.h"
+#include <SFML/Graphics.hpp>
+#include <array>
+#include <stdexcept>
 
-void Texture::load()
+std::array<sf::Texture, 6> piece_main;
+std::array<sf::Texture, 6> piece_base;
+std::array<sf::Texture, 6> piece_neutral;
+
+void load()
 {
     std::array<std::string, 6> names = {"king", "queen", "rook", "bishop", "knight", "pawn"};
     for (int i = 0; i < 6; i++)

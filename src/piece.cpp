@@ -16,7 +16,7 @@ Piece::Piece(const sf::Vector2<int> &pos, int faction, int owner, Type type, Tex
 
 void Piece::updateSprite()
 {
-    main_sprite.setTexture(texture.piece_main[0]);
+    main_sprite.setTexture(texture.piece_main[type]);
     if (owner == -1)
         base_sprite.setTexture(texture.piece_neutral[type]);
     else
@@ -24,7 +24,7 @@ void Piece::updateSprite()
 
     main_sprite.setColor(colors[faction]);
     if (owner == -1)
-        base_sprite.setColor(colors[0]);
+        base_sprite.setColor(colors[owner]);
     else
         base_sprite.setColor(colors[owner]);
 }
