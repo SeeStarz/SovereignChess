@@ -2,6 +2,7 @@
 #include "texture.h"
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <vector>
 
 int main()
 {
@@ -9,13 +10,10 @@ int main()
     Texture texture;
     texture.load();
 
-    // sf::Sprite f;
-    // f.setTexture(texture.piece_main[4]);
-    // f.setScale(10, 10);
-
-    Piece piece(sf::Vector2i(1, 1), 0, 0, Piece::Type::Rook, texture);
-    piece.main_sprite.setScale(10, 10);
-    piece.base_sprite.setScale(10, 10);
+    std::vector<Piece> pieces;
+    pieces.push_back(Piece(sf::Vector2i(1, 1), 11, 11, Piece::Type::Rook, texture));
+    pieces[0].base_sprite.setScale(10, 10);
+    pieces[0].main_sprite.setScale(10, 10);
 
     while (window.isOpen())
     {
@@ -32,9 +30,11 @@ int main()
         }
 
         window.clear(sf::Color(255, 255, 255));
-        window.draw(piece.main_sprite);
-        window.draw(piece.base_sprite);
-        // window.draw(f);
+        for (int i = 0; i < pieces.size(); i++)
+        {
+            window.draw(pieces[i].main_sprite);
+            window.draw(pieces[i].base_sprite);
+        }
         window.display();
     }
 

@@ -26,6 +26,7 @@ public:
     sf::Sprite main_sprite;
     sf::Sprite base_sprite;
     Texture &texture;
+    std::array<sf::Color, 12> colors;
 };
 
 #endif
