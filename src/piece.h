@@ -15,8 +15,7 @@ public:
         Knight,
         Pawn
     };
-    Piece(const sf::Vector2<int> pos, int faction, int owner, const Type type, Texture &texture);
-    void draw(sf::RenderWindow *window);
+    Piece(const sf::Vector2<int> &pos, int faction, int owner, const Type type, Texture &texture);
     void updateSprite();
 
     sf::Vector2<int> pos;
@@ -26,7 +25,6 @@ public:
     sf::Sprite main_sprite;
     sf::Sprite base_sprite;
     Texture &texture;
-    std::array<sf::Color, 12> colors;
 };
 
 #endif
