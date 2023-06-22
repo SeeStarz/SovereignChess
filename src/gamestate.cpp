@@ -4,8 +4,12 @@
 #include <array>
 #include <vector>
 
-GameState::GameState(Texture &texture) : texture(texture)
+#include <iostream>
+
+GameState::GameState()
 {
+    // Make sure piece reference won't be dangling
+    pieces.reserve(256);
     player1_color = 0;
     player2_color = 11;
     player1_to_move = true;
@@ -130,6 +134,34 @@ GameState::GameState(Texture &texture) : texture(texture)
     }
 }
 
+GameState::GameState(const GameState &game_state, Move move)
+{
+    pieces = game_state.pieces;
+    player1_color = game_state.player1_color;
+    player2_color = game_state.player2_color;
+    player1_to_move = !game_state.player1_to_move;
+
+    for (int i = 0; i < board.size(); i++)
+    {
+        for (int j = 0; j < board[i].size(); j++)
+        {
+            board[i][j] = NULL;
+        }
+    }
+
+    for (int i = 0; i < pieces.size(); i++)
+    {
+        Piece &piece = pieces[i];
+        board[piece.pos.y][piece.pos.x] = &piece;
+    }
+
+    Piece *piece_moved = board[move.start_position.y][move.start_position.x];
+    piece_moved->pos = move.end_position;
+
+    board[move.start_position.y][move.start_position.x] = NULL;
+    board[move.end_position.y][move.end_position.x] = piece_moved;
+}
+
 std::vector<Move> GameState::getMoves()
 {
     int controlled;
@@ -173,9 +205,9 @@ std::vector<Move> GameState::getMoves()
 
 void GameState::addPiece(int faction, int owner, Piece::Type type, int x, int y)
 {
-    Piece piece(sf::Vector2i(x, y), faction, owner, type, texture);
-    board[y][x] = &piece;
+    Piece piece(sf::Vector2i(x, y), faction, owner, type);
     pieces.push_back(piece);
+    board[y][x] = &pieces.back();
 }
 
 void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)

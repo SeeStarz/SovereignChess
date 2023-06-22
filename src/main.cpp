@@ -4,16 +4,17 @@
 #include "gamestate.h"
 #include "move.h"
 #include <SFML/Graphics.hpp>
+#include <memory>
 #include <iostream>
 #include <vector>
 #include <array>
 #include <map>
 
-void drawSquare(sf::RenderWindow &window, int r, int c, sf::Color color)
+void drawSquare(sf::RenderWindow &window, int x, int y, sf::Color color)
 {
     sf::RectangleShape square = sf::RectangleShape(sf::Vector2f(48, 48));
     square.setFillColor(color);
-    square.setPosition(48 * c, 48 * r);
+    square.setPosition(48 * x, 48 * y);
     window.draw(square);
 }
 
@@ -101,23 +102,44 @@ void drawBoard(sf::RenderWindow &window)
     window.draw(promotion_border);
 }
 
-void drawPieces(sf::RenderWindow &window, std::vector<Piece> &pieces)
+void drawPieces(sf::RenderWindow &window, Texture &texture, std::vector<Piece> &pieces)
 {
     for (int i = 0; i < pieces.size(); i++)
     {
-        pieces[i].main_sprite.setScale(3, 3);
-        pieces[i].main_sprite.setPosition(pieces[i].pos.x * 48, pieces[i].pos.y * 48);
-        pieces[i].base_sprite.setScale(3, 3);
-        pieces[i].base_sprite.setPosition(pieces[i].pos.x * 48, pieces[i].pos.y * 48);
-        window.draw(pieces[i].main_sprite);
-        window.draw(pieces[i].base_sprite);
+        sf::Sprite main_sprite(texture.piece_main[pieces[i].type]);
+        main_sprite.setScale(3, 3);
+        main_sprite.setColor(colors[pieces[i].faction]);
+        main_sprite.setPosition(pieces[i].pos.x * 48, pieces[i].pos.y * 48);
+        window.draw(main_sprite);
+
+        sf::Sprite base_sprite(texture.piece_base[pieces[i].type]);
+        base_sprite.setScale(3, 3);
+        base_sprite.setColor(colors[pieces[i].owner]);
+        base_sprite.setPosition(pieces[i].pos.x * 48, pieces[i].pos.y * 48);
+        window.draw(base_sprite);
     }
 }
-void draw(sf::RenderWindow &window, std::vector<Piece> &pieces)
+
+void drawMoves(sf::RenderWindow &window, Piece *piece, std::vector<Move> moves)
+{
+    if (!piece)
+        return;
+    drawSquare(window, piece->pos.x, piece->pos.y, sf::Color(0, 255, 0, 50));
+    for (int i = 0; i < moves.size(); i++)
+    {
+        if (moves[i].start_position != piece->pos)
+            continue;
+
+        drawSquare(window, moves[i].end_position.x, moves[i].end_position.y, sf::Color(255, 0, 0, 50));
+    }
+}
+
+void draw(sf::RenderWindow &window, Texture &texture, std::vector<Piece> &pieces, Piece *piece, std::vector<Move> moves)
 {
     window.clear(sf::Color(255, 255, 255));
     drawBoard(window);
-    drawPieces(window, pieces);
+    drawPieces(window, texture, pieces);
+    drawMoves(window, piece, moves);
     window.display();
 }
 
@@ -128,9 +150,10 @@ int main()
     texture.load();
 
     std::vector<Move> moves;
-    bool generated = false;
+    Piece *selected_piece = NULL;
 
-    GameState gamestate(texture);
+    GameState game_state;
+    moves = game_state.getMoves();
 
     while (window.isOpen())
     {
@@ -139,14 +162,40 @@ int main()
         {
             if (event.type == sf::Event::Closed)
                 window.close();
-        }
-        if (!generated)
-        {
-            moves = gamestate.getMoves();
-            generated = true;
+            if (event.type == sf::Event::MouseButtonPressed)
+            {
+                if (!selected_piece)
+                {
+                    sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
+                    sf::Vector2i board_pos = mouse_pos / 48;
+                    if (board_pos.x >= 0 && board_pos.x < 16 && board_pos.y >= 0 && board_pos.y < 16)
+                        selected_piece = game_state.board[board_pos.y][board_pos.x];
+                }
+                else
+                {
+                    bool valid = false;
+                    sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
+                    sf::Vector2i board_pos = mouse_pos / 48;
+                    for (int i = 0; i < moves.size(); i++)
+                    {
+                        Move &move = moves[i];
+                        if (board_pos != move.end_position)
+                            continue;
+                        if (selected_piece->pos != move.start_position)
+                            continue;
+
+                        valid = true;
+                        game_state = GameState(game_state, move);
+                        moves = game_state.getMoves();
+                        selected_piece = NULL;
+                    }
+                    if (!valid && board_pos.x >= 0 && board_pos.x < 16 && board_pos.y >= 0 && board_pos.y < 16)
+                        selected_piece = game_state.board[board_pos.y][board_pos.x];
+                }
+            }
         }
 
-        draw(window, gamestate.pieces);
+        draw(window, texture, game_state.pieces, selected_piece, moves);
     }
 
     return 0;

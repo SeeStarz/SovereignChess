@@ -15,16 +15,13 @@ public:
         Knight,
         Pawn
     };
-    Piece(const sf::Vector2<int> &pos, int faction, int owner, const Type type, Texture &texture);
-    void updateSprite();
+    Piece(const sf::Vector2<int> &pos, int faction, int owner, const Type type);
+    Piece() = default;
 
     sf::Vector2<int> pos;
     int faction;
     int owner;
     Type type;
-    sf::Sprite main_sprite;
-    sf::Sprite base_sprite;
-    Texture &texture;
 };
 
 #endif

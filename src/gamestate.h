@@ -24,10 +24,11 @@ public:
     int player1_color;
     int player2_color;
     bool player1_to_move;
-    Texture &texture;
 
-    GameState(Texture &texture);
+    GameState();
+    GameState(const GameState &game_state, Move move);
     std::vector<Move> getMoves();
+
     void addPiece(int faction, int owner, Piece::Type type, int r, int c);
 };
 
