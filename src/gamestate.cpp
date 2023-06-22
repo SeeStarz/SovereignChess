@@ -334,56 +334,55 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
 
     std::array<sf::Vector2i, 4> move_directions = {{{1, 0}, {0, 1}, {0, -1}, {-1, 0}}};
     std::array<sf::Vector2i, 4> capture_directions = {{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}}};
-    std::array<bool, 4> valid_move_directions;
-    std::array<bool, 4> valid_capture_directions;
-    std::array<bool, 4> valid_double_directions;
+    std::array<bool, 4> valid_move_directions = {};
+    std::array<bool, 4> valid_double_directions = {};
+    std::array<bool, 4> valid_capture_directions = {};
 
-    if (piece.pos.x < 8 && piece.pos.y < 8)
+    if (piece.pos.x < 7)
     {
-        valid_move_directions = {true, true, false, false};
-        valid_capture_directions = {true, true, true, false};
-        if ((piece.pos.x == 0 && piece.pos.y == 0) || (piece.pos.x == 1 && piece.pos.y == 1))
-            valid_double_directions = {true, true, false, false};
-        else if (piece.pos.x < 2)
-            valid_double_directions = {true, false, false, false};
-        else if (piece.pos.y < 2)
-            valid_double_directions = {false, true, false, false};
+        valid_move_directions[0] = true;
+        valid_capture_directions[0] = true;
+        valid_capture_directions[1] = true;
+
+        if (piece.pos.x == 0)
+            valid_double_directions[0] = true;
+        else if (piece.pos.x == 1 && piece.pos.y != 0 && piece.pos.y != 15)
+            valid_double_directions[0] = true;
     }
 
-    if (piece.pos.x > 7 && piece.pos.y < 8)
+    if (piece.pos.x > 8)
     {
-        valid_move_directions = {false, true, false, true};
-        valid_capture_directions = {false, true, true, true};
-        if ((piece.pos.x == 15 && piece.pos.y == 0) || (piece.pos.x == 14 && piece.pos.y == 1))
-            valid_double_directions = {false, true, false, true};
-        else if (piece.pos.x > 13)
-            valid_double_directions = {false, false, false, true};
-        else if (piece.pos.y < 2)
-            valid_double_directions = {false, true, false, false};
+        valid_move_directions[3] = true;
+        valid_capture_directions[2] = true;
+        valid_capture_directions[3] = true;
+
+        if (piece.pos.x == 15)
+            valid_double_directions[3] = true;
+        else if (piece.pos.x == 14 && piece.pos.y != 0 && piece.pos.y != 15)
+            valid_double_directions[3] = true;
+    }
+    if (piece.pos.y < 7)
+    {
+        valid_move_directions[1] = true;
+        valid_capture_directions[0] = true;
+        valid_capture_directions[2] = true;
+
+        if (piece.pos.y == 0)
+            valid_double_directions[1] = true;
+        else if (piece.pos.y == 1 && piece.pos.x != 0 && piece.pos.x != 15)
+            valid_double_directions[1] = true;
     }
 
-    if (piece.pos.x < 8 && piece.pos.y > 7)
+    if (piece.pos.y > 8)
     {
-        valid_move_directions = {true, false, true, false};
-        valid_capture_directions = {true, true, false, true};
-        if ((piece.pos.x == 0 && piece.pos.y == 15) || (piece.pos.x == 1 && piece.pos.y == 14))
-            valid_double_directions = {true, false, true, false};
-        else if (piece.pos.x < 2)
-            valid_double_directions = {true, false, false, false};
-        else if (piece.pos.y > 13)
-            valid_double_directions = {false, false, true, false};
-    }
+        valid_move_directions[2] = true;
+        valid_capture_directions[1] = true;
+        valid_capture_directions[3] = true;
 
-    if (piece.pos.x > 7 && piece.pos.y > 7)
-    {
-        valid_move_directions = {false, false, true, true};
-        valid_capture_directions = {true, true, false, true};
-        if ((piece.pos.x == 15 && piece.pos.y == 15) || (piece.pos.x == 14 && piece.pos.y == 14))
-            valid_double_directions = {false, false, true, true};
-        else if (piece.pos.x > 13)
-            valid_double_directions = {false, false, false, true};
-        else if (piece.pos.y > 13)
-            valid_double_directions = {false, false, true, false};
+        if (piece.pos.y == 15)
+            valid_double_directions[2] = true;
+        else if (piece.pos.y == 14 && piece.pos.x != 0 && piece.pos.x != 15)
+            valid_double_directions[2] = true;
     }
 
     for (int i = 0; i < move_directions.size(); i++)
@@ -391,6 +390,8 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
         if (!valid_move_directions[i])
             continue;
         sf::Vector2i end_pos = piece.pos + move_directions[i];
+        if (!checkInBoard(end_pos))
+            continue;
 
         Piece *target_piece = board[end_pos.y][end_pos.x];
         if (target_piece == NULL)
