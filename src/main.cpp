@@ -106,16 +106,20 @@ void drawPieces(sf::RenderWindow &window, Texture &texture, std::vector<Piece> &
 {
     for (int i = 0; i < pieces.size(); i++)
     {
-        sf::Sprite main_sprite(texture.piece_main[pieces[i].type]);
+        Piece &piece = pieces[i];
+        if (!piece.is_alive)
+            continue;
+
+        sf::Sprite main_sprite(texture.piece_main[piece.type]);
         main_sprite.setScale(3, 3);
-        main_sprite.setColor(colors[pieces[i].faction]);
-        main_sprite.setPosition(pieces[i].pos.x * 48, pieces[i].pos.y * 48);
+        main_sprite.setColor(colors[piece.faction]);
+        main_sprite.setPosition(piece.pos.x * 48, piece.pos.y * 48);
         window.draw(main_sprite);
 
-        sf::Sprite base_sprite(texture.piece_base[pieces[i].type]);
+        sf::Sprite base_sprite(texture.piece_base[piece.type]);
         base_sprite.setScale(3, 3);
-        base_sprite.setColor(colors[pieces[i].owner]);
-        base_sprite.setPosition(pieces[i].pos.x * 48, pieces[i].pos.y * 48);
+        base_sprite.setColor(colors[piece.owner]);
+        base_sprite.setPosition(piece.pos.x * 48, piece.pos.y * 48);
         window.draw(base_sprite);
     }
 }
@@ -188,6 +192,7 @@ int main()
                         game_state = GameState(game_state, move);
                         moves = game_state.getMoves();
                         selected_piece = NULL;
+                        break;
                     }
                     if (!valid && board_pos.x >= 0 && board_pos.x < 16 && board_pos.y >= 0 && board_pos.y < 16)
                         selected_piece = game_state.board[board_pos.y][board_pos.x];

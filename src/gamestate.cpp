@@ -3,7 +3,7 @@
 #include "move.h"
 #include <array>
 #include <vector>
-
+#include <cassert>
 #include <iostream>
 
 GameState::GameState()
@@ -152,11 +152,21 @@ GameState::GameState(const GameState &game_state, Move move)
     for (int i = 0; i < pieces.size(); i++)
     {
         Piece &piece = pieces[i];
+        if (!piece.is_alive)
+            continue;
         board[piece.pos.y][piece.pos.x] = &piece;
     }
 
     Piece *piece_moved = board[move.start_position.y][move.start_position.x];
+    Piece *piece_captured = board[move.end_position.y][move.end_position.x];
+
+    assert(piece_moved != NULL);
     piece_moved->pos = move.end_position;
+    if (move.is_capture)
+    {
+        assert(piece_captured != NULL);
+        piece_captured->is_alive = false;
+    }
 
     board[move.start_position.y][move.start_position.x] = NULL;
     board[move.end_position.y][move.end_position.x] = piece_moved;
@@ -174,6 +184,8 @@ std::vector<Move> GameState::getMoves()
     for (int i = 0; i < pieces.size(); i++)
     {
         Piece &piece = pieces[i];
+        if (!piece.is_alive)
+            continue;
         if (piece.owner != controlled)
             continue;
 
@@ -262,7 +274,10 @@ void GameState::getRookMoves(std::vector<Move> &moves, Piece piece)
             if (target_piece == NULL)
                 moves.push_back(Move{piece.pos, end_pos, piece, false});
             else if (target_piece->owner == enemy_color)
+            {
                 moves.push_back(Move{piece.pos, end_pos, piece, true});
+                break;
+            }
             else
                 break;
         }
@@ -292,7 +307,10 @@ void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece)
                 if (target_piece == NULL)
                     moves.push_back(Move{piece.pos, end_pos, piece, false});
                 else if (target_piece->owner == enemy_color)
+                {
                     moves.push_back(Move{piece.pos, end_pos, piece, true});
+                    break;
+                }
                 else
                     break;
             }

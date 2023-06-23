@@ -22,6 +22,7 @@ public:
     int faction;
     int owner;
     Type type;
+    bool is_alive = true;
 };
 
 #endif
