@@ -1,6 +1,6 @@
 #include "piece.h"
 #include "texture.h"
-#include "constants.cpp"
+#include "helper.h"
 #include "gamestate.h"
 #include "move.h"
 #include <SFML/Graphics.hpp>
@@ -31,32 +31,8 @@ void drawBoard(sf::RenderWindow &window)
         }
     }
 
-    {
-        drawSquare(window, 4, 4, colors[Red]);
-        drawSquare(window, 11, 11, colors[Red]);
-        drawSquare(window, 11, 4, colors[Blue]);
-        drawSquare(window, 4, 11, colors[Blue]);
-        drawSquare(window, 5, 5, colors[Yellow]);
-        drawSquare(window, 10, 10, colors[Yellow]);
-        drawSquare(window, 10, 5, colors[Green]);
-        drawSquare(window, 5, 10, colors[Green]);
-        drawSquare(window, 7, 5, colors[Pink]);
-        drawSquare(window, 8, 10, colors[Pink]);
-        drawSquare(window, 8, 5, colors[Purple]);
-        drawSquare(window, 7, 10, colors[Purple]);
-        drawSquare(window, 6, 6, colors[DarkGray]);
-        drawSquare(window, 9, 9, colors[DarkGray]);
-        drawSquare(window, 9, 6, colors[LightGray]);
-        drawSquare(window, 6, 9, colors[LightGray]);
-        drawSquare(window, 5, 7, colors[Orange]);
-        drawSquare(window, 10, 8, colors[Orange]);
-        drawSquare(window, 10, 7, colors[Cyan]);
-        drawSquare(window, 5, 8, colors[Cyan]);
-        drawSquare(window, 7, 7, colors[White]);
-        drawSquare(window, 8, 8, colors[White]);
-        drawSquare(window, 8, 7, colors[Black]);
-        drawSquare(window, 7, 8, colors[Black]);
-    }
+    for (auto it = color_map.begin(); it != color_map.end(); it++)
+        drawSquare(window, it->first.x, it->first.y, colors[it->second]);
 
     sf::RectangleShape horizontal_line(sf::Vector2f(768, 2));
     sf::RectangleShape vertical_line(sf::Vector2f(2, 768));

@@ -5,6 +5,7 @@
 #include "move.h"
 #include <array>
 #include <vector>
+#include <map>
 
 class GameState
 {
@@ -17,6 +18,7 @@ private:
     void getPawnMoves(std::vector<Move> &moves, Piece piece);
 
     bool checkInBoard(sf::Vector2i pos);
+    void addPiece(int faction, int owner, Piece::Type type, int r, int c);
 
 public:
     std::array<std::array<Piece *, 16>, 16> board;
@@ -28,8 +30,6 @@ public:
     GameState();
     GameState(const GameState &game_state, Move move);
     std::vector<Move> getMoves();
-
-    void addPiece(int faction, int owner, Piece::Type type, int r, int c);
 };
 
 #endif

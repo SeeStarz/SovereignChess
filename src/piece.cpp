@@ -1,6 +1,5 @@
 #include "piece.h"
 #include "texture.h"
-#include "constants.cpp"
 #include <SFML/Graphics.hpp>
 #include <stdexcept>
 
