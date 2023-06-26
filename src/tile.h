@@ -5,12 +5,13 @@
 #include <SFML/System/Vector2.hpp>
 #include <memory>
 
-class Tile
+struct Tile
 {
-public:
     sf::Vector2i pos;
     int color;
-    std::unique_ptr<Piece> piece;
+    Piece *piece;
+    Tile *other_tile;
+    bool blocked;
 };
 
 #endif

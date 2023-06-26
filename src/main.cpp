@@ -149,7 +149,7 @@ int main()
                     sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
                     sf::Vector2i board_pos = mouse_pos / 48;
                     if (board_pos.x >= 0 && board_pos.x < 16 && board_pos.y >= 0 && board_pos.y < 16)
-                        selected_piece = game_state.board[board_pos.y][board_pos.x];
+                        selected_piece = game_state.board[board_pos.y][board_pos.x].piece;
                 }
                 else
                 {
@@ -171,7 +171,7 @@ int main()
                         break;
                     }
                     if (!valid && board_pos.x >= 0 && board_pos.x < 16 && board_pos.y >= 0 && board_pos.y < 16)
-                        selected_piece = game_state.board[board_pos.y][board_pos.x];
+                        selected_piece = game_state.board[board_pos.y][board_pos.x].piece;
                 }
             }
         }

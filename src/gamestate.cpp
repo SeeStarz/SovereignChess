@@ -1,6 +1,7 @@
 #include "piece.h"
 #include "gamestate.h"
 #include "move.h"
+#include "helper.h"
 #include <array>
 #include <vector>
 #include <cassert>
@@ -13,11 +14,8 @@ GameState::GameState()
     player1_color = 0;
     player2_color = 11;
     player1_to_move = true;
-    for (int i = 0; i < board.size(); i++)
-    {
-        for (int j = 0; j < board[i].size(); j++)
-            board[i][j] = NULL;
-    }
+    makeBoard();
+
     {
         addPiece(0, 0, Piece::King, 8, 15);
         addPiece(11, 11, Piece::King, 8, 0);
@@ -140,25 +138,18 @@ GameState::GameState(const GameState &game_state, Move move)
     player1_color = game_state.player1_color;
     player2_color = game_state.player2_color;
     player1_to_move = !game_state.player1_to_move;
-
-    for (int i = 0; i < board.size(); i++)
-    {
-        for (int j = 0; j < board[i].size(); j++)
-        {
-            board[i][j] = NULL;
-        }
-    }
+    makeBoard();
 
     for (int i = 0; i < pieces.size(); i++)
     {
         Piece &piece = pieces[i];
         if (!piece.is_alive)
             continue;
-        board[piece.pos.y][piece.pos.x] = &piece;
+        board[piece.pos.y][piece.pos.x].piece = &piece;
     }
 
-    Piece *piece_moved = board[move.start_position.y][move.start_position.x];
-    Piece *piece_captured = board[move.end_position.y][move.end_position.x];
+    Piece *piece_moved = board[move.start_position.y][move.start_position.x].piece;
+    Piece *piece_captured = board[move.end_position.y][move.end_position.x].piece;
 
     assert(piece_moved != NULL);
     piece_moved->pos = move.end_position;
@@ -168,8 +159,8 @@ GameState::GameState(const GameState &game_state, Move move)
         piece_captured->is_alive = false;
     }
 
-    board[move.start_position.y][move.start_position.x] = NULL;
-    board[move.end_position.y][move.end_position.x] = piece_moved;
+    board[move.start_position.y][move.start_position.x].piece = NULL;
+    board[move.end_position.y][move.end_position.x].piece = piece_moved;
 }
 
 std::vector<Move> GameState::getMoves()
@@ -215,13 +206,54 @@ std::vector<Move> GameState::getMoves()
     return moves;
 }
 
+void GameState::makeBoard()
+{
+    for (int i = 0; i < board.size(); i++)
+    {
+        for (int j = 0; j < board[i].size(); j++)
+        {
+            board[i][j] = Tile{{j, i}, -1, NULL, NULL, false};
+        }
+    }
+
+    std::array<const sf::Vector2i *, 12> tile_pos = {};
+    for (auto it = color_map.begin(); it != color_map.end(); it++)
+    {
+        sf::Vector2i pos = it->first;
+        Tile &tile = board[pos.y][pos.x];
+        Color color = it->second;
+
+        tile.color = color;
+        if (!tile_pos[color])
+            tile_pos[color] = &it->first;
+        else
+        {
+            Tile &other_tile = board[tile_pos[color]->y][tile_pos[color]->x];
+            tile.other_tile = &other_tile;
+            other_tile.other_tile = &tile;
+        }
+    }
+}
+
 void GameState::addPiece(int faction, int owner, Piece::Type type, int x, int y)
 {
     Piece piece(sf::Vector2i(x, y), faction, owner, type);
     pieces.push_back(piece);
-    board[y][x] = &pieces.back();
+    board[y][x].piece = &pieces.back();
 }
 
+bool GameState::checkInBoard(sf::Vector2i pos)
+{
+    if (pos.x < 0 || pos.y < 0)
+        return false;
+    if (pos.x > 15 || pos.y > 15)
+        return false;
+    return true;
+}
+
+///////////////////
+// MOVES SECTION //
+///////////////////
 void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
 {
     int ally_color = piece.owner;
@@ -239,7 +271,7 @@ void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
         if (!checkInBoard(end_pos))
             continue;
 
-        Piece *target_piece = board[end_pos.y][end_pos.x];
+        Piece *target_piece = board[end_pos.y][end_pos.x].piece;
         if (target_piece == NULL)
             moves.push_back(Move{piece.pos, end_pos, piece, false});
         else if (target_piece->owner == enemy_color)
@@ -270,7 +302,7 @@ void GameState::getRookMoves(std::vector<Move> &moves, Piece piece)
             if (!checkInBoard(end_pos))
                 break;
 
-            Piece *target_piece = board[end_pos.y][end_pos.x];
+            Piece *target_piece = board[end_pos.y][end_pos.x].piece;
             if (target_piece == NULL)
                 moves.push_back(Move{piece.pos, end_pos, piece, false});
             else if (target_piece->owner == enemy_color)
@@ -303,7 +335,7 @@ void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece)
                 if (!checkInBoard(end_pos))
                     break;
 
-                Piece *target_piece = board[end_pos.y][end_pos.x];
+                Piece *target_piece = board[end_pos.y][end_pos.x].piece;
                 if (target_piece == NULL)
                     moves.push_back(Move{piece.pos, end_pos, piece, false});
                 else if (target_piece->owner == enemy_color)
@@ -334,7 +366,7 @@ void GameState::getKnightMoves(std::vector<Move> &moves, Piece piece)
         if (!checkInBoard(end_pos))
             continue;
 
-        Piece *target_piece = board[end_pos.y][end_pos.x];
+        Piece *target_piece = board[end_pos.y][end_pos.x].piece;
         if (target_piece == NULL)
             moves.push_back(Move{piece.pos, end_pos, piece, false});
         else if (target_piece->owner == enemy_color)
@@ -411,7 +443,7 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
         if (!checkInBoard(end_pos))
             continue;
 
-        Piece *target_piece = board[end_pos.y][end_pos.x];
+        Piece *target_piece = board[end_pos.y][end_pos.x].piece;
         if (target_piece == NULL)
         {
             moves.push_back(Move{piece.pos, end_pos, piece, false});
@@ -420,7 +452,7 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
             if (!valid_double_directions[i])
                 continue;
             sf::Vector2i end_pos = piece.pos + move_directions[i] * 2;
-            Piece *target_piece = board[end_pos.y][end_pos.x];
+            Piece *target_piece = board[end_pos.y][end_pos.x].piece;
             if (target_piece == NULL)
                 moves.push_back(Move{piece.pos, end_pos, piece, false});
         }
@@ -433,17 +465,8 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
         sf::Vector2i end_pos = piece.pos + capture_directions[i];
         if (!checkInBoard(end_pos))
             continue;
-        Piece *target_piece = board[end_pos.y][end_pos.x];
+        Piece *target_piece = board[end_pos.y][end_pos.x].piece;
         if (target_piece && target_piece->owner == enemy_color)
             moves.push_back(Move{piece.pos, end_pos, piece, true});
     }
-}
-
-bool GameState::checkInBoard(sf::Vector2i pos)
-{
-    if (pos.x < 0 || pos.y < 0)
-        return false;
-    if (pos.x > 15 || pos.y > 15)
-        return false;
-    return true;
 }
