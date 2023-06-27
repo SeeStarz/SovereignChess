@@ -15,12 +15,13 @@ public:
         Knight,
         Pawn
     };
-    Piece(const sf::Vector2<int> &pos, int faction, int owner, const Type type);
+    Piece(const sf::Vector2<int> &pos, int faction, int main_owner, int direct_owner, const Type type);
     Piece() = default;
 
     sf::Vector2<int> pos;
     int faction;
-    int owner;
+    int main_owner;
+    int direct_owner;
     Type type;
     bool is_alive = true;
 };

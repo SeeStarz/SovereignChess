@@ -92,11 +92,21 @@ void drawPieces(sf::RenderWindow &window, Texture &texture, std::vector<Piece> &
         main_sprite.setPosition(piece.pos.x * 48, piece.pos.y * 48);
         window.draw(main_sprite);
 
-        sf::Sprite base_sprite(texture.piece_base[piece.type]);
-        base_sprite.setScale(3, 3);
-        base_sprite.setColor(colors[piece.owner]);
-        base_sprite.setPosition(piece.pos.x * 48, piece.pos.y * 48);
-        window.draw(base_sprite);
+        if (piece.main_owner != -1)
+        {
+            sf::Sprite base_sprite(texture.piece_base[piece.type]);
+            base_sprite.setScale(3, 3);
+            base_sprite.setColor(colors[piece.main_owner]);
+            base_sprite.setPosition(piece.pos.x * 48, piece.pos.y * 48);
+            window.draw(base_sprite);
+        }
+        else
+        {
+            sf::Sprite neutral_sprite(texture.piece_neutral[piece.type]);
+            neutral_sprite.setScale(3, 3);
+            neutral_sprite.setPosition(piece.pos.x * 48, piece.pos.y * 48);
+            window.draw(neutral_sprite);
+        }
     }
 }
 

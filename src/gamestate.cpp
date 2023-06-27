@@ -10,7 +10,8 @@
 GameState::GameState()
 {
     // Make sure piece reference won't be dangling
-    pieces.reserve(256);
+    pieces.reserve(112);
+    faction_owner = {0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 11};
     player1_color = 0;
     player2_color = 11;
     player1_to_move = true;
@@ -135,32 +136,58 @@ GameState::GameState()
 GameState::GameState(const GameState &game_state, Move move)
 {
     pieces = game_state.pieces;
+    faction_owner = game_state.faction_owner;
     player1_color = game_state.player1_color;
     player2_color = game_state.player2_color;
     player1_to_move = !game_state.player1_to_move;
     makeBoard();
 
-    for (int i = 0; i < pieces.size(); i++)
-    {
-        Piece &piece = pieces[i];
-        if (!piece.is_alive)
-            continue;
-        board[piece.pos.y][piece.pos.x].piece = &piece;
-    }
-
-    Piece *piece_moved = board[move.start_position.y][move.start_position.x].piece;
-    Piece *piece_captured = board[move.end_position.y][move.end_position.x].piece;
+    Tile &start_tile = board[move.start_position.y][move.start_position.x];
+    Tile &end_tile = board[move.end_position.y][move.end_position.x];
+    Piece *piece_moved = start_tile.piece;
+    Piece *piece_captured = end_tile.piece;
 
     assert(piece_moved != NULL);
-    piece_moved->pos = move.end_position;
+    piece_moved->pos = end_tile.position;
+
     if (move.is_capture)
     {
         assert(piece_captured != NULL);
         piece_captured->is_alive = false;
     }
 
-    board[move.start_position.y][move.start_position.x].piece = NULL;
-    board[move.end_position.y][move.end_position.x].piece = piece_moved;
+    start_tile.piece = NULL;
+    end_tile.piece = piece_moved;
+
+    bool update_owner = false;
+    if (start_tile.color != -1)
+    {
+        assert(!start_tile.blocked);
+        start_tile.other_tile->blocked = false;
+        if (start_tile.color != player1_color && start_tile.color != player2_color)
+            faction_owner[start_tile.color] = -1;
+        update_owner = true;
+    }
+    if (end_tile.color != -1)
+    {
+        assert(!end_tile.blocked);
+        end_tile.other_tile->blocked = true;
+        if (end_tile.color != player1_color && end_tile.color != player2_color)
+            faction_owner[end_tile.color] = piece_moved->faction;
+        update_owner = true;
+    }
+
+    if (update_owner)
+    {
+        for (int i = 0; i < pieces.size(); i++)
+        {
+            Piece &piece = pieces[i];
+            if (!piece.is_alive)
+                continue;
+            piece.direct_owner = faction_owner[piece.faction];
+            piece.main_owner = mainOwner(piece.direct_owner);
+        }
+    }
 }
 
 std::vector<Move> GameState::getMoves()
@@ -177,7 +204,7 @@ std::vector<Move> GameState::getMoves()
         Piece &piece = pieces[i];
         if (!piece.is_alive)
             continue;
-        if (piece.owner != controlled)
+        if (piece.main_owner != controlled)
             continue;
 
         switch (piece.type)
@@ -233,13 +260,35 @@ void GameState::makeBoard()
             other_tile.other_tile = &tile;
         }
     }
+
+    for (int i = 0; i < pieces.size(); i++)
+    {
+        Piece &piece = pieces[i];
+        if (!piece.is_alive)
+            continue;
+
+        Tile &tile = board[piece.pos.y][piece.pos.x];
+        tile.piece = &piece;
+
+        assert(!tile.blocked);
+        if (tile.color != -1)
+            tile.other_tile->blocked = true;
+    }
 }
 
 void GameState::addPiece(int faction, int owner, Piece::Type type, int x, int y)
 {
-    Piece piece(sf::Vector2i(x, y), faction, owner, type);
+    Piece piece(sf::Vector2i(x, y), faction, owner, owner, type);
     pieces.push_back(piece);
     board[y][x].piece = &pieces.back();
+}
+
+int GameState::mainOwner(int direct_owner)
+{
+    while (direct_owner != -1 && faction_owner[direct_owner] != direct_owner)
+        direct_owner = faction_owner[direct_owner];
+
+    return direct_owner;
 }
 
 bool GameState::checkInBoard(sf::Vector2i pos)
@@ -256,9 +305,9 @@ bool GameState::checkInBoard(sf::Vector2i pos)
 ///////////////////
 void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
 {
-    int ally_color = piece.owner;
+    int ally_color = piece.main_owner;
     int enemy_color;
-    if (piece.owner == player1_color)
+    if (piece.main_owner == player1_color)
         enemy_color = player2_color;
     else
         enemy_color = player1_color;
@@ -270,11 +319,16 @@ void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
         sf::Vector2i end_pos = piece.pos + directions[i];
         if (!checkInBoard(end_pos))
             continue;
+        Tile &tile = board[end_pos.y][end_pos.x];
+        if (tile.blocked)
+            continue;
+        if (tile.color == piece.faction)
+            continue;
 
-        Piece *target_piece = board[end_pos.y][end_pos.x].piece;
+        Piece *target_piece = tile.piece;
         if (target_piece == NULL)
             moves.push_back(Move{piece.pos, end_pos, piece, false});
-        else if (target_piece->owner == enemy_color)
+        else if (target_piece->main_owner == enemy_color)
             moves.push_back(Move{piece.pos, end_pos, piece, true});
     }
 }
@@ -285,9 +339,9 @@ void GameState::getQueenMoves(std::vector<Move> &moves, Piece piece)
 }
 void GameState::getRookMoves(std::vector<Move> &moves, Piece piece)
 {
-    int ally_color = piece.owner;
+    int ally_color = piece.main_owner;
     int enemy_color;
-    if (piece.owner == player1_color)
+    if (piece.main_owner == player1_color)
         enemy_color = player2_color;
     else
         enemy_color = player1_color;
@@ -302,10 +356,16 @@ void GameState::getRookMoves(std::vector<Move> &moves, Piece piece)
             if (!checkInBoard(end_pos))
                 break;
 
-            Piece *target_piece = board[end_pos.y][end_pos.x].piece;
+            Tile &tile = board[end_pos.y][end_pos.x];
+            if (tile.blocked)
+                continue;
+            if (tile.color == piece.faction)
+                continue;
+
+            Piece *target_piece = tile.piece;
             if (target_piece == NULL)
                 moves.push_back(Move{piece.pos, end_pos, piece, false});
-            else if (target_piece->owner == enemy_color)
+            else if (target_piece->main_owner == enemy_color)
             {
                 moves.push_back(Move{piece.pos, end_pos, piece, true});
                 break;
@@ -318,9 +378,9 @@ void GameState::getRookMoves(std::vector<Move> &moves, Piece piece)
 void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece)
 {
     {
-        int ally_color = piece.owner;
+        int ally_color = piece.main_owner;
         int enemy_color;
-        if (piece.owner == player1_color)
+        if (piece.main_owner == player1_color)
             enemy_color = player2_color;
         else
             enemy_color = player1_color;
@@ -335,10 +395,16 @@ void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece)
                 if (!checkInBoard(end_pos))
                     break;
 
-                Piece *target_piece = board[end_pos.y][end_pos.x].piece;
+                Tile &tile = board[end_pos.y][end_pos.x];
+                if (tile.blocked)
+                    continue;
+                if (tile.color == piece.faction)
+                    continue;
+
+                Piece *target_piece = tile.piece;
                 if (target_piece == NULL)
                     moves.push_back(Move{piece.pos, end_pos, piece, false});
-                else if (target_piece->owner == enemy_color)
+                else if (target_piece->main_owner == enemy_color)
                 {
                     moves.push_back(Move{piece.pos, end_pos, piece, true});
                     break;
@@ -351,9 +417,9 @@ void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece)
 }
 void GameState::getKnightMoves(std::vector<Move> &moves, Piece piece)
 {
-    int ally_color = piece.owner;
+    int ally_color = piece.main_owner;
     int enemy_color;
-    if (piece.owner == player1_color)
+    if (piece.main_owner == player1_color)
         enemy_color = player2_color;
     else
         enemy_color = player1_color;
@@ -366,18 +432,24 @@ void GameState::getKnightMoves(std::vector<Move> &moves, Piece piece)
         if (!checkInBoard(end_pos))
             continue;
 
-        Piece *target_piece = board[end_pos.y][end_pos.x].piece;
+        Tile &tile = board[end_pos.y][end_pos.x];
+        if (tile.blocked)
+            continue;
+        if (tile.color == piece.faction)
+            continue;
+
+        Piece *target_piece = tile.piece;
         if (target_piece == NULL)
             moves.push_back(Move{piece.pos, end_pos, piece, false});
-        else if (target_piece->owner == enemy_color)
+        else if (target_piece->main_owner == enemy_color)
             moves.push_back(Move{piece.pos, end_pos, piece, true});
     }
 }
 void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
 {
-    int ally_color = piece.owner;
+    int ally_color = piece.main_owner;
     int enemy_color;
-    if (piece.owner == player1_color)
+    if (piece.main_owner == player1_color)
         enemy_color = player2_color;
     else
         enemy_color = player1_color;
@@ -443,7 +515,13 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
         if (!checkInBoard(end_pos))
             continue;
 
-        Piece *target_piece = board[end_pos.y][end_pos.x].piece;
+        Tile &tile = board[end_pos.y][end_pos.x];
+        if (tile.blocked)
+            continue;
+        if (tile.color == piece.faction)
+            continue;
+
+        Piece *target_piece = tile.piece;
         if (target_piece == NULL)
         {
             moves.push_back(Move{piece.pos, end_pos, piece, false});
@@ -465,8 +543,15 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
         sf::Vector2i end_pos = piece.pos + capture_directions[i];
         if (!checkInBoard(end_pos))
             continue;
-        Piece *target_piece = board[end_pos.y][end_pos.x].piece;
-        if (target_piece && target_piece->owner == enemy_color)
+
+        Tile &tile = board[end_pos.y][end_pos.x];
+        if (tile.blocked)
+            continue;
+        if (tile.color == piece.faction)
+            continue;
+
+        Piece *target_piece = tile.piece;
+        if (target_piece && target_piece->main_owner == enemy_color)
             moves.push_back(Move{piece.pos, end_pos, piece, true});
     }
 }

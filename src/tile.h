@@ -7,7 +7,7 @@
 
 struct Tile
 {
-    sf::Vector2i pos;
+    sf::Vector2i position;
     int color;
     Piece *piece;
     Tile *other_tile;
