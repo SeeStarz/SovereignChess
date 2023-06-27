@@ -24,19 +24,20 @@ enum Color
 const std::array<sf::Color, 12> colors =
     {sf::Color(255, 255, 255),
      sf::Color(31, 159, 31),
-     sf::Color(191, 191, 191),
+     sf::Color(223, 223, 223),
      sf::Color(31, 191, 191),
      sf::Color(31, 31, 191),
      sf::Color(159, 0, 223),
      sf::Color(223, 159, 223),
      sf::Color(191, 31, 31),
      sf::Color(223, 95, 31),
-     sf::Color(95, 95, 95),
+     sf::Color(127, 127, 127),
      sf::Color(255, 255, 31),
-     sf::Color(31, 31, 31)};
+     sf::Color(63, 63, 63)};
 
-struct Vector2iLess
+class Vector2iLess
 {
+public:
     bool operator()(const sf::Vector2i &lhs, const sf::Vector2i &rhs) const;
 };
 

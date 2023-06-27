@@ -1,6 +1,7 @@
 #include "piece.h"
 #include "texture.h"
 #include "helper.h"
+#include "displayconfig.h"
 #include "gamestate.h"
 #include "move.h"
 #include <SFML/Graphics.hpp>
@@ -12,9 +13,9 @@
 
 void drawSquare(sf::RenderWindow &window, int x, int y, sf::Color color)
 {
-    sf::RectangleShape square = sf::RectangleShape(sf::Vector2f(48, 48));
+    sf::RectangleShape square = sf::RectangleShape(sf::Vector2f(end_size, end_size));
     square.setFillColor(color);
-    square.setPosition(48 * x, 48 * y);
+    square.setPosition(sf::Vector2f(end_size * x, end_size * y) + offset);
     window.draw(square);
 }
 
@@ -34,47 +35,48 @@ void drawBoard(sf::RenderWindow &window)
     for (auto it = color_map.begin(); it != color_map.end(); it++)
         drawSquare(window, it->first.x, it->first.y, colors[it->second]);
 
-    sf::RectangleShape horizontal_line(sf::Vector2f(768, 2));
-    sf::RectangleShape vertical_line(sf::Vector2f(2, 768));
+    sf::RectangleShape horizontal_line(sf::Vector2f(end_size * 16, line_scale * 2));
+    sf::RectangleShape vertical_line(sf::Vector2f(line_scale * 2, end_size * 16));
     horizontal_line.setFillColor(sf::Color::Black);
     vertical_line.setFillColor(sf::Color::Black);
-    horizontal_line.setOrigin(1, 1);
-    vertical_line.setOrigin(1, 1);
+    horizontal_line.setOrigin(line_scale, line_scale);
+    vertical_line.setOrigin(line_scale, line_scale);
     for (int i = 0; i <= 16; i++)
     {
-        horizontal_line.setPosition(0, 48 * i);
-        vertical_line.setPosition(48 * i, 0);
+        horizontal_line.setPosition(sf::Vector2f(0, end_size * i) + offset);
+        vertical_line.setPosition(sf::Vector2f(end_size * i, 0) + offset);
         window.draw(horizontal_line);
         window.draw(vertical_line);
     }
 
-    sf::RectangleShape board_border(sf::Vector2f(768, 768));
+    sf::RectangleShape board_border(sf::Vector2f(end_size * 16, end_size * 16));
+    board_border.setPosition(offset);
     board_border.setFillColor(sf::Color::Transparent);
     board_border.setOutlineColor(sf::Color::Black);
-    board_border.setOutlineThickness(5);
+    board_border.setOutlineThickness(line_scale * 5);
     window.draw(board_border);
 
-    sf::RectangleShape horizontal_pawn(sf::Vector2f(288, 4));
-    horizontal_pawn.setOrigin(0, 2);
+    sf::RectangleShape horizontal_pawn(sf::Vector2f(end_size * 6, line_scale * 4));
+    horizontal_pawn.setOrigin(0, line_scale * 2);
     horizontal_pawn.setFillColor(sf::Color(66, 47, 43));
-    horizontal_pawn.setPosition(0, 384);
+    horizontal_pawn.setPosition(sf::Vector2f(0, end_size * 8) + offset);
     window.draw(horizontal_pawn);
-    horizontal_pawn.setPosition(480, 384);
+    horizontal_pawn.setPosition(sf::Vector2f(end_size * 10, end_size * 8) + offset);
     window.draw(horizontal_pawn);
 
-    sf::RectangleShape vertical_pawn(sf::Vector2f(4, 288));
-    vertical_pawn.setOrigin(2, 0);
+    sf::RectangleShape vertical_pawn(sf::Vector2f(line_scale * 4, end_size * 6));
+    vertical_pawn.setOrigin(line_scale * 2, 0);
     vertical_pawn.setFillColor(sf::Color(66, 47, 43));
-    vertical_pawn.setPosition(384, 0);
+    vertical_pawn.setPosition(sf::Vector2f(end_size * 8, 0) + offset);
     window.draw(vertical_pawn);
-    vertical_pawn.setPosition(384, 480);
+    vertical_pawn.setPosition(sf::Vector2f(end_size * 8, end_size * 10) + offset);
     window.draw(vertical_pawn);
 
-    sf::RectangleShape promotion_border(sf::Vector2f(192, 192));
-    promotion_border.setPosition(288, 288);
+    sf::RectangleShape promotion_border(sf::Vector2f(end_size * 4, end_size * 4));
+    promotion_border.setPosition(sf::Vector2f(end_size * 6, end_size * 6) + offset);
     promotion_border.setFillColor(sf::Color::Transparent);
     promotion_border.setOutlineColor(sf::Color::Black);
-    promotion_border.setOutlineThickness(3);
+    promotion_border.setOutlineThickness(line_scale * 3);
     window.draw(promotion_border);
 }
 
@@ -89,7 +91,7 @@ void drawPieces(sf::RenderWindow &window, Texture &texture, std::vector<Piece> &
         sf::Sprite main_sprite(texture.piece_main[piece.type]);
         main_sprite.setScale(3, 3);
         main_sprite.setColor(colors[piece.faction]);
-        main_sprite.setPosition(piece.pos.x * 48, piece.pos.y * 48);
+        main_sprite.setPosition(sf::Vector2f(piece.pos.x * 48, piece.pos.y * 48) + offset);
         window.draw(main_sprite);
 
         if (piece.main_owner != -1)
@@ -97,14 +99,14 @@ void drawPieces(sf::RenderWindow &window, Texture &texture, std::vector<Piece> &
             sf::Sprite base_sprite(texture.piece_base[piece.type]);
             base_sprite.setScale(3, 3);
             base_sprite.setColor(colors[piece.main_owner]);
-            base_sprite.setPosition(piece.pos.x * 48, piece.pos.y * 48);
+            base_sprite.setPosition(sf::Vector2f(piece.pos.x * 48, piece.pos.y * 48) + offset);
             window.draw(base_sprite);
         }
         else
         {
             sf::Sprite neutral_sprite(texture.piece_neutral[piece.type]);
             neutral_sprite.setScale(3, 3);
-            neutral_sprite.setPosition(piece.pos.x * 48, piece.pos.y * 48);
+            neutral_sprite.setPosition(sf::Vector2f(piece.pos.x * 48, piece.pos.y * 48) + offset);
             window.draw(neutral_sprite);
         }
     }
@@ -135,7 +137,7 @@ void draw(sf::RenderWindow &window, Texture &texture, std::vector<Piece> &pieces
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(1600, 900), "Test For SFML");
+    sf::RenderWindow window(sf::VideoMode(width, height), "Test For SFML");
     Texture texture;
     texture.load();
 
@@ -157,7 +159,7 @@ int main()
                 if (!selected_piece)
                 {
                     sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
-                    sf::Vector2i board_pos = mouse_pos / 48;
+                    sf::Vector2i board_pos = mouse_pos / (int)end_size;
                     if (board_pos.x >= 0 && board_pos.x < 16 && board_pos.y >= 0 && board_pos.y < 16)
                         selected_piece = game_state.board[board_pos.y][board_pos.x].piece;
                 }
@@ -165,7 +167,7 @@ int main()
                 {
                     bool valid = false;
                     sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
-                    sf::Vector2i board_pos = mouse_pos / 48;
+                    sf::Vector2i board_pos = mouse_pos / (int)end_size;
                     for (int i = 0; i < moves.size(); i++)
                     {
                         Move &move = moves[i];
