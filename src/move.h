@@ -6,8 +6,8 @@
 struct Move
 {
 public:
-    sf::Vector2i start_position;
-    sf::Vector2i end_position;
+    sf::Vector2i start_pos;
+    sf::Vector2i end_pos;
     Piece piece_moved;
     bool is_capture;
 };

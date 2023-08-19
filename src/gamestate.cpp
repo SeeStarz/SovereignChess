@@ -142,13 +142,13 @@ GameState::GameState(const GameState &game_state, Move move)
     player1_to_move = !game_state.player1_to_move;
     makeBoard();
 
-    Tile &start_tile = board[move.start_position.y][move.start_position.x];
-    Tile &end_tile = board[move.end_position.y][move.end_position.x];
+    Tile &start_tile = board[move.start_pos.y][move.start_pos.x];
+    Tile &end_tile = board[move.end_pos.y][move.end_pos.x];
     Piece *piece_moved = start_tile.piece;
     Piece *piece_captured = end_tile.piece;
 
     assert(piece_moved != NULL);
-    piece_moved->pos = end_tile.position;
+    piece_moved->pos = end_tile.pos;
 
     if (move.is_capture)
     {
@@ -300,9 +300,6 @@ bool GameState::checkInBoard(sf::Vector2i pos)
     return true;
 }
 
-///////////////////
-// MOVES SECTION //
-///////////////////
 void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
 {
     int ally_color = piece.main_owner;

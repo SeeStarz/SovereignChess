@@ -34,6 +34,12 @@ public:
     GameState();
     GameState(const GameState &game_state, Move move);
     std::vector<Move> getMoves();
+
+    // GameState is only moveable
+    GameState(const GameState &) = delete;
+    GameState &operator=(const GameState &) = delete;
+    GameState(GameState &&) = default;
+    GameState &operator=(GameState &&) = default;
 };
 
 #endif

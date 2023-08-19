@@ -52,6 +52,8 @@
         "iomanip": "cpp",
         "sstream": "cpp",
         "optional": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "*.tpp": "cpp",
+        "cassert": "cpp"
     }
 }
