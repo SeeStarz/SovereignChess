@@ -2,10 +2,12 @@
 #include "event.h"
 #include <SFML/Graphics.hpp>
 
-TileButton::TileButton(sf::FloatRect rect, sf::Vector2i pos)
+TileButton::TileButton(sf::FloatRect rect, sf::Vector2i pos, int layer, bool active)
 {
     this->rect = rect;
     this->pos = pos;
+    this->layer = layer;
+    this->active = active;
 }
 
 void TileButton::press()

@@ -147,13 +147,19 @@ GameState::GameState(const GameState &game_state, Move move)
     Piece *piece_moved = start_tile.piece;
     Piece *piece_captured = end_tile.piece;
 
-    assert(piece_moved != NULL);
+    assert(piece_moved);
     piece_moved->pos = end_tile.pos;
 
     if (move.is_capture)
     {
-        assert(piece_captured != NULL);
+        assert(piece_captured);
         piece_captured->is_alive = false;
+    }
+
+    if (move.promotion_type != Piece::Type::Pawn)
+    {
+        assert(piece_moved->type == Piece::Type::Pawn);
+        piece_moved->type = move.promotion_type;
     }
 
     start_tile.piece = NULL;
@@ -457,6 +463,8 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
     std::array<bool, 4> valid_double_directions = {};
     std::array<bool, 4> valid_capture_directions = {};
 
+    bool promotion = false;
+
     if (piece.pos.x < 7)
     {
         valid_move_directions[0] = true;
@@ -518,16 +526,29 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
         if (tile.color == piece.faction)
             continue;
 
+        if (end_pos.x > 5 && end_pos.x < 10 && end_pos.y > 5 && end_pos.y < 10)
+            promotion = true;
+
         Piece *target_piece = tile.piece;
         if (target_piece == NULL)
         {
-            moves.push_back(Move{piece.pos, end_pos, piece, false});
+            if (!promotion)
+                moves.push_back(Move{piece.pos, end_pos, piece, false});
+            else
+            {
+                // caution
+                moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::King});
+                moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::Queen});
+                moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::Rook});
+                moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::Bishop});
+                moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::Knight});
+            }
 
             // Double move
             if (!valid_double_directions[i])
                 continue;
-            sf::Vector2i end_pos = piece.pos + move_directions[i] * 2;
-            Piece *target_piece = board[end_pos.y][end_pos.x].piece;
+            end_pos = piece.pos + move_directions[i] * 2;
+            target_piece = board[end_pos.y][end_pos.x].piece;
             if (target_piece == NULL)
                 moves.push_back(Move{piece.pos, end_pos, piece, false});
         }

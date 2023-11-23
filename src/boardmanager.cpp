@@ -26,7 +26,7 @@ BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
         for (int y = 0; y < 16; y++)
         {
             int i = 16 * x + y;
-            tile_buttons[i] = TileButton{sf::FloatRect(offset + sf::Vector2f(tile_size * x, tile_size * y), sf::Vector2f(tile_size, tile_size)), sf::Vector2i(x, y)};
+            tile_buttons[i] = TileButton{sf::FloatRect(offset + sf::Vector2f(tile_size * x, tile_size * y), sf::Vector2f(tile_size, tile_size)), sf::Vector2i(x, y), 0};
         }
     }
 }
@@ -167,6 +167,7 @@ void BoardManager::onPress(TileButton &button)
         Piece piece_moved = *selected_piece;
         bool is_capture = getTile(button).piece;
         Move move = {start_pos, end_pos, piece_moved, is_capture};
+        Move move2 = {start_pos, end_pos, piece_moved, is_capture, Piece::Type::Queen};
 
         assert(game_states.size() == legal_moves.size());
         if (isMoveValid(move))
@@ -174,6 +175,13 @@ void BoardManager::onPress(TileButton &button)
             GameState game_state = GameState(game_states.back(), move);
             game_states.push_back(std::move(game_state));
             played_moves.push_back(move);
+            legal_moves.push_back(game_states.back().getMoves());
+        }
+        if (isMoveValid(move2))
+        {
+            GameState game_state = GameState(game_states.back(), move2);
+            game_states.push_back(std::move(game_state));
+            played_moves.push_back(move2);
             legal_moves.push_back(game_states.back().getMoves());
         }
 
@@ -216,14 +224,7 @@ bool BoardManager::isMoveValid(const Move &move, int index)
     if (index == -1)
         index = legal_moves.size() - 1;
     for (Move legal_move : legal_moves[index])
-    {
-        if (legal_move.start_pos != move.start_pos)
-            continue;
-        if (legal_move.end_pos != move.end_pos)
-            continue;
-        if (legal_move.is_capture != move.is_capture)
-            continue;
-        return true;
-    }
+        if (legal_move == move)
+            return true;
     return false;
 }

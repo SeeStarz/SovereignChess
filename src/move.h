@@ -3,13 +3,18 @@
 
 #include "piece.h"
 #include <SFML/System/Vector2.hpp>
-struct Move
+class Move
 {
 public:
     sf::Vector2i start_pos;
     sf::Vector2i end_pos;
     Piece piece_moved;
     bool is_capture;
+    // Pawn type means it is not a promotion
+    Piece::Type promotion_type = Piece::Type::Pawn;
+
+    bool operator==(const Move &other);
+    bool operator!=(const Move &other);
 };
 
 #endif

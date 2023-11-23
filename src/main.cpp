@@ -15,12 +15,12 @@
 
 Button *buttonAtPos(std::vector<Button *> buttons, sf::Vector2i mouse_pos)
 {
+    Button *clicked_button = NULL;
     for (Button *button : buttons)
-    {
-        if (button->rect.contains(sf::Vector2f(mouse_pos)))
-            return button;
-    }
-    return NULL;
+        if (button->active && button->rect.contains(sf::Vector2f(mouse_pos)))
+            if (!clicked_button || button->layer > clicked_button->layer)
+                clicked_button = button;
+    return clicked_button;
 }
 
 int main()

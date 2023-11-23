@@ -11,3 +11,23 @@ Piece::Piece(const sf::Vector2<int> &pos, int faction, int main_owner, int direc
     this->direct_owner = direct_owner;
     this->type = type;
 }
+
+bool Piece::operator==(const Piece &other)
+{
+    if (pos != other.pos)
+        return false;
+    if (faction != other.faction)
+        return false;
+    if (main_owner != other.main_owner)
+        return false;
+    if (direct_owner != other.direct_owner)
+        return false;
+    if (type != other.type)
+        return false;
+    return true;
+}
+
+bool Piece::operator!=(const Piece &other)
+{
+    return !(*this == other);
+}

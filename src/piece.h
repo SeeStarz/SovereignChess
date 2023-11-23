@@ -17,6 +17,8 @@ public:
     };
     Piece(const sf::Vector2<int> &pos, int faction, int main_owner, int direct_owner, const Type type);
     Piece() = default;
+    bool operator==(const Piece &other);
+    bool operator!=(const Piece &other);
 
     sf::Vector2<int> pos;
     int faction;
