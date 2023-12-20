@@ -1,6 +1,7 @@
 #ifndef BUTTON_H
 #define BUTTON_H
 
+#include "piece.h"
 #include <SFML/Graphics.hpp>
 class Button
 {
@@ -18,9 +19,34 @@ class TileButton : public Button
 {
 public:
     TileButton() = default;
-    TileButton(sf::FloatRect rect, sf::Vector2i pos, int layer, bool active = true);
+    TileButton(sf::FloatRect rect, int layer, sf::Vector2i pos, bool active = true);
 
     sf::Vector2i pos;
+    void press();
+    void hold();
+    void release();
+};
+
+class PromotionButton : public Button
+{
+public:
+    PromotionButton() = default;
+    PromotionButton(sf::FloatRect rect, int layer, sf::Vector2i pos, Piece::Type promotion_type, bool active = true);
+
+    sf::Vector2i pos;
+    Piece::Type promotion_type;
+    void press();
+    void hold();
+    void release();
+};
+
+class OtherButton : public Button
+{
+public:
+    OtherButton() = default;
+    OtherButton(sf::FloatRect rect, int layer, bool active = true);
+
+    std::string identifier;
     void press();
     void hold();
     void release();

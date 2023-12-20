@@ -25,7 +25,7 @@ Button *buttonAtPos(std::vector<Button *> buttons, sf::Vector2i mouse_pos)
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(width, height), "Test For SFML");
+    sf::RenderWindow window(sf::VideoMode(width, height), "Sovereign Chess");
     Texture texture;
     texture.load();
 

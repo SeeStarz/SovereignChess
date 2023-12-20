@@ -463,8 +463,6 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
     std::array<bool, 4> valid_double_directions = {};
     std::array<bool, 4> valid_capture_directions = {};
 
-    bool promotion = false;
-
     if (piece.pos.x < 7)
     {
         valid_move_directions[0] = true;
@@ -526,6 +524,7 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece)
         if (tile.color == piece.faction)
             continue;
 
+        bool promotion = false;
         if (end_pos.x > 5 && end_pos.x < 10 && end_pos.y > 5 && end_pos.y < 10)
             promotion = true;
 

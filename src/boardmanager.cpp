@@ -26,8 +26,14 @@ BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
         for (int y = 0; y < 16; y++)
         {
             int i = 16 * x + y;
-            tile_buttons[i] = TileButton{sf::FloatRect(offset + sf::Vector2f(tile_size * x, tile_size * y), sf::Vector2f(tile_size, tile_size)), sf::Vector2i(x, y), 0};
+            tile_buttons[i] = TileButton{sf::FloatRect(offset + sf::Vector2f(tile_size * x, tile_size * y), sf::Vector2f(tile_size, tile_size)), 0, sf::Vector2i(x, y)};
         }
+    }
+
+    std::array<Piece::Type, 5> piece_types = {Piece::Type::King, Piece::Type::Queen, Piece::Type::Knight, Piece::Type::Rook, Piece::Type::Bishop};
+    for (int i = 0; i < 5; i++)
+    {
+        promotion_buttons[i] = PromotionButton{sf::FloatRect(0, 0, tile_size, tile_size), 1, {0, 0}, piece_types[i], false};
     }
 }
 
@@ -147,6 +153,15 @@ void BoardManager::drawMoves()
 
         drawSquare(moves[i].end_pos.x, moves[i].end_pos.y, sf::Color(255, 0, 0, 50));
     }
+
+    for (int i = 0; i < 5; i++)
+    {
+        if (!promotion_buttons[i].active)
+            continue;
+        PromotionButton &promotion_button = promotion_buttons[i];
+
+        drawSquare(promotion_button.pos.x, promotion_button.pos.y + i, sf::Color(255, 255, 255, 255));
+    }
 }
 
 void BoardManager::draw()
@@ -166,28 +181,44 @@ void BoardManager::onPress(TileButton &button)
         sf::Vector2i end_pos = getTile(button).pos;
         Piece piece_moved = *selected_piece;
         bool is_capture = getTile(button).piece;
-        Move move = {start_pos, end_pos, piece_moved, is_capture};
-        Move move2 = {start_pos, end_pos, piece_moved, is_capture, Piece::Type::Queen};
 
         assert(game_states.size() == legal_moves.size());
-        if (isMoveValid(move))
-        {
-            GameState game_state = GameState(game_states.back(), move);
-            game_states.push_back(std::move(game_state));
-            played_moves.push_back(move);
-            legal_moves.push_back(game_states.back().getMoves());
-        }
-        if (isMoveValid(move2))
-        {
-            GameState game_state = GameState(game_states.back(), move2);
-            game_states.push_back(std::move(game_state));
-            played_moves.push_back(move2);
-            legal_moves.push_back(game_states.back().getMoves());
-        }
 
-        selected_piece = NULL;
+        // Did not account for king promotion
+        Move normal_move = {start_pos, end_pos, piece_moved, is_capture};
+        Move promotion_move = {start_pos, end_pos, piece_moved, is_capture, Piece::Type::Queen};
+
+        if (isMoveValid(normal_move))
+        {
+            GameState game_state = GameState(game_states.back(), normal_move);
+            game_states.push_back(std::move(game_state));
+            played_moves.push_back(normal_move);
+            legal_moves.push_back(game_states.back().getMoves());
+
+            selected_piece = NULL;
+        }
+        else if (isMoveValid(promotion_move))
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                PromotionButton &promotion_button = promotion_buttons[i];
+                promotion_button.active = true;
+                promotion_button.pos = button.pos;
+                promotion_button.rect.left = offset.x + end_pos.x * tile_size;
+                promotion_button.rect.top = offset.y + (end_pos.y + i) * tile_size;
+            }
+        }
+        else
+        {
+            selected_piece = NULL;
+            for (int i = 0; i < 5; i++)
+            {
+                promotion_buttons[i].active = false;
+            }
+        }
     }
 }
+
 void BoardManager::onHold(TileButton &button)
 {
 }
@@ -195,13 +226,58 @@ void BoardManager::onRelease(TileButton &button)
 {
 }
 
+void BoardManager::onPress(PromotionButton &button)
+{
+    sf::Vector2i start_pos = selected_piece->pos;
+    sf::Vector2i end_pos = getTile(button.pos).pos;
+    Piece piece_moved = *selected_piece;
+    bool is_capture = getTile(button.pos).piece;
+
+    assert(game_states.size() == legal_moves.size());
+
+    Move move = {start_pos, end_pos, piece_moved, is_capture, button.promotion_type};
+
+    assert(isMoveValid(move));
+
+    GameState game_state = GameState(game_states.back(), move);
+    game_states.push_back(std::move(game_state));
+    played_moves.push_back(move);
+    legal_moves.push_back(game_states.back().getMoves());
+
+    selected_piece = NULL;
+    for (int i = 0; i < 5; i++)
+    {
+        promotion_buttons[i].active = false;
+    }
+}
+void BoardManager::onHold(PromotionButton &button)
+{
+}
+void BoardManager::onRelease(PromotionButton &button)
+{
+}
+
 void BoardManager::registerListener()
 {
-    using func = std::function<void(TileButton & button)>;
-    func press = std::bind(&onPress, this, std::placeholders::_1);
-    func hold = std::bind(&onHold, this, std::placeholders::_1);
-    func release = std::bind(&onRelease, this, std::placeholders::_1);
-    listener_id = ButtonEventChannel<TileButton>::registerListener(press, hold, release);
+    using tfunc = std::function<void(TileButton & button)>;
+    void (BoardManager::*top)(TileButton &button) = &onPress;
+    void (BoardManager::*toh)(TileButton &button) = &onHold;
+    void (BoardManager::*tor)(TileButton &button) = &onRelease;
+
+    tfunc tpress = std::bind(top, this, std::placeholders::_1);
+    tfunc thold = std::bind(toh, this, std::placeholders::_1);
+    tfunc trelease = std::bind(tor, this, std::placeholders::_1);
+    listener_id = ButtonEventChannel<TileButton>::registerListener(tpress, thold, trelease);
+
+    using pfunc = std::function<void(PromotionButton & button)>;
+    void (BoardManager::*pop)(PromotionButton &button) = &onPress;
+    void (BoardManager::*poh)(PromotionButton &button) = &onHold;
+    void (BoardManager::*por)(PromotionButton &button) = &onRelease;
+
+    pfunc ppress = std::bind(pop, this, std::placeholders::_1);
+    pfunc phold = std::bind(poh, this, std::placeholders::_1);
+    pfunc prelease = std::bind(por, this, std::placeholders::_1);
+    listener_id = ButtonEventChannel<PromotionButton>::registerListener(ppress, phold, prelease);
 }
 
 void BoardManager::registerButtons(std::vector<Button *> &buttons)
@@ -210,13 +286,22 @@ void BoardManager::registerButtons(std::vector<Button *> &buttons)
     {
         buttons.push_back(&button);
     }
+    for (auto &button : promotion_buttons)
+    {
+        buttons.push_back(&button);
+    }
 }
 
 Tile BoardManager::getTile(TileButton &button, int index)
 {
+    return getTile(button.pos, index);
+}
+
+Tile BoardManager::getTile(sf::Vector2i pos, int index)
+{
     if (index == -1)
         index = game_states.size() - 1;
-    return game_states[index].board[button.pos.y][button.pos.x];
+    return game_states[index].board[pos.y][pos.x];
 }
 
 bool BoardManager::isMoveValid(const Move &move, int index)
