@@ -13,8 +13,9 @@ class GameState
 private:
     void makeBoard();
     void addPiece(int faction, int owner, Piece::Type type, int r, int c);
-    int mainOwner(int direct_owner);
+    int getMainOwner(int direct_owner);
     bool checkInBoard(sf::Vector2i pos);
+    bool checkIsCheck(sf::Vector2i pos, int faction);
 
     void getKingMoves(std::vector<Move> &moves, Piece piece);
     void getQueenMoves(std::vector<Move> &moves, Piece piece);
@@ -27,6 +28,7 @@ public:
     std::array<std::array<Tile, 16>, 16> board;
     std::vector<Piece> pieces;
     std::array<int, 12> faction_owner;
+    std::vector<std::array<sf::Vector2i, 2>> pins;
     int player1_color;
     int player2_color;
     bool player1_to_move;

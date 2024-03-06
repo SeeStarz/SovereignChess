@@ -15,12 +15,12 @@ public:
         Knight,
         Pawn
     };
-    Piece(const sf::Vector2<int> &pos, int faction, int main_owner, int direct_owner, const Type type);
+    Piece(const sf::Vector2i &pos, int faction, int main_owner, int direct_owner, const Type type);
     Piece() = default;
     bool operator==(const Piece &other);
     bool operator!=(const Piece &other);
 
-    sf::Vector2<int> pos;
+    sf::Vector2i pos;
     int faction;
     int main_owner;
     int direct_owner;

@@ -3,7 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <stdexcept>
 
-Piece::Piece(const sf::Vector2<int> &pos, int faction, int main_owner, int direct_owner, Type type)
+Piece::Piece(const sf::Vector2i &pos, int faction, int main_owner, int direct_owner, Type type)
 {
     this->pos = pos;
     this->faction = faction;

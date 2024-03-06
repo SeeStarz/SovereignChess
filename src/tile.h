@@ -8,7 +8,7 @@
 struct Tile
 {
     sf::Vector2i pos;
-    int color;
+    int color; // -1 For normal tiles
     Piece *piece;
     Tile *other_tile;
     bool blocked;
