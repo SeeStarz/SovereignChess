@@ -115,27 +115,32 @@ void BoardManager::drawPieces()
         if (!piece.is_alive)
             continue;
 
-        sf::Sprite main_sprite(texture.piece_main[piece.type]);
-        main_sprite.setScale(3, 3);
-        main_sprite.setColor(colors[piece.faction]);
-        main_sprite.setPosition(sf::Vector2f(piece.pos.x * 48, piece.pos.y * 48) + offset);
-        window.draw(main_sprite);
+        drawPiece(piece);
+    }
+}
 
-        if (piece.main_owner != -1)
-        {
-            sf::Sprite base_sprite(texture.piece_base[piece.type]);
-            base_sprite.setScale(3, 3);
-            base_sprite.setColor(colors[piece.main_owner]);
-            base_sprite.setPosition(sf::Vector2f(piece.pos.x * 48, piece.pos.y * 48) + offset);
-            window.draw(base_sprite);
-        }
-        else
-        {
-            sf::Sprite neutral_sprite(texture.piece_neutral[piece.type]);
-            neutral_sprite.setScale(3, 3);
-            neutral_sprite.setPosition(sf::Vector2f(piece.pos.x * 48, piece.pos.y * 48) + offset);
-            window.draw(neutral_sprite);
-        }
+void BoardManager::drawPiece(const Piece &piece)
+{
+    sf::Sprite main_sprite(texture.piece_main[piece.type]);
+    main_sprite.setScale(scale, scale);
+    main_sprite.setColor(colors[piece.faction]);
+    main_sprite.setPosition(sf::Vector2f(piece.pos.x * tile_size, piece.pos.y * tile_size) + offset);
+    window.draw(main_sprite);
+
+    if (piece.main_owner != -1)
+    {
+        sf::Sprite base_sprite(texture.piece_base[piece.type]);
+        base_sprite.setScale(scale, scale);
+        base_sprite.setColor(colors[piece.main_owner]);
+        base_sprite.setPosition(sf::Vector2f(piece.pos.x * tile_size, piece.pos.y * tile_size) + offset);
+        window.draw(base_sprite);
+    }
+    else
+    {
+        sf::Sprite neutral_sprite(texture.piece_neutral[piece.type]);
+        neutral_sprite.setScale(scale, scale);
+        neutral_sprite.setPosition(sf::Vector2f(piece.pos.x * tile_size, piece.pos.y * tile_size) + offset);
+        window.draw(neutral_sprite);
     }
 }
 
@@ -161,6 +166,10 @@ void BoardManager::drawMoves()
         PromotionButton &promotion_button = promotion_buttons[i];
 
         drawSquare(promotion_button.pos.x, promotion_button.pos.y + i, sf::Color(255, 255, 255, 255));
+
+        std::array<Piece::Type, 5> piece_types = {Piece::Type::King, Piece::Type::Queen, Piece::Type::Knight, Piece::Type::Rook, Piece::Type::Bishop};
+
+        drawPiece(Piece(promotion_button.pos + sf::Vector2i{0, i}, selected_piece->faction, selected_piece->main_owner, selected_piece->direct_owner, piece_types[i]));
     }
 }
 
@@ -184,7 +193,6 @@ void BoardManager::onPress(TileButton &button)
 
         assert(game_states.size() == legal_moves.size());
 
-        // Did not account for king promotion
         Move normal_move = {start_pos, end_pos, piece_moved, is_capture};
         Move promotion_move = {start_pos, end_pos, piece_moved, is_capture, Piece::Type::Queen};
 
@@ -203,7 +211,7 @@ void BoardManager::onPress(TileButton &button)
             {
                 PromotionButton &promotion_button = promotion_buttons[i];
                 promotion_button.active = true;
-                promotion_button.pos = button.pos;
+                promotion_button.pos = end_pos;
                 promotion_button.rect.left = offset.x + end_pos.x * tile_size;
                 promotion_button.rect.top = offset.y + (end_pos.y + i) * tile_size;
             }

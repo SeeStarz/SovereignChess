@@ -33,7 +33,7 @@ public:
     PromotionButton() = default;
     PromotionButton(sf::FloatRect rect, int layer, sf::Vector2i pos, Piece::Type promotion_type, bool active = true);
 
-    sf::Vector2i pos;
+    sf::Vector2i pos; // Refers to the destination pos
     Piece::Type promotion_type;
     void press();
     void hold();

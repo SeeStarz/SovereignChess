@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <array>
 #include <tuple>
+#include <vector>
 
 enum Color
 {
@@ -40,6 +41,9 @@ class Vector2iLess
 public:
     bool operator()(const sf::Vector2i &lhs, const sf::Vector2i &rhs) const;
 };
+
+// Orthogonal only
+std::vector<sf::Vector2i> getInBetweens(sf::Vector2i pos1, sf::Vector2i pos2);
 
 const std::map<sf::Vector2i, Color, Vector2iLess> color_map = {
     {{7, 7}, Color::White},

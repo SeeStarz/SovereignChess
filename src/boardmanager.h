@@ -25,6 +25,7 @@ private:
     void drawSquare(int x, int y, sf::Color color);
     void drawBoard();
     void drawPieces();
+    void drawPiece(const Piece &piece);
     void drawMoves();
 
     void onPress(TileButton &button);
