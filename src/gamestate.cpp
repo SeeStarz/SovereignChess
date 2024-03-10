@@ -15,6 +15,8 @@ GameState::GameState()
     faction_owner = {0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 11};
     player1_color = 0;
     player2_color = 11;
+    player1_king = NULL;
+    player2_king = NULL;
     player1_to_move = true;
 
     {
@@ -154,22 +156,56 @@ GameState::GameState(const GameState &game_state, Move move)
     assert(piece_moved);
     piece_moved->pos = end_tile.pos;
 
-    if (move.is_capture)
-    {
-        assert(piece_captured);
-        piece_captured->is_alive = false;
-    }
-
-    if (move.promotion_type != Piece::Type::Pawn)
-    {
-        assert(piece_moved->type == Piece::Type::Pawn);
-        piece_moved->type = move.promotion_type;
-    }
-
     start_tile.piece = NULL;
     end_tile.piece = piece_moved;
 
+    if (move.is_capture)
+    {
+        assert(piece_captured);
+        assert(piece_captured->type != Piece::Type::King);
+        piece_captured->is_alive = false;
+    }
+
     bool update_owner = false;
+    if (move.promotion_type != Piece::Type::Pawn)
+    {
+        assert(piece_moved->type == Piece::Type::Pawn || move.promotion_type == Piece::Type::King);
+        piece_moved->type = move.promotion_type;
+
+        if (move.promotion_type == Piece::Type::King)
+        {
+            Piece *king;
+            int start_color;
+            if (!player1_to_move)
+            {
+                king = player1_king;
+                start_color = player1_color;
+                player1_king = piece_moved;
+                player1_color = piece_moved->faction;
+            }
+            else
+            {
+                king = player2_king;
+                start_color = player2_color;
+                player2_king = piece_moved;
+                player2_color = piece_moved->faction;
+            }
+
+            if (piece_moved != king)
+            {
+                king->is_alive = false;
+                board[king->pos.y][king->pos.x].piece = NULL;
+            }
+
+            faction_owner[start_color] = -1;
+            faction_owner[piece_moved->faction] = piece_moved->faction;
+            auto it = std::find_if(colored_tiles.begin(), colored_tiles.end(), [&start_color](Tile *tile) -> bool
+                                   { return tile->color == start_color && tile->piece != NULL; });
+            if (it != colored_tiles.end())
+                faction_owner[start_color] = (*it)->color;
+        }
+    }
+
     if (start_tile.color != -1)
     {
         assert(!start_tile.blocked);
@@ -293,17 +329,11 @@ std::vector<Move> GameState::getMoves()
             bool can_convert = faction != enemy_color;
             if (can_convert)
             {
-                Tile *tile = NULL;
-                for (int i = 0; i < board.size(); i++)
-                {
-                    auto it = std::find_if(board[i].begin(), board[i].end(), [&faction](Tile &tile) -> bool
-                                           { return tile.color == faction && !tile.blocked; });
-                    if (it != board[i].end())
-                        tile = &(*it);
-                }
-                assert(tile != NULL);
+                auto it = std::find_if(colored_tiles.begin(), colored_tiles.end(), [&faction](Tile *tile) -> bool
+                                       { return tile->color == faction && !tile->blocked; });
+                assert(it != colored_tiles.end());
 
-                valid_end_pos.push_back(tile->pos);
+                valid_end_pos.push_back((*it)->pos);
             }
 
             // Capturing checking piece
@@ -317,7 +347,10 @@ std::vector<Move> GameState::getMoves()
         for (int i = moves.size() - 1; i >= 0; i--)
         {
             // King moves already accounts for danger
-            if (moves[i].piece_moved.type != Piece::Type::King && std::find(valid_end_pos.begin(), valid_end_pos.end(), moves[i].end_pos) == valid_end_pos.end())
+            bool king_move = moves[i].piece_moved.type == Piece::Type::King;
+            bool king_change = moves[i].promotion_type == Piece::Type::King;
+            bool part_of_valid_move = std::find(valid_end_pos.begin(), valid_end_pos.end(), moves[i].end_pos) != valid_end_pos.end();
+            if (!king_move && !king_change && !part_of_valid_move)
                 moves.erase(moves.begin() + i);
         }
     }
@@ -335,6 +368,7 @@ void GameState::makeBoard()
     }
 
     std::array<const sf::Vector2i *, 12> tile_pos = {};
+    int j = 0;
     for (auto it = color_map.begin(); it != color_map.end(); it++)
     {
         sf::Vector2i pos = it->first;
@@ -350,6 +384,9 @@ void GameState::makeBoard()
             tile.other_tile = &other_tile;
             other_tile.other_tile = &tile;
         }
+
+        colored_tiles[j] = &tile;
+        j++;
     }
 
     for (int i = 0; i < pieces.size(); i++)
@@ -367,11 +404,17 @@ void GameState::makeBoard()
 
         if (piece.type == Piece::Type::King)
             if (piece.faction == player1_color)
+            {
+                assert(player1_king == NULL);
                 player1_king = &piece;
+            }
             else if (piece.faction == player2_color)
+            {
+                assert(player2_king == NULL);
                 player2_king = &piece;
+            }
             else
-                throw std::runtime_error("Unknown king color" + std::to_string(piece.faction));
+                throw std::runtime_error("Unknown king color " + std::to_string(piece.faction));
     }
 }
 
@@ -450,19 +493,19 @@ std::vector<Piece *> GameState::getAllChecks(sf::Vector2i pos, int faction)
                     switch (i)
                     {
                     case 0:
-                        if (end_pos.x < 8 || end_pos.y < 8)
+                        if (end_pos.x >= 8 || end_pos.y >= 8)
                             checking_pieces.push_back(target_piece);
                         break;
                     case 1:
-                        if (end_pos.x < 8 || end_pos.y >= 8)
-                            checking_pieces.push_back(target_piece);
-                        break;
-                    case 2:
                         if (end_pos.x >= 8 || end_pos.y < 8)
                             checking_pieces.push_back(target_piece);
                         break;
+                    case 2:
+                        if (end_pos.x < 8 || end_pos.y >= 8)
+                            checking_pieces.push_back(target_piece);
+                        break;
                     case 3:
-                        if (end_pos.x >= 8 || end_pos.y >= 8)
+                        if (end_pos.x < 8 || end_pos.y < 8)
                             checking_pieces.push_back(target_piece);
                         break;
                     }
@@ -587,6 +630,7 @@ void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
             moves.push_back(Move{piece.pos, end_pos, piece, true});
     }
 }
+
 void GameState::getQueenMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 {
     getRookMoves(moves, piece, pin);
@@ -634,6 +678,7 @@ void GameState::getRookMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
         }
     }
 }
+
 void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 {
     int ally_color = piece.main_owner;
@@ -675,6 +720,7 @@ void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
         }
     }
 }
+
 void GameState::getKnightMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 {
     if (pin != NULL)
@@ -708,6 +754,7 @@ void GameState::getKnightMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
             moves.push_back(Move{piece.pos, end_pos, piece, true});
     }
 }
+
 void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 {
     int ally_color = piece.main_owner;
@@ -746,6 +793,7 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
         else if (piece.pos.x == 14 && piece.pos.y != 0 && piece.pos.y != 15)
             valid_double_directions[3] = true;
     }
+
     if (piece.pos.y < 7)
     {
         valid_move_directions[1] = true;
@@ -798,12 +846,23 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
                 moves.push_back(Move{piece.pos, end_pos, piece, false});
             else
             {
-                // caution
-                moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::King});
                 moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::Queen});
                 moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::Rook});
                 moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::Bishop});
                 moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::Knight});
+
+                Tile &tile = board[piece.pos.y][piece.pos.x];
+                Piece *pointed_piece = tile.piece;
+                assert(tile.piece != NULL);
+                tile.piece = NULL;
+                assert(pointed_piece->is_alive);
+                pointed_piece->is_alive = false;
+
+                if (getAllChecks(end_pos, piece.faction).size() == 0)
+                    moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::King});
+
+                pointed_piece->is_alive = true;
+                tile.piece = pointed_piece;
             }
 
             // Double move

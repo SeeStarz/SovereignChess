@@ -28,6 +28,7 @@ private:
 
 public:
     std::array<std::array<Tile, 16>, 16> board;
+    std::array<Tile *, 24> colored_tiles;
     std::vector<Piece> pieces;
     std::array<int, 12> faction_owner;
     std::vector<std::array<sf::Vector2i, 2>> pins;
