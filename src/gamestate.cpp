@@ -203,15 +203,18 @@ GameState::GameState(const GameState &game_state, Move move)
 std::vector<Move> GameState::getMoves()
 {
     int ally_color;
+    int enemy_color;
     Piece *ally_king;
     if (player1_to_move)
     {
         ally_color = player1_color;
+        enemy_color = player2_color;
         ally_king = player1_king;
     }
     else
     {
         ally_color = player2_color;
+        enemy_color = player1_color;
         ally_king = player2_king;
     }
 
@@ -258,35 +261,64 @@ std::vector<Move> GameState::getMoves()
     std::vector<Piece *> checking_pieces = getAllChecks(ally_king->pos, ally_color);
     if (checking_pieces.size() != 0)
     {
+        std::vector<sf::Vector2i> valid_end_pos = {};
+
+        if (checking_pieces.size() > 1)
+        {
+            bool same_faction = std::all_of(checking_pieces.begin(), checking_pieces.end(), [&checking_pieces](Piece *piece) -> bool
+                                            { return piece->faction == checking_pieces[0]->faction; });
+
+            // It's possible to evade multi check by claiming control
+            int faction = checking_pieces[0]->faction;
+            bool can_convert = same_faction && faction != enemy_color;
+            if (can_convert)
+            {
+                Tile *tile = NULL;
+                for (int i = 0; i < board.size(); i++)
+                {
+                    auto it = std::find_if(board[i].begin(), board[i].end(), [&faction](Tile &tile) -> bool
+                                           { return tile.color == faction && !tile.blocked; });
+                    if (it != board[i].end())
+                        tile = &(*it);
+                }
+                assert(tile != NULL);
+
+                valid_end_pos.push_back(tile->pos);
+            }
+        }
+        else
+        {
+            // Taking control of checking piece
+            int faction = checking_pieces[0]->faction;
+            bool can_convert = faction != enemy_color;
+            if (can_convert)
+            {
+                Tile *tile = NULL;
+                for (int i = 0; i < board.size(); i++)
+                {
+                    auto it = std::find_if(board[i].begin(), board[i].end(), [&faction](Tile &tile) -> bool
+                                           { return tile.color == faction && !tile.blocked; });
+                    if (it != board[i].end())
+                        tile = &(*it);
+                }
+                assert(tile != NULL);
+
+                valid_end_pos.push_back(tile->pos);
+            }
+
+            // Capturing checking piece
+            valid_end_pos.push_back(checking_pieces[0]->pos);
+
+            // Blocking check
+            std::vector<sf::Vector2i> pos_in_between = getInBetweens(ally_king->pos, checking_pieces[0]->pos);
+            valid_end_pos.insert(valid_end_pos.end(), pos_in_between.begin(), pos_in_between.end());
+        }
+
         for (int i = moves.size() - 1; i >= 0; i--)
         {
-            Move &move = moves[i];
-            if (move.piece_moved.type == Piece::Type::King)
-                continue; // Every king move already accounts check
-
-            if (checking_pieces.size() > 1)
-            {
-                assert(checking_pieces.size() == 2);
-                // Double check requires king move
+            // King moves already accounts for danger
+            if (moves[i].piece_moved.type != Piece::Type::King && std::find(valid_end_pos.begin(), valid_end_pos.end(), moves[i].end_pos) == valid_end_pos.end())
                 moves.erase(moves.begin() + i);
-                continue;
-            }
-
-            Piece *checking_piece = checking_pieces[0];
-            if (checking_piece->type == Piece::Type::Knight)
-            {
-                if (move.end_pos != checking_piece->pos)
-                    // Knight must be killed
-                    moves.erase(moves.begin() + i);
-            }
-            else
-            {
-                std::vector<sf::Vector2i> valid_end_pos = getInBetweens(ally_king->pos, checking_piece->pos);
-                valid_end_pos.push_back(checking_piece->pos);
-
-                if (std::find(valid_end_pos.begin(), valid_end_pos.end(), move.end_pos) == valid_end_pos.end())
-                    moves.erase(moves.begin() + i);
-            }
         }
     }
     return moves;
