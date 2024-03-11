@@ -14,10 +14,6 @@ class GameState
 private:
     void makeBoard();
     void addPiece(int faction, int owner, Piece::Type type, int r, int c);
-    int getMainOwner(int direct_owner);
-    bool checkInBoard(sf::Vector2i pos);
-    std::vector<Piece *> getAllChecks(sf::Vector2i pos, int faction);
-    std::vector<Pin> getAllPins(sf::Vector2i pos, int faction);
 
     void getKingMoves(std::vector<Move> &moves, Piece piece);
     void getQueenMoves(std::vector<Move> &moves, Piece piece, Pin *pin);
@@ -41,6 +37,11 @@ public:
     GameState();
     GameState(const GameState &game_state, Move move);
     std::vector<Move> getMoves();
+
+    int getMainOwner(int direct_owner);
+    bool checkInBoard(sf::Vector2i pos);
+    std::vector<Piece *> getAllChecks(sf::Vector2i pos, int faction);
+    std::vector<Pin> getAllPins(sf::Vector2i pos, int faction);
 
     // GameState is only moveable
     GameState(const GameState &) = delete;

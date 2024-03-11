@@ -169,6 +169,8 @@ GameState::GameState(const GameState &game_state, Move move)
     bool update_owner = false;
     if (move.promotion_type != Piece::Type::Pawn)
     {
+        update_owner = true;
+
         assert(piece_moved->type == Piece::Type::Pawn || move.promotion_type == Piece::Type::King);
         piece_moved->type = move.promotion_type;
 
@@ -176,6 +178,11 @@ GameState::GameState(const GameState &game_state, Move move)
         {
             Piece *king;
             int start_color;
+
+            // King defection is the only move that modifies faction within Move class
+            if (piece_moved->type == Piece::Type::King)
+                piece_moved->faction = move.piece_moved.faction;
+
             if (!player1_to_move)
             {
                 king = player1_king;
@@ -628,6 +635,41 @@ void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
             moves.push_back(Move{piece.pos, end_pos, piece, false});
         else if (target_piece->main_owner == enemy_color)
             moves.push_back(Move{piece.pos, end_pos, piece, true});
+    }
+
+    for (int faction = 0; faction < faction_owner.size(); faction++)
+    {
+        int owner = getMainOwner(faction);
+
+        if (owner == faction)
+            continue;
+        if (owner != ally_color)
+            continue;
+
+        Piece king_piece = piece;
+        king_piece.faction = faction;
+        if (board[piece.pos.y][piece.pos.x].color != faction)
+        {
+            if (getAllChecks(piece.pos, faction).size() == 0)
+                moves.push_back(Move{piece.pos, piece.pos, king_piece, false, Piece::Type::King});
+        }
+        else
+            for (int j = 0; j < directions.size(); j++)
+            {
+                sf::Vector2i end_pos = king_piece.pos + directions[j];
+                assert(checkInBoard(king_piece.pos));
+                Tile &tile = board[end_pos.y][end_pos.x];
+                if (tile.blocked)
+                    continue;
+                if (getAllChecks(end_pos, king_piece.faction).size() != 0)
+                    continue;
+
+                Piece *target_piece = tile.piece;
+                if (target_piece == NULL)
+                    moves.push_back(Move{king_piece.pos, end_pos, king_piece, false, Piece::Type::King});
+                else if (target_piece->main_owner == enemy_color)
+                    moves.push_back(Move{king_piece.pos, end_pos, king_piece, true, Piece::Type::King});
+            }
     }
 }
 

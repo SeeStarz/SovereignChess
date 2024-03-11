@@ -44,7 +44,7 @@ class OtherButton : public Button
 {
 public:
     OtherButton() = default;
-    OtherButton(sf::FloatRect rect, int layer, bool active = true);
+    OtherButton(sf::FloatRect rect, int layer, std::string identifier, bool active = true);
 
     std::string identifier;
     void press();

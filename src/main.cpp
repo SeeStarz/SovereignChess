@@ -34,7 +34,7 @@ int main()
     board_manager.registerButtons(buttons);
 
     bool hold = false;
-    Button *clicked_button;
+    Button *clicked_button = NULL;
 
     while (window.isOpen())
     {
@@ -53,8 +53,8 @@ int main()
             }
             if (event.type == sf::Event::MouseButtonReleased)
             {
-                assert(clicked_button);
-                clicked_button->release();
+                if (clicked_button)
+                    clicked_button->release();
                 hold = false;
             }
         }
@@ -74,7 +74,7 @@ int main()
                 button->hover = false;
         }
 
-        window.clear(sf::Color(255, 255, 255));
+        window.clear(sf::Color(161, 102, 47));
         board_manager.draw();
         window.display();
     }

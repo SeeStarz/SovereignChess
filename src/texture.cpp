@@ -12,4 +12,6 @@ void Texture::load()
         if (!piece_neutral[i].loadFromFile("..\\img\\" + names[i] + "_neutral.png"))
             throw std::runtime_error("");
     }
+    if (!font.loadFromFile("..\\font\\Monocraft.ttf"))
+        throw std::runtime_error("");
 }

@@ -25,7 +25,7 @@ enum Color
 const std::array<sf::Color, 12> colors =
     {sf::Color(255, 255, 255),
      sf::Color(31, 159, 31),
-     sf::Color(223, 223, 223),
+     sf::Color(207, 207, 207),
      sf::Color(31, 191, 191),
      sf::Color(31, 31, 191),
      sf::Color(159, 0, 223),
