@@ -21,6 +21,7 @@ BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
     texture = Texture();
     texture.load();
     selected_piece = NULL;
+    swap = false;
     registerListener();
 
     for (int x = 0; x < 16; x++)
@@ -49,6 +50,13 @@ BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
         other_buttons[identifier] = OtherButton(rect, 0, identifier, false);
     }
     other_buttons["king0"].active = true;
+
+    {
+        sf::FloatRect rect = sf::FloatRect(text_offset.x, text_offset.y + text_size * 5.5f, 5 * text_size, 2 * text_size);
+        other_buttons["swap1"] = OtherButton(rect, 0, "swap1", false);
+        rect.left = rect.left + rect.width + text_size;
+        other_buttons["swap0"] = OtherButton(rect, 0, "swap0", false);
+    }
 }
 
 void BoardManager::drawSquare(int x, int y, sf::Color color)
@@ -230,7 +238,11 @@ void BoardManager::drawExtra()
     text.setPosition(text_offset);
 
     GameState &game_state = game_states.back();
-    int player_to_move = game_state.player1_to_move ? 1 : 2;
+
+    int player_to_move = game_state.player_white_to_move != swap ? 1 : 2; // XOR
+    int player1_color = !swap ? game_state.player_white_color : game_state.player_black_color;
+    int player2_color = !swap ? game_state.player_black_color : game_state.player_white_color;
+
     text.setString("Player " + std::to_string(player_to_move) + " to move");
     window.draw(text);
 
@@ -241,7 +253,7 @@ void BoardManager::drawExtra()
     sf::RectangleShape square = sf::RectangleShape(sf::Vector2f(text_height, text_height));
     square.setOutlineColor(sf::Color::Black);
     square.setOutlineThickness(2);
-    square.setFillColor(colors[game_state.player1_color]);
+    square.setFillColor(colors[player1_color]);
     square.setPosition(text.getGlobalBounds().left + text.getGlobalBounds().width + offset.x, offset.y + text_down + text_size);
     window.draw(square);
 
@@ -249,7 +261,7 @@ void BoardManager::drawExtra()
     text.setString("Player 2 Color:");
     window.draw(text);
 
-    square.setFillColor(colors[game_state.player2_color]);
+    square.setFillColor(colors[player2_color]);
     square.setPosition(text.getGlobalBounds().left + text.getGlobalBounds().width + offset.x, offset.y + text_down + text_size * 2);
     window.draw(square);
 
@@ -271,6 +283,35 @@ void BoardManager::drawExtra()
 
         Piece piece = Piece(sf::Vector2i(0, 0), i, owner, owner, Piece::Type::King);
         drawPiece(piece, rect);
+    }
+
+    if (other_buttons["swap0"].active)
+    {
+        sf::FloatRect rect = other_buttons["swap0"].rect;
+        sf::RectangleShape shape = sf::RectangleShape(sf::Vector2f(rect.width, rect.height));
+        shape.setPosition(rect.left, rect.top);
+        shape.setFillColor(sf::Color(255, 255, 255, 127));
+        window.draw(shape);
+
+        text.setString("Black");
+        sf::FloatRect text_rect = text.getLocalBounds();
+        text.setPosition(rect.left + (rect.width - text_rect.width) / 2, rect.top + (rect.height - text_size - text_down) / 2);
+        window.draw(text);
+
+        rect = other_buttons["swap1"].rect;
+        shape = sf::RectangleShape(sf::Vector2f(rect.width, rect.height));
+        shape.setPosition(rect.left, rect.top);
+        shape.setFillColor(sf::Color(255, 255, 255, 127));
+        window.draw(shape);
+
+        text.setString("White");
+        text_rect = text.getLocalBounds();
+        text.setPosition(rect.left + (rect.width - text_rect.width) / 2, rect.top + (rect.height - text_size - text_down) / 2);
+        window.draw(text);
+
+        text.setPosition(text_offset.x, text_offset.y + text_size * 4);
+        text.setString("P-2 Choose Color");
+        window.draw(text);
     }
 }
 
@@ -380,14 +421,23 @@ void BoardManager::onRelease(PromotionButton &button)
 
 void BoardManager::onPress(OtherButton &button)
 {
-    if (selected_piece)
-        selected_piece = NULL;
-    else
-    {
-        defection_piece = game_states.back().player1_to_move ? *game_states.back().player1_king : *game_states.back().player2_king;
-        defection_piece.faction = std::stoi(button.identifier.substr(4));
-        selected_piece = &defection_piece;
-    }
+    if (button.identifier.substr(0, 4) == "king")
+        if (selected_piece)
+            selected_piece = NULL;
+        else
+        {
+            defection_piece = game_states.back().player_white_to_move ? *game_states.back().player_white_king : *game_states.back().player_black_king;
+            defection_piece.faction = std::stoi(button.identifier.substr(4));
+            selected_piece = &defection_piece;
+        }
+    else if (button.identifier.substr(0, 4) == "swap")
+        if (button.identifier.substr(4, 1) == "0")
+            refreshButtons();
+        else if (button.identifier.substr(4, 1) == "1")
+        {
+            swap = true;
+            refreshButtons();
+        }
 }
 
 void BoardManager::onHold(OtherButton &button) {}
@@ -404,7 +454,7 @@ void BoardManager::registerListener()
     tfunc tpress = std::bind(top, this, std::placeholders::_1);
     tfunc thold = std::bind(toh, this, std::placeholders::_1);
     tfunc trelease = std::bind(tor, this, std::placeholders::_1);
-    listener_id = ButtonEventChannel<TileButton>::registerListener(tpress, thold, trelease);
+    t_listener_id = ButtonEventChannel<TileButton>::registerListener(tpress, thold, trelease);
 
     using pfunc = std::function<void(PromotionButton & button)>;
     void (BoardManager::*pop)(PromotionButton &button) = &onPress;
@@ -414,7 +464,7 @@ void BoardManager::registerListener()
     pfunc ppress = std::bind(pop, this, std::placeholders::_1);
     pfunc phold = std::bind(poh, this, std::placeholders::_1);
     pfunc prelease = std::bind(por, this, std::placeholders::_1);
-    listener_id = ButtonEventChannel<PromotionButton>::registerListener(ppress, phold, prelease);
+    p_listener_id = ButtonEventChannel<PromotionButton>::registerListener(ppress, phold, prelease);
 
     using ofunc = std::function<void(OtherButton & button)>;
     void (BoardManager::*oop)(OtherButton &button) = &onPress;
@@ -424,7 +474,7 @@ void BoardManager::registerListener()
     ofunc opress = std::bind(oop, this, std::placeholders::_1);
     ofunc ohold = std::bind(ooh, this, std::placeholders::_1);
     ofunc orelease = std::bind(oor, this, std::placeholders::_1);
-    listener_id = ButtonEventChannel<OtherButton>::registerListener(opress, ohold, orelease);
+    o_listener_id = ButtonEventChannel<OtherButton>::registerListener(opress, ohold, orelease);
 }
 
 void BoardManager::registerButtons(std::vector<Button *> &buttons)
@@ -475,12 +525,39 @@ bool BoardManager::doMove(const Move &move)
     played_moves.push_back(move);
     legal_moves.push_back(game_states.back().getMoves());
 
+    refreshButtons();
+
+    return true;
+}
+
+void BoardManager::refreshButtons()
+{
+    GameState &game_state = game_states.back();
     for (int i = 0; i < 12; i++)
     {
         std::string identifier = "king" + std::to_string(i);
-        int ally_color = game_state.player1_to_move ? game_state.player1_color : game_state.player2_color;
+        int ally_color = game_state.player_white_to_move ? game_state.player_white_color : game_state.player_black_color;
         other_buttons[identifier].active = game_state.getMainOwner(game_state.faction_owner[i]) == ally_color ? true : false;
     }
 
-    return true;
+    if (game_states.size() == 2)
+    {
+        if (!other_buttons["swap0"].active)
+        {
+            other_buttons["swap0"].active = true;
+            other_buttons["swap1"].active = true;
+
+            for (auto &button : tile_buttons)
+                button.active = false;
+            for (int i = 0; i < 12; i++)
+                other_buttons["king" + std::to_string(i)].active = false;
+        }
+        else
+        {
+            other_buttons["swap0"].active = false;
+            other_buttons["swap1"].active = false;
+            for (auto &button : tile_buttons)
+                button.active = true;
+        }
+    }
 }

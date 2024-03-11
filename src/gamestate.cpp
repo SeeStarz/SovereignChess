@@ -13,11 +13,11 @@ GameState::GameState()
     // Make sure piece reference won't be dangling
     pieces.reserve(112);
     faction_owner = {0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 11};
-    player1_color = 0;
-    player2_color = 11;
-    player1_king = NULL;
-    player2_king = NULL;
-    player1_to_move = true;
+    player_white_color = 0;
+    player_black_color = 11;
+    player_white_king = NULL;
+    player_black_king = NULL;
+    player_white_to_move = true;
 
     {
         addPiece(0, 0, Piece::King, 8, 15);
@@ -141,11 +141,11 @@ GameState::GameState(const GameState &game_state, Move move)
 {
     pieces = game_state.pieces;
     faction_owner = game_state.faction_owner;
-    player1_color = game_state.player1_color;
-    player2_color = game_state.player2_color;
-    player1_to_move = !game_state.player1_to_move;
-    player1_king = NULL;
-    player2_king = NULL;
+    player_white_color = game_state.player_white_color;
+    player_black_color = game_state.player_black_color;
+    player_white_to_move = !game_state.player_white_to_move;
+    player_white_king = NULL;
+    player_black_king = NULL;
     makeBoard();
 
     Tile &start_tile = board[move.start_pos.y][move.start_pos.x];
@@ -183,19 +183,19 @@ GameState::GameState(const GameState &game_state, Move move)
             if (piece_moved->type == Piece::Type::King)
                 piece_moved->faction = move.piece_moved.faction;
 
-            if (!player1_to_move)
+            if (!player_white_to_move)
             {
-                king = player1_king;
-                start_color = player1_color;
-                player1_king = piece_moved;
-                player1_color = piece_moved->faction;
+                king = player_white_king;
+                start_color = player_white_color;
+                player_white_king = piece_moved;
+                player_white_color = piece_moved->faction;
             }
             else
             {
-                king = player2_king;
-                start_color = player2_color;
-                player2_king = piece_moved;
-                player2_color = piece_moved->faction;
+                king = player_black_king;
+                start_color = player_black_color;
+                player_black_king = piece_moved;
+                player_black_color = piece_moved->faction;
             }
 
             if (piece_moved != king)
@@ -217,7 +217,7 @@ GameState::GameState(const GameState &game_state, Move move)
     {
         assert(!start_tile.blocked);
         start_tile.other_tile->blocked = false;
-        if (start_tile.color != player1_color && start_tile.color != player2_color)
+        if (start_tile.color != player_white_color && start_tile.color != player_black_color)
             faction_owner[start_tile.color] = -1;
         update_owner = true;
     }
@@ -225,7 +225,7 @@ GameState::GameState(const GameState &game_state, Move move)
     {
         assert(!end_tile.blocked);
         end_tile.other_tile->blocked = true;
-        if (end_tile.color != player1_color && end_tile.color != player2_color)
+        if (end_tile.color != player_white_color && end_tile.color != player_black_color)
             faction_owner[end_tile.color] = piece_moved->faction;
         update_owner = true;
     }
@@ -248,17 +248,17 @@ std::vector<Move> GameState::getMoves()
     int ally_color;
     int enemy_color;
     Piece *ally_king;
-    if (player1_to_move)
+    if (player_white_to_move)
     {
-        ally_color = player1_color;
-        enemy_color = player2_color;
-        ally_king = player1_king;
+        ally_color = player_white_color;
+        enemy_color = player_black_color;
+        ally_king = player_white_king;
     }
     else
     {
-        ally_color = player2_color;
-        enemy_color = player1_color;
-        ally_king = player2_king;
+        ally_color = player_black_color;
+        enemy_color = player_white_color;
+        ally_king = player_black_king;
     }
 
     std::vector<Pin> pins = getAllPins(ally_king->pos, ally_color);
@@ -410,15 +410,15 @@ void GameState::makeBoard()
             tile.other_tile->blocked = true;
 
         if (piece.type == Piece::Type::King)
-            if (piece.faction == player1_color)
+            if (piece.faction == player_white_color)
             {
-                assert(player1_king == NULL);
-                player1_king = &piece;
+                assert(player_white_king == NULL);
+                player_white_king = &piece;
             }
-            else if (piece.faction == player2_color)
+            else if (piece.faction == player_black_color)
             {
-                assert(player2_king == NULL);
-                player2_king = &piece;
+                assert(player_black_king == NULL);
+                player_black_king = &piece;
             }
             else
                 throw std::runtime_error("Unknown king color " + std::to_string(piece.faction));
@@ -455,10 +455,10 @@ std::vector<Piece *> GameState::getAllChecks(sf::Vector2i pos, int faction)
 
     int ally_color = getMainOwner(faction);
     int enemy_color;
-    if (ally_color == player1_color)
-        enemy_color = player2_color;
+    if (ally_color == player_white_color)
+        enemy_color = player_black_color;
     else
-        enemy_color = player1_color;
+        enemy_color = player_white_color;
 
     std::vector<Piece *> checking_pieces = {};
 
@@ -548,10 +548,10 @@ std::vector<Pin> GameState::getAllPins(sf::Vector2i pos, int faction)
 
     int ally_color = getMainOwner(faction);
     int enemy_color;
-    if (ally_color == player1_color)
-        enemy_color = player2_color;
+    if (ally_color == player_white_color)
+        enemy_color = player_black_color;
     else
-        enemy_color = player1_color;
+        enemy_color = player_white_color;
 
     std::vector<Pin> pins = {};
 
@@ -610,10 +610,10 @@ void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
 {
     int ally_color = piece.main_owner;
     int enemy_color;
-    if (piece.main_owner == player1_color)
-        enemy_color = player2_color;
+    if (piece.main_owner == player_white_color)
+        enemy_color = player_black_color;
     else
-        enemy_color = player1_color;
+        enemy_color = player_white_color;
 
     std::array<sf::Vector2i, 8> directions = {{{1, 1}, {1, 0}, {1, -1}, {0, 1}, {0, -1}, {-1, 1}, {-1, 0}, {-1, -1}}};
 
@@ -683,10 +683,10 @@ void GameState::getRookMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 {
     int ally_color = piece.main_owner;
     int enemy_color;
-    if (piece.main_owner == player1_color)
-        enemy_color = player2_color;
+    if (piece.main_owner == player_white_color)
+        enemy_color = player_black_color;
     else
-        enemy_color = player1_color;
+        enemy_color = player_white_color;
 
     std::array<sf::Vector2i, 4> directions = {{{1, 0}, {0, 1}, {0, -1}, {-1, 0}}};
 
@@ -725,10 +725,10 @@ void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 {
     int ally_color = piece.main_owner;
     int enemy_color;
-    if (piece.main_owner == player1_color)
-        enemy_color = player2_color;
+    if (piece.main_owner == player_white_color)
+        enemy_color = player_black_color;
     else
-        enemy_color = player1_color;
+        enemy_color = player_white_color;
 
     std::array<sf::Vector2i, 4> directions = {{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}}};
 
@@ -770,10 +770,10 @@ void GameState::getKnightMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 
     int ally_color = piece.main_owner;
     int enemy_color;
-    if (piece.main_owner == player1_color)
-        enemy_color = player2_color;
+    if (piece.main_owner == player_white_color)
+        enemy_color = player_black_color;
     else
-        enemy_color = player1_color;
+        enemy_color = player_white_color;
 
     std::array<sf::Vector2i, 8> directions = {{{2, 1}, {2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {-2, 1}, {-2, -1}}};
 
@@ -801,10 +801,10 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 {
     int ally_color = piece.main_owner;
     int enemy_color;
-    if (piece.main_owner == player1_color)
-        enemy_color = player2_color;
+    if (piece.main_owner == player_white_color)
+        enemy_color = player_black_color;
     else
-        enemy_color = player1_color;
+        enemy_color = player_white_color;
 
     std::array<sf::Vector2i, 4> move_directions = {{{1, 0}, {0, 1}, {0, -1}, {-1, 0}}};
     std::array<sf::Vector2i, 4> capture_directions = {{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}}};

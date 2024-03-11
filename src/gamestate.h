@@ -28,11 +28,11 @@ public:
     std::vector<Piece> pieces;
     std::array<int, 12> faction_owner;
     std::vector<std::array<sf::Vector2i, 2>> pins;
-    Piece *player1_king;
-    Piece *player2_king;
-    int player1_color;
-    int player2_color;
-    bool player1_to_move;
+    Piece *player_white_king;
+    Piece *player_black_king;
+    int player_white_color;
+    int player_black_color;
+    bool player_white_to_move;
 
     GameState();
     GameState(const GameState &game_state, Move move);

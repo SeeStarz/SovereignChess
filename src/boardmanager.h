@@ -26,7 +26,10 @@ private:
     Texture texture;
     Piece *selected_piece;
     Piece defection_piece;
-    unsigned int listener_id;
+    bool swap;
+    unsigned int t_listener_id;
+    unsigned int p_listener_id;
+    unsigned int o_listener_id;
 
     void drawSquare(int x, int y, sf::Color color);
     void drawBoard();
@@ -51,6 +54,7 @@ private:
     Tile getTile(sf::Vector2i pos, int index = -1);
     bool isMoveValid(const Move &move, int index = -1);
     bool doMove(const Move &move);
+    void refreshButtons();
 
 public:
     BoardManager(sf::RenderWindow &window);

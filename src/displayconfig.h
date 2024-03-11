@@ -5,7 +5,7 @@
 
 const sf::Vector2f offset = {10.f, 10.f};
 const int height = 788;
-const int width = 1188;
+const int width = 1162;
 const int sprite_size = 16;
 const float scale = 3.f;
 const float tile_size = sprite_size * scale;
