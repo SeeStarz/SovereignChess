@@ -27,19 +27,21 @@ public:
     std::array<Tile *, 24> colored_tiles;
     std::vector<Piece> pieces;
     std::array<int, 12> faction_owner;
+    std::array<bool, 8> castle_rooks; // From left to right, first 4 are white's
     std::vector<std::array<sf::Vector2i, 2>> pins;
     Piece *player_white_king;
     Piece *player_black_king;
     int player_white_color;
     int player_black_color;
     bool player_white_to_move;
+    // Player white/black refers to the player's starting color
 
     GameState();
     GameState(const GameState &game_state, Move move);
     std::vector<Move> getMoves();
 
     int getMainOwner(int direct_owner);
-    bool checkInBoard(sf::Vector2i pos);
+    static bool checkInBoard(sf::Vector2i pos);
     std::vector<Piece *> getAllChecks(sf::Vector2i pos, int faction);
     std::vector<Pin> getAllPins(sf::Vector2i pos, int faction);
 

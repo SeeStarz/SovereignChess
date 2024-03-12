@@ -201,14 +201,38 @@ void BoardManager::drawMoves()
     bool in_place = true;
     for (int i = 0; i < moves.size(); i++)
     {
-        if (moves[i].start_pos != selected_piece->pos)
+        const Move &move = moves[i];
+        if (move.start_pos != selected_piece->pos)
             continue;
-        if (moves[i].piece_moved.faction != selected_piece->faction)
+        if (move.piece_moved.faction != selected_piece->faction)
             continue;
-        if (in_place && moves[i].start_pos != moves[i].end_pos)
+        if (in_place && move.start_pos != move.end_pos)
             in_place = false;
 
-        drawSquare(moves[i].end_pos.x, moves[i].end_pos.y, sf::Color(255, 0, 0, 50));
+        if (move.piece_moved.type == Piece::Type::King && move.promotion_type == Piece::Type::Rook && getDistance(move.start_pos, move.end_pos) < 2)
+        {
+            // Near Castle
+            sf::Vector2i rook_pos = move.start_pos;
+            sf::Vector2i direction = move.end_pos - move.start_pos;
+            while (true)
+            {
+                rook_pos += direction;
+                assert(GameState::checkInBoard(rook_pos));
+
+                const Piece *piece = game_states.back().board[rook_pos.y][rook_pos.x].piece;
+                if (!piece)
+                    continue;
+
+                if (piece->type == Piece::Type::Rook)
+                    break;
+                else
+                    assert(piece->type == Piece::Type::King);
+            }
+
+            drawSquare(rook_pos.x, rook_pos.y, sf::Color(255, 0, 0, 50));
+        }
+        else
+            drawSquare(move.end_pos.x, move.end_pos.y, sf::Color(255, 0, 0, 50));
     }
     if (!in_place)
         drawSquare(selected_piece->pos.x, selected_piece->pos.y, sf::Color(0, 255, 0, 50));
@@ -339,7 +363,7 @@ void BoardManager::onPress(TileButton &button)
     assert(game_states.size() == legal_moves.size());
 
     Move normal_move = {start_pos, end_pos, piece_moved, is_capture};
-    Move promotion_move = {start_pos, end_pos, piece_moved, is_capture, Piece::Type::Queen};
+    Move promotion_move = {start_pos, end_pos, piece_moved, is_capture, Piece::Type::Rook}; // Can also be castling
     Move king_promotion_move = {start_pos, end_pos, piece_moved, is_capture, Piece::Type::King};
 
     if (isMoveValid(normal_move))
@@ -347,7 +371,8 @@ void BoardManager::onPress(TileButton &button)
         doMove(normal_move);
         selected_piece = NULL;
     }
-    else if (isMoveValid(promotion_move))
+    // Pawn Promotion
+    else if (isMoveValid(promotion_move) && piece_moved.type != Piece::Type::King)
     {
         if (isMoveValid(king_promotion_move))
             for (int i = 0; i < 5; i++)
@@ -368,6 +393,20 @@ void BoardManager::onPress(TileButton &button)
                 promotion_button.rect.top = offset.y + (end_pos.y + i - 1) * tile_size;
             }
     }
+    // Castling
+    else if (piece_moved.type == Piece::Type::King && getDistance(start_pos, end_pos) > 1.1f)
+    {
+        if (!doMove(promotion_move))
+        {
+            Piece *piece = game_states.back().board[end_pos.y][end_pos.x].piece;
+            std::vector<sf::Vector2i> pos_in_between = getInBetweens(start_pos, end_pos);
+            // Get one distance move castle
+            if (piece->type == Piece::Type::Rook && pos_in_between.size() != 0)
+                assert(doMove(Move{start_pos, pos_in_between[0], piece_moved, false, Piece::Type::Rook}));
+        }
+        selected_piece = NULL;
+    }
+    // Defection
     else if (isMoveValid(king_promotion_move))
     {
         doMove(king_promotion_move);

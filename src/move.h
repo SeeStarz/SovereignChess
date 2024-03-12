@@ -11,6 +11,8 @@ public:
     Piece piece_moved;
     bool is_capture;
     // Pawn type means it is not a promotion
+    // King type means some form of regime change
+    // Rook type with king means castle
     Piece::Type promotion_type = Piece::Type::Pawn;
 
     bool operator==(const Move &other);

@@ -13,6 +13,7 @@ GameState::GameState()
     // Make sure piece reference won't be dangling
     pieces.reserve(112);
     faction_owner = {0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 11};
+    castle_rooks = {true, true, true, true, true, true, true, true};
     player_white_color = 0;
     player_black_color = 11;
     player_white_king = NULL;
@@ -141,6 +142,7 @@ GameState::GameState(const GameState &game_state, Move move)
 {
     pieces = game_state.pieces;
     faction_owner = game_state.faction_owner;
+    castle_rooks = game_state.castle_rooks;
     player_white_color = game_state.player_white_color;
     player_black_color = game_state.player_black_color;
     player_white_to_move = !game_state.player_white_to_move;
@@ -164,52 +166,103 @@ GameState::GameState(const GameState &game_state, Move move)
         assert(piece_captured);
         assert(piece_captured->type != Piece::Type::King);
         piece_captured->is_alive = false;
+
+        if (piece_captured->type == Piece::Type::Rook)
+        {
+            auto it = std::find(castle_rooks_pos.begin(), castle_rooks_pos.end(), piece_captured->pos);
+            if (it != castle_rooks_pos.end())
+                castle_rooks[it - castle_rooks_pos.begin()] = false;
+        }
     }
 
+    if ((piece_moved->type == Piece::Type::King || move.promotion_type == Piece::Type::King) && move.start_pos != move.end_pos)
+    {
+        if (game_state.player_white_to_move)
+            for (int i = 0; i < 4; i++)
+                castle_rooks[i] = false;
+        else
+            for (int i = 4; i < 8; i++)
+                castle_rooks[i] = false;
+    }
+    else if (piece_moved->type == Piece::Type::Rook)
+    {
+        auto it = std::find(castle_rooks_pos.begin(), castle_rooks_pos.end(), start_tile.pos);
+        if (it != castle_rooks_pos.end())
+            castle_rooks[it - castle_rooks_pos.begin()] = false;
+    }
+
+    if (move.promotion_type != Piece::Type::Pawn && piece_moved->type == Piece::Type::Pawn)
+    {
+        piece_moved->type = move.promotion_type;
+    }
+
+    // Regime Change
     bool update_owner = false;
-    if (move.promotion_type != Piece::Type::Pawn)
+    if (move.promotion_type == Piece::Type::King)
     {
         update_owner = true;
+        Piece *king;
+        int start_color;
 
-        assert(piece_moved->type == Piece::Type::Pawn || move.promotion_type == Piece::Type::King);
-        piece_moved->type = move.promotion_type;
+        // King defection is the only move that modifies faction within Move class
+        if (piece_moved->type == Piece::Type::King)
+            piece_moved->faction = move.piece_moved.faction;
 
-        if (move.promotion_type == Piece::Type::King)
+        if (game_state.player_white_to_move)
         {
-            Piece *king;
-            int start_color;
+            king = player_white_king;
+            start_color = player_white_color;
+            player_white_king = piece_moved;
+            player_white_color = piece_moved->faction;
+        }
+        else
+        {
+            king = player_black_king;
+            start_color = player_black_color;
+            player_black_king = piece_moved;
+            player_black_color = piece_moved->faction;
+        }
 
-            // King defection is the only move that modifies faction within Move class
-            if (piece_moved->type == Piece::Type::King)
-                piece_moved->faction = move.piece_moved.faction;
+        if (piece_moved != king)
+        {
+            king->is_alive = false;
+            board[king->pos.y][king->pos.x].piece = NULL;
+        }
 
-            if (!player_white_to_move)
+        faction_owner[start_color] = -1;
+        faction_owner[piece_moved->faction] = piece_moved->faction;
+        auto it = std::find_if(colored_tiles.begin(), colored_tiles.end(), [&start_color](Tile *tile) -> bool
+                               { return tile->color == start_color && tile->piece != NULL; });
+        if (it != colored_tiles.end())
+            faction_owner[start_color] = (*it)->color;
+    }
+
+    // Castling
+    else if (move.promotion_type == Piece::Type::Rook && piece_moved->type == Piece::Type::King)
+    {
+        sf::Vector2i direction = (end_tile.pos - start_tile.pos) / (int)(getDistance(end_tile.pos, start_tile.pos) + 0.5);
+        assert(direction.y == 0);
+
+        Piece *rook;
+        sf::Vector2i rook_pos = start_tile.pos;
+        while (true)
+        {
+            rook_pos += direction;
+            assert(checkInBoard(rook_pos));
+            Tile &rook_tile = board[rook_pos.y][rook_pos.x];
+            if (!rook_tile.piece)
+                continue;
+            if (rook_tile.piece->type == Piece::Type::Rook)
             {
-                king = player_white_king;
-                start_color = player_white_color;
-                player_white_king = piece_moved;
-                player_white_color = piece_moved->faction;
+                rook = rook_tile.piece;
+                rook->pos = end_tile.pos - direction;
+                board[rook->pos.y][rook->pos.x].piece = rook;
+                rook_tile.piece = NULL;
+                assert(rook_tile.color == -1);
+                break;
             }
             else
-            {
-                king = player_black_king;
-                start_color = player_black_color;
-                player_black_king = piece_moved;
-                player_black_color = piece_moved->faction;
-            }
-
-            if (piece_moved != king)
-            {
-                king->is_alive = false;
-                board[king->pos.y][king->pos.x].piece = NULL;
-            }
-
-            faction_owner[start_color] = -1;
-            faction_owner[piece_moved->faction] = piece_moved->faction;
-            auto it = std::find_if(colored_tiles.begin(), colored_tiles.end(), [&start_color](Tile *tile) -> bool
-                                   { return tile->color == start_color && tile->piece != NULL; });
-            if (it != colored_tiles.end())
-                faction_owner[start_color] = (*it)->color;
+                assert(rook_tile.piece->type == Piece::Type::King);
         }
     }
 
@@ -670,6 +723,38 @@ void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
                 else if (target_piece->main_owner == enemy_color)
                     moves.push_back(Move{king_piece.pos, end_pos, king_piece, true, Piece::Type::King});
             }
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        if (getAllChecks(piece.pos, piece.faction).size() != 0)
+            break;
+
+        int j = player_white_to_move ? j = i : j = i + 4;
+        if (!castle_rooks[j])
+            continue;
+
+        sf::Vector2i rook_pos = castle_rooks_pos[j];
+
+        assert(board[rook_pos.y][rook_pos.x].piece != NULL);
+        if (getMainOwner(board[rook_pos.y][rook_pos.x].piece->faction) != ally_color)
+            continue;
+
+        std::vector<sf::Vector2i> in_between = getInBetweens(piece.pos, rook_pos);
+
+        bool empty = true;
+        for (sf::Vector2i pos : in_between)
+            if (board[pos.y][pos.x].piece != NULL)
+            {
+                empty = false;
+                break;
+            }
+        if (!empty)
+            continue;
+
+        for (sf::Vector2i end_pos : in_between)
+            if (getAllChecks(end_pos, piece.faction).size() == 0)
+                moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::Rook});
     }
 }
 

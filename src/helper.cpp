@@ -1,6 +1,7 @@
 #include "helper.h"
 #include <SFML/Graphics.hpp>
 #include <tuple>
+#include <cmath>
 
 bool Vector2iLess::operator()(const sf::Vector2i &lhs, const sf::Vector2i &rhs) const
 {
@@ -33,4 +34,9 @@ std::vector<sf::Vector2i> getInBetweens(sf::Vector2i pos1, sf::Vector2i pos2)
         }
 
     return pos_in_between;
+}
+
+float getDistance(sf::Vector2i pos1, sf::Vector2i pos2)
+{
+    return std::sqrt(std::pow(pos2.x - pos1.x, 2) + std::pow(pos2.y - pos1.y, 2));
 }
