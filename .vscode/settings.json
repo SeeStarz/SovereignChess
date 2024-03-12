@@ -54,6 +54,10 @@
         "optional": "cpp",
         "set": "cpp",
         "*.tpp": "cpp",
-        "cassert": "cpp"
+        "cassert": "cpp",
+        "charconv": "cpp",
+        "format": "cpp",
+        "span": "cpp",
+        "variant": "cpp"
     }
 }

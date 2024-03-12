@@ -29,6 +29,11 @@ int main()
     Texture texture;
     texture.load();
 
+    sf::Image icon;
+    if (!icon.loadFromFile("..\\img\\king.png"))
+        throw std::runtime_error("");
+    window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
+
     std::vector<Button *> buttons;
     BoardManager board_manager(window);
     board_manager.registerButtons(buttons);
