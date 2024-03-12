@@ -19,3 +19,8 @@ This project is by no means official, and this variation is not mine. Have a loo
 -To castle click the king and then click the king destination  
 -To castle one square click the king and then click the rook  
 -To do defection click on colored kings on the bottom right, then select a valid square (usually the king itself)  
+
+## Images
+<img src="https://i.imgur.com/8TsV77Z.png" width="600" />
+<img src="https://i.imgur.com/vCSwhJX.png" width="600" />
+<img src="https://i.imgur.com/GDuTJ3H.png" width="600" />
