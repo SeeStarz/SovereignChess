@@ -2,7 +2,10 @@
 #define PIECE_H
 
 #include "texture.h"
-#include <SFML/Graphics.hpp>
+#include <SFML/System/Vector2.hpp>
+#include <SFML/Network/Packet.hpp>
+#include <array>
+
 class Piece
 {
 public:
@@ -17,8 +20,8 @@ public:
     };
     Piece(const sf::Vector2i &pos, int faction, int main_owner, int direct_owner, const Type type);
     Piece() = default;
-    bool operator==(const Piece &other);
-    bool operator!=(const Piece &other);
+    bool operator==(const Piece &other) const;
+    bool operator!=(const Piece &other) const;
 
     sf::Vector2i pos;
     int faction;
@@ -27,5 +30,8 @@ public:
     Type type;
     bool is_alive = true;
 };
+
+sf::Packet &operator<<(sf::Packet &packet, const Piece &piece);
+sf::Packet &operator>>(sf::Packet &packet, Piece &piece);
 
 #endif

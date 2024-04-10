@@ -15,7 +15,8 @@
                 "-L..\\libs\\SFML-2.5.1\\lib",
                 "-lsfml-graphics",
                 "-lsfml-window",
-                "-lsfml-system"
+                "-lsfml-system",
+                "-lsfml-network"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

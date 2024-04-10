@@ -1,4 +1,5 @@
 #include "helper.h"
+#include "displayconfig.h"
 #include <SFML/Graphics.hpp>
 #include <tuple>
 #include <cmath>
@@ -39,4 +40,10 @@ std::vector<sf::Vector2i> getInBetweens(sf::Vector2i pos1, sf::Vector2i pos2)
 float getDistance(sf::Vector2i pos1, sf::Vector2i pos2)
 {
     return std::sqrt(std::pow(pos2.x - pos1.x, 2) + std::pow(pos2.y - pos1.y, 2));
+}
+
+void alignText(sf::Text &text, const sf::FloatRect &rect)
+{
+    sf::FloatRect text_rect = text.getLocalBounds();
+    text.setPosition(rect.left + (rect.width - text_rect.width) / 2, rect.top + (rect.height - text_size - text_down) / 2);
 }

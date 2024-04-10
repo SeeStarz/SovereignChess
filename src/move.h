@@ -3,6 +3,9 @@
 
 #include "piece.h"
 #include <SFML/System/Vector2.hpp>
+#include <SFML/Network/Packet.hpp>
+#include <array>
+
 class Move
 {
 public:
@@ -15,8 +18,11 @@ public:
     // Rook type with king means castle
     Piece::Type promotion_type = Piece::Type::Pawn;
 
-    bool operator==(const Move &other);
-    bool operator!=(const Move &other);
+    bool operator==(const Move &other) const;
+    bool operator!=(const Move &other) const;
 };
+
+sf::Packet &operator<<(sf::Packet &packet, const Move &move);
+sf::Packet &operator>>(sf::Packet &packet, Move &move);
 
 #endif

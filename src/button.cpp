@@ -1,7 +1,7 @@
 #include "button.h"
 #include "event.h"
 #include "piece.h"
-#include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Rect.hpp>
 
 TileButton::TileButton(sf::FloatRect rect, int layer, sf::Vector2i pos, bool active)
 {
@@ -74,4 +74,27 @@ void OtherButton::hold()
 void OtherButton::release()
 {
     ButtonEventChannel<OtherButton>::release(*this);
+}
+
+TextFieldButton::TextFieldButton(sf::FloatRect rect, int layer, bool active)
+{
+    this->rect = rect;
+    this->layer = layer;
+    this->active = active;
+    hover = false;
+}
+
+void TextFieldButton::press()
+{
+    ButtonEventChannel<TextFieldButton>::press(*this);
+}
+
+void TextFieldButton::hold()
+{
+    ButtonEventChannel<TextFieldButton>::hold(*this);
+}
+
+void TextFieldButton::release()
+{
+    ButtonEventChannel<TextFieldButton>::release(*this);
 }

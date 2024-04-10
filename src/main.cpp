@@ -5,7 +5,9 @@
 #include "gamestate.h"
 #include "move.h"
 #include "boardmanager.h"
+#include "mainmenu.h"
 #include <SFML/Graphics.hpp>
+#include <SFML/Network.hpp>
 #include <memory>
 #include <iostream>
 #include <vector>
@@ -35,8 +37,8 @@ int main()
     window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
 
     std::vector<Button *> buttons;
-    BoardManager board_manager(window);
-    board_manager.registerButtons(buttons);
+    MainMenu main_menu = MainMenu(window);
+    main_menu.registerButtons(buttons);
 
     bool hold = false;
     Button *clicked_button = NULL;
@@ -46,21 +48,58 @@ int main()
         sf::Event event;
         while (window.pollEvent(event))
         {
-            if (event.type == sf::Event::Closed)
-                window.close();
-            if (event.type == sf::Event::MouseButtonPressed && !hold)
+            switch (event.type)
             {
+            case sf::Event::Closed:
+            {
+                window.close();
+                break;
+            }
+            case sf::Event::MouseButtonPressed:
+            {
+                if (hold)
+                    break;
+
                 clicked_button = buttonAtPos(buttons, sf::Mouse::getPosition(window));
                 if (!clicked_button)
-                    continue;
+                    break;
                 clicked_button->press();
                 hold = true;
             }
-            if (event.type == sf::Event::MouseButtonReleased)
+            case sf::Event::MouseButtonReleased:
             {
                 if (clicked_button)
                     clicked_button->release();
                 hold = false;
+            }
+
+            case sf::Event::TextEntered:
+            {
+                if (!clicked_button)
+                    break;
+                if (!dynamic_cast<TextFieldButton *>(clicked_button))
+                    break;
+                TextFieldButton *field = dynamic_cast<TextFieldButton *>(clicked_button);
+                if (std::isprint(event.text.unicode))
+                    field->text += event.text.unicode;
+                else if (event.text.unicode == 8)
+                    field->text.pop_back();
+            }
+
+            case sf::Event::KeyPressed:
+            {
+                if (!clicked_button)
+                    continue;
+                if (!dynamic_cast<TextFieldButton *>(clicked_button))
+                    continue;
+                TextFieldButton *field = dynamic_cast<TextFieldButton *>(clicked_button);
+                if (event.key.control && event.key.code == sf::Keyboard::C)
+                    sf::Clipboard::setString(field->text);
+                if (event.key.control && event.key.code == sf::Keyboard::V)
+                    field->text += sf::Clipboard::getString();
+                if (event.key.control && event.key.code == sf::Keyboard::Backspace)
+                    field->text = "";
+            }
             }
         }
 
@@ -80,7 +119,7 @@ int main()
         }
 
         window.clear(sf::Color(161, 102, 47));
-        board_manager.draw();
+        main_menu.draw();
         window.display();
     }
 }

@@ -6,6 +6,7 @@
 #include "event.h"
 #include "button.h"
 #include <SFML/Graphics.hpp>
+#include <SFML/Network.hpp>
 #include <string>
 #include <utility>
 #include <cassert>
@@ -471,11 +472,11 @@ void BoardManager::onPress(OtherButton &button)
         }
     else if (button.identifier.substr(0, 4) == "swap")
         if (button.identifier.substr(4, 1) == "0")
-            refreshButtons();
+            refreshOtherButtons(true);
         else if (button.identifier.substr(4, 1) == "1")
         {
             swap = true;
-            refreshButtons();
+            refreshOtherButtons(true);
         }
 }
 
@@ -564,12 +565,12 @@ bool BoardManager::doMove(const Move &move)
     played_moves.push_back(move);
     legal_moves.push_back(game_states.back().getMoves());
 
-    refreshButtons();
+    refreshOtherButtons();
 
     return true;
 }
 
-void BoardManager::refreshButtons()
+void BoardManager::refreshOtherButtons(bool swap_done)
 {
     GameState &game_state = game_states.back();
     for (int i = 0; i < 12; i++)
@@ -581,7 +582,7 @@ void BoardManager::refreshButtons()
 
     if (game_states.size() == 2)
     {
-        if (!other_buttons["swap0"].active)
+        if (!swap_done)
         {
             other_buttons["swap0"].active = true;
             other_buttons["swap1"].active = true;
@@ -599,4 +600,24 @@ void BoardManager::refreshButtons()
                 button.active = true;
         }
     }
+}
+
+void BoardManager::enableButtons()
+{
+    for (TileButton &button : tile_buttons)
+        button.active = true;
+
+    refreshOtherButtons();
+}
+
+void BoardManager::disableButtons()
+{
+    for (TileButton &button : tile_buttons)
+        button.active = false;
+
+    for (PromotionButton &button : promotion_buttons)
+        button.active = false;
+
+    for (auto it = other_buttons.begin(); it != other_buttons.end(); it++)
+        it->second.active = false;
 }

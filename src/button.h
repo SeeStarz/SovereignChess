@@ -2,7 +2,7 @@
 #define BUTTON_H
 
 #include "piece.h"
-#include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Rect.hpp>
 class Button
 {
 public:
@@ -47,6 +47,18 @@ public:
     OtherButton(sf::FloatRect rect, int layer, std::string identifier, bool active = true);
 
     std::string identifier;
+    void press();
+    void hold();
+    void release();
+};
+
+class TextFieldButton : public Button
+{
+public:
+    TextFieldButton() = default;
+    TextFieldButton(sf::FloatRect rect, int layer, bool active = true);
+
+    std::string text;
     void press();
     void hold();
     void release();

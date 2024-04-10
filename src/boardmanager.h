@@ -54,11 +54,13 @@ private:
     Tile getTile(sf::Vector2i pos, int index = -1);
     bool isMoveValid(const Move &move, int index = -1);
     bool doMove(const Move &move);
-    void refreshButtons();
+    void refreshOtherButtons(bool swap_done = false);
 
 public:
     BoardManager(sf::RenderWindow &window);
     void registerButtons(std::vector<Button *> &buttons);
+    void disableButtons();
+    void enableButtons();
     void draw();
 };
 

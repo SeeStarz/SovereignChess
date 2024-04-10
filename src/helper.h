@@ -83,4 +83,6 @@ const std::map<sf::Vector2i, Color, Vector2iLess> color_map = {
     {{8, 7}, Color::Black},
     {{7, 8}, Color::Black}};
 
+void alignText(sf::Text &text, const sf::FloatRect &rect);
+
 #endif
