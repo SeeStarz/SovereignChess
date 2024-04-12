@@ -9,6 +9,7 @@
 #include "move.h"
 #include "button.h"
 #include <SFML/Graphics.hpp>
+#include <SFML/Network.hpp>
 #include <vector>
 #include <map>
 #include <string>
@@ -26,7 +27,9 @@ private:
     Texture texture;
     Piece *selected_piece;
     Piece defection_piece;
-    bool swap;
+    sf::TcpSocket *socket;
+    bool player1_is_white;
+    bool swap_done;
     unsigned int t_listener_id;
     unsigned int p_listener_id;
     unsigned int o_listener_id;
@@ -54,13 +57,16 @@ private:
     Tile getTile(sf::Vector2i pos, int index = -1);
     bool isMoveValid(const Move &move, int index = -1);
     bool doMove(const Move &move);
-    void refreshOtherButtons(bool swap_done = false);
+    void refreshOtherButtons();
 
 public:
     BoardManager(sf::RenderWindow &window);
+    // Player 1 is the user playing, socket=NULL indicates offline play
+    void startGame(bool player1_is_white = true, sf::TcpSocket *socket = NULL);
     void registerButtons(std::vector<Button *> &buttons);
     void disableButtons();
     void enableButtons();
+    void checkNetwork();
     void draw();
 };
 

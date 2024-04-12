@@ -10,20 +10,19 @@
 
 MainMenu::MainMenu(sf::RenderWindow &window) : window(window), board_manager(window)
 {
-    board_manager.disableButtons();
     texture.load();
 
     in_menu = true;
 
-    sf::FloatRect rect = sf::FloatRect(width / 2 - text_size * 6, offset.y, text_size * 12, text_size * 2);
+    sf::FloatRect rect = sf::FloatRect(width / 2 - text_size * 6, offset.y + text_size, text_size * 12, text_size * 2);
     buttons["offline"] = OtherButton(rect, 2, "offline");
-    rect.top = offset.y + text_size * 6;
+    rect.top = offset.y + text_size * 7;
     text_fields[0] = TextFieldButton(rect, 2);
     text_fields[0].text = "50000";
-    rect.top = offset.y + text_size * 10;
+    rect.top = offset.y + text_size * 11;
     text_fields[1] = TextFieldButton(rect, 2);
 
-    rect.top = offset.y + text_size * 13;
+    rect.top = offset.y + text_size * 14;
     rect.width = text_size * 5;
     buttons["host"] = OtherButton(rect, 2, "host");
     rect.left = width / 2 + text_size;
@@ -58,6 +57,16 @@ void MainMenu::drawMenu()
     alignText(text, rect);
     window.draw(text);
 
+    rect.top = buttons["offline"].rect.top + text_size * 3;
+    rect.left = width / 2 - text_size * 7;
+    rect.width = text_size * 14;
+    rect.height = text_size * 13;
+    shape.setSize(sf::Vector2f(rect.width, rect.height));
+    shape.setPosition(rect.left, rect.top);
+    shape.setFillColor(sf::Color(127, 127, 127));
+    window.draw(shape);
+
+    rect = buttons["offline"].rect;
     rect.top += text_size * 3;
     text.setString("Multi Player");
     alignText(text, rect);
@@ -66,6 +75,7 @@ void MainMenu::drawMenu()
     rect = text_fields[0].rect;
     shape.setPosition(rect.left, rect.top);
     shape.setFillColor(sf::Color::White);
+    shape.setSize(sf::Vector2f(rect.width, rect.height));
     window.draw(shape);
     text.setString(text_fields[0].text);
     alignText(text, rect);
@@ -142,7 +152,7 @@ void MainMenu::onPress(OtherButton &button)
     {
         in_menu = false;
         updateButtons();
-        board_manager.enableButtons();
+        board_manager.startGame(true, NULL);
     }
 
     else if (button.identifier == "host")
@@ -168,7 +178,7 @@ void MainMenu::onPress(OtherButton &button)
 
         in_menu = false;
         updateButtons();
-        board_manager.enableButtons();
+        board_manager.startGame(true, &socket);
     }
     else if (button.identifier == "connect")
     {
@@ -183,7 +193,7 @@ void MainMenu::onPress(OtherButton &button)
 
         in_menu = false;
         updateButtons();
-        board_manager.enableButtons();
+        board_manager.startGame(false, &socket);
     }
 }
 void MainMenu::onHold(OtherButton &button)

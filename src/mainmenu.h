@@ -17,7 +17,6 @@ private:
     sf::RenderWindow &window;
     sf::TcpListener listener;
     sf::TcpSocket socket;
-    BoardManager board_manager;
     std::map<std::string, OtherButton> buttons;
     std::array<TextFieldButton, 2> text_fields;
     Texture texture;
@@ -39,6 +38,8 @@ private:
     void drawMenu();
 
 public:
+    BoardManager board_manager;
+
     MainMenu(sf::RenderWindow &window);
     void registerButtons(std::vector<Button *> &buttons);
     void draw();

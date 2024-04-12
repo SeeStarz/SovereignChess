@@ -16,13 +16,15 @@
 
 BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
 {
-    game_states.push_back(GameState());
-    played_moves = {};
-    legal_moves.push_back(game_states[0].getMoves());
     texture = Texture();
     texture.load();
+
     selected_piece = NULL;
-    swap = false;
+    socket = NULL;
+    player1_is_white = true;
+    t_listener_id = -1;
+    p_listener_id = -1;
+    o_listener_id = -1;
     registerListener();
 
     for (int x = 0; x < 16; x++)
@@ -30,7 +32,7 @@ BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
         for (int y = 0; y < 16; y++)
         {
             int i = 16 * x + y;
-            tile_buttons[i] = TileButton{sf::FloatRect(offset + sf::Vector2f(tile_size * x, tile_size * y), sf::Vector2f(tile_size, tile_size)), 0, sf::Vector2i(x, y)};
+            tile_buttons[i] = TileButton{sf::FloatRect(offset + sf::Vector2f(tile_size * x, tile_size * y), sf::Vector2f(tile_size, tile_size)), 0, sf::Vector2i(x, y), false};
         }
     }
 
@@ -50,7 +52,6 @@ BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
             rect = sf::FloatRect(tile_size * (10 + i) + offset.x * 2, height - offset.y - tile_size, tile_size, tile_size);
         other_buttons[identifier] = OtherButton(rect, 0, identifier, false);
     }
-    other_buttons["king0"].active = true;
 
     {
         sf::FloatRect rect = sf::FloatRect(text_offset.x, text_offset.y + text_size * 5.5f, 5 * text_size, 2 * text_size);
@@ -58,6 +59,23 @@ BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
         rect.left = rect.left + rect.width + text_size;
         other_buttons["swap0"] = OtherButton(rect, 0, "swap0", false);
     }
+}
+
+void BoardManager::startGame(bool player1_is_white, sf::TcpSocket *socket)
+{
+    game_states.clear();
+    game_states.push_back(GameState());
+    played_moves.clear();
+    legal_moves.clear();
+    legal_moves.push_back(game_states[0].getMoves());
+    selected_piece = NULL;
+    this->socket = socket;
+    if (socket != NULL)
+        this->socket->setBlocking(false);
+    this->player1_is_white = player1_is_white;
+
+    enableButtons();
+    other_buttons["king0"].active = true;
 }
 
 void BoardManager::drawSquare(int x, int y, sf::Color color)
@@ -264,9 +282,9 @@ void BoardManager::drawExtra()
 
     GameState &game_state = game_states.back();
 
-    int player_to_move = game_state.player_white_to_move != swap ? 1 : 2; // XOR
-    int player1_color = !swap ? game_state.player_white_color : game_state.player_black_color;
-    int player2_color = !swap ? game_state.player_black_color : game_state.player_white_color;
+    int player_to_move = game_state.player_white_to_move == player1_is_white ? 1 : 2;
+    int player1_color = player1_is_white ? game_state.player_white_color : game_state.player_black_color;
+    int player2_color = player1_is_white ? game_state.player_black_color : game_state.player_white_color;
 
     text.setString("Player " + std::to_string(player_to_move) + " to move");
     window.draw(text);
@@ -356,6 +374,12 @@ void BoardManager::onPress(TileButton &button)
         return;
     }
 
+    if (socket != NULL && game_states.back().player_white_to_move != player1_is_white)
+    {
+        selected_piece = NULL;
+        return;
+    }
+
     sf::Vector2i start_pos = selected_piece->pos;
     sf::Vector2i end_pos = getTile(button).pos;
     Piece piece_moved = *selected_piece;
@@ -433,6 +457,8 @@ void BoardManager::onRelease(TileButton &button)
 
 void BoardManager::onPress(PromotionButton &button)
 {
+    assert(socket == NULL || game_states.back().player_white_to_move == player1_is_white);
+
     sf::Vector2i start_pos = selected_piece->pos;
     sf::Vector2i end_pos = getTile(button.pos).pos;
     Piece piece_moved = *selected_piece;
@@ -471,13 +497,33 @@ void BoardManager::onPress(OtherButton &button)
             selected_piece = &defection_piece;
         }
     else if (button.identifier.substr(0, 4) == "swap")
+    {
+        sf::Packet packet;
         if (button.identifier.substr(4, 1) == "0")
-            refreshOtherButtons(true);
+        {
+            swap_done = true;
+            refreshOtherButtons();
+            packet << sf::Uint8(false);
+        }
         else if (button.identifier.substr(4, 1) == "1")
         {
-            swap = true;
-            refreshOtherButtons(true);
+            swap_done = true;
+            player1_is_white = !player1_is_white;
+            refreshOtherButtons();
+            packet << sf::Uint8(true);
         }
+
+        if (socket != NULL)
+        {
+            sf::Socket::Status status = sf::Socket::Partial;
+            while (status == sf::Socket::Partial)
+            {
+                status = socket->send(packet);
+            }
+            assert(status != sf::Socket::Disconnected);
+            assert(status != sf::Socket::Error);
+        }
+    }
 }
 
 void BoardManager::onHold(OtherButton &button) {}
@@ -560,6 +606,21 @@ bool BoardManager::doMove(const Move &move)
     if (!isMoveValid(move))
         return false;
 
+    int player_to_move = game_states.back().player_white_to_move == player1_is_white ? 1 : 2;
+
+    if (socket != NULL && player1_is_white == game_states.back().player_white_to_move)
+    {
+        sf::Packet packet;
+        packet << move;
+        sf::Socket::Status status = sf::Socket::Partial;
+        while (status == sf::Socket::Partial)
+        {
+            status = socket->send(packet);
+        }
+        assert(status != sf::Socket::Disconnected);
+        assert(status != sf::Socket::Error);
+    }
+
     GameState game_state = GameState(game_states.back(), move);
     game_states.push_back(std::move(game_state));
     played_moves.push_back(move);
@@ -570,7 +631,7 @@ bool BoardManager::doMove(const Move &move)
     return true;
 }
 
-void BoardManager::refreshOtherButtons(bool swap_done)
+void BoardManager::refreshOtherButtons()
 {
     GameState &game_state = game_states.back();
     for (int i = 0; i < 12; i++)
@@ -582,7 +643,8 @@ void BoardManager::refreshOtherButtons(bool swap_done)
 
     if (game_states.size() == 2)
     {
-        if (!swap_done)
+        // Only show swap button to the player swapping
+        if (!swap_done && (socket == NULL || player1_is_white == game_state.player_white_to_move))
         {
             other_buttons["swap0"].active = true;
             other_buttons["swap1"].active = true;
@@ -599,6 +661,37 @@ void BoardManager::refreshOtherButtons(bool swap_done)
             for (auto &button : tile_buttons)
                 button.active = true;
         }
+    }
+}
+
+void BoardManager::checkNetwork()
+{
+    if (socket == NULL)
+        return;
+
+    sf::Packet packet;
+    sf::Socket::Status status = socket->receive(packet);
+
+    if (status != sf::Socket::Done)
+    {
+        assert(status == sf::Socket::NotReady);
+        return;
+    }
+
+    if (game_states.size() == 2 && player1_is_white != game_states.back().player_white_to_move && !swap_done)
+    {
+        sf::Uint8 swap;
+        packet >> swap;
+        ;
+        if ((bool)swap)
+            player1_is_white = !player1_is_white;
+        swap_done = true;
+    }
+    else
+    {
+        Move move;
+        packet >> move;
+        assert(doMove(move));
     }
 }
 

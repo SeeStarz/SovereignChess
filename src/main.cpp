@@ -35,6 +35,7 @@ int main()
     if (!icon.loadFromFile("..\\img\\king.png"))
         throw std::runtime_error("");
     window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
+    window.setFramerateLimit(60);
 
     std::vector<Button *> buttons;
     MainMenu main_menu = MainMenu(window);
@@ -120,6 +121,7 @@ int main()
 
         window.clear(sf::Color(161, 102, 47));
         main_menu.draw();
+        main_menu.board_manager.checkNetwork();
         window.display();
     }
 }
