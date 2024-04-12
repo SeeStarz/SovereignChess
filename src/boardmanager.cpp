@@ -70,8 +70,8 @@ void BoardManager::startGame(bool player1_is_white, sf::TcpSocket *socket)
     legal_moves.push_back(game_states[0].getMoves());
     selected_piece = NULL;
     this->socket = socket;
-    if (socket != NULL)
-        this->socket->setBlocking(false);
+    if (socket)
+        socket->setBlocking(false);
     this->player1_is_white = player1_is_white;
 
     enableButtons();
@@ -286,11 +286,19 @@ void BoardManager::drawExtra()
     int player1_color = player1_is_white ? game_state.player_white_color : game_state.player_black_color;
     int player2_color = player1_is_white ? game_state.player_black_color : game_state.player_white_color;
 
-    text.setString("Player " + std::to_string(player_to_move) + " to move");
+    if (socket == NULL)
+        text.setString("Player " + std::to_string(player_to_move) + " to move");
+    else if (player_to_move == 1)
+        text.setString("Your turn");
+    else
+        text.setString("Opponent turn");
     window.draw(text);
 
     text.setPosition(text_offset + sf::Vector2f(0, text_size));
-    text.setString("Player 1 Color:");
+    if (socket == NULL)
+        text.setString("Player 1 Color:");
+    else
+        text.setString("Your Color:");
     window.draw(text);
 
     sf::RectangleShape square = sf::RectangleShape(sf::Vector2f(text_height, text_height));
@@ -301,7 +309,10 @@ void BoardManager::drawExtra()
     window.draw(square);
 
     text.setPosition(text_offset + sf::Vector2f(0, text_size * 2));
-    text.setString("Player 2 Color:");
+    if (socket == NULL)
+        text.setString("Player 2 Color:");
+    else
+        text.setString("Opponent Color:");
     window.draw(text);
 
     square.setFillColor(colors[player2_color]);
@@ -617,7 +628,8 @@ bool BoardManager::doMove(const Move &move)
         {
             status = socket->send(packet);
         }
-        assert(status != sf::Socket::Disconnected);
+        if (status == sf::Socket::Disconnected)
+            std::cout << "Disconnected" << std::endl;
         assert(status != sf::Socket::Error);
     }
 
@@ -668,11 +680,17 @@ void BoardManager::checkNetwork()
 {
     if (socket == NULL)
         return;
+    assert(!socket->isBlocking());
 
     sf::Packet packet;
     sf::Socket::Status status = socket->receive(packet);
 
-    if (status != sf::Socket::Done)
+    if (status == sf::Socket::Disconnected)
+    {
+        std::cout << "Disconnected" << std::endl;
+        return;
+    }
+    else if (status != sf::Socket::Done)
     {
         assert(status == sf::Socket::NotReady);
         return;

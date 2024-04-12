@@ -121,6 +121,7 @@ int main()
 
         window.clear(sf::Color(161, 102, 47));
         main_menu.draw();
+        main_menu.tick();
         main_menu.board_manager.checkNetwork();
         window.display();
     }

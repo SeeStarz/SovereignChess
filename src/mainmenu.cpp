@@ -6,13 +6,21 @@
 #include <iostream>
 #include <string>
 #include <functional>
+#include <thread>
 #include <map>
+#include <cassert>
 
 MainMenu::MainMenu(sf::RenderWindow &window) : window(window), board_manager(window)
 {
     texture.load();
 
+    socket.setBlocking(true);
+    listener.setBlocking(true);
     in_menu = true;
+    connecting = false;
+    hosting = false;
+    ip = sf::IpAddress::None;
+    port = 0;
 
     sf::FloatRect rect = sf::FloatRect(width / 2 - text_size * 6, offset.y + text_size, text_size * 12, text_size * 2);
     buttons["offline"] = OtherButton(rect, 2, "offline");
@@ -27,6 +35,11 @@ MainMenu::MainMenu(sf::RenderWindow &window) : window(window), board_manager(win
     buttons["host"] = OtherButton(rect, 2, "host");
     rect.left = width / 2 + text_size;
     buttons["connect"] = OtherButton(rect, 2, "connect");
+
+    rect.left = width / 2 - text_size * 4;
+    rect.top = height / 2;
+    rect.width = text_size * 8;
+    buttons["cancel"] = OtherButton(rect, 3, "cancel");
 
     updateButtons();
     registerListener();
@@ -115,6 +128,71 @@ void MainMenu::drawMenu()
     text.setString("Connect");
     alignText(text, rect);
     window.draw(text);
+
+    if (connecting)
+    {
+        shape.setFillColor(sf::Color(86, 50, 50));
+        shape.setPosition(width / 2 - text_size * 10, height / 2 - text_size * 3);
+        shape.setSize(sf::Vector2f(text_size * 20, text_size * 6));
+        window.draw(shape);
+
+        shape.setFillColor(sf::Color(255, 255, 255, 127));
+        rect = buttons["cancel"].rect;
+        shape.setPosition(rect.left, rect.top);
+        shape.setSize(sf::Vector2f(rect.width, rect.height));
+        window.draw(shape);
+        text.setString("Cancel");
+        alignText(text, rect);
+        window.draw(text);
+
+        rect.top -= text_size * 2;
+        text.setString("Waiting for connection...");
+        alignText(text, rect);
+        window.draw(text);
+    }
+}
+
+void MainMenu::tick()
+{
+    if (!in_menu)
+        return;
+
+    if (!thread.running && thread.status == sf::Socket::Done)
+    {
+        in_menu = false;
+        connecting = false;
+        thread.stop();
+        thread.status = sf::Socket::Disconnected;
+        updateButtons();
+        board_manager.startGame(false, &socket);
+    }
+
+    if (!connecting)
+        return;
+
+    sf::Socket::Status status;
+    if (hosting)
+    {
+        status = listener.accept(socket);
+        if (status == sf::Socket::Done)
+        {
+            in_menu = false;
+            connecting = false;
+            listener.close();
+            updateButtons();
+            board_manager.startGame(true, &socket);
+        }
+        else
+            assert(status == sf::Socket::NotReady);
+    }
+    else if (!thread.running)
+    {
+        thread.run(&socket, ip, port);
+    }
+}
+
+void MainMenu::connect()
+{
 }
 
 void MainMenu::registerButtons(std::vector<Button *> &buttons)
@@ -131,10 +209,12 @@ void MainMenu::registerButtons(std::vector<Button *> &buttons)
 void MainMenu::updateButtons()
 {
     for (TextFieldButton &button : text_fields)
-        button.active = in_menu;
+        button.active = in_menu && !connecting;
 
     for (auto it = this->buttons.begin(); it != this->buttons.end(); it++)
-        it->second.active = in_menu;
+        it->second.active = in_menu && !connecting;
+
+    buttons["cancel"].active = in_menu && connecting;
 }
 
 void MainMenu::onPress(TextFieldButton &button)
@@ -146,6 +226,7 @@ void MainMenu::onHold(TextFieldButton &button)
 void MainMenu::onRelease(TextFieldButton &button)
 {
 }
+
 void MainMenu::onPress(OtherButton &button)
 {
     if (button.identifier == "offline")
@@ -157,43 +238,38 @@ void MainMenu::onPress(OtherButton &button)
 
     else if (button.identifier == "host")
     {
-        int port = std::stoi(text_fields[0].text);
-        sf::IpAddress address;
+        port = std::stoi(text_fields[0].text);
         if (text_fields[1].text != "")
-            address = sf::IpAddress(text_fields[1].text);
+            ip = sf::IpAddress(text_fields[1].text);
         else
-            address = sf::IpAddress::Any;
+            ip = sf::IpAddress::Any;
 
-        if (listener.listen(port, address) != sf::Socket::Done)
+        if (listener.listen(port, ip) != sf::Socket::Done)
+            std::cout << "Failed to listen to port: " << port << std::endl;
+        else
         {
-            std::cout << "cannot listen to port: " << port << std::endl;
-            return;
-        }
+            listener.setBlocking(false);
 
-        if (listener.accept(socket) != sf::Socket::Done)
-        {
-            std::cout << "cannot connect to socket" << std::endl;
-            return;
+            connecting = true;
+            hosting = true;
+            updateButtons();
         }
-
-        in_menu = false;
-        updateButtons();
-        board_manager.startGame(true, &socket);
     }
     else if (button.identifier == "connect")
     {
-        int port = std::stoi(text_fields[0].text);
-        sf::IpAddress address = sf::IpAddress(text_fields[1].text);
+        port = std::stoi(text_fields[0].text);
+        ip = sf::IpAddress(text_fields[1].text);
 
-        if (socket.connect(address, port) != sf::Socket::Done)
-        {
-            std::cout << "cannot connect to socket" << std::endl;
-            return;
-        }
-
-        in_menu = false;
+        connecting = true;
+        hosting = false;
         updateButtons();
-        board_manager.startGame(false, &socket);
+    }
+    else if (button.identifier == "cancel")
+    {
+        connecting = false;
+        listener.close();
+        thread.stop();
+        updateButtons();
     }
 }
 void MainMenu::onHold(OtherButton &button)
@@ -224,4 +300,43 @@ void MainMenu::registerListener()
     ofunc ohold = std::bind(ooh, this, std::placeholders::_1);
     ofunc orelease = std::bind(oor, this, std::placeholders::_1);
     o_listener_id = ButtonEventChannel<OtherButton>::registerListener(opress, ohold, orelease);
+}
+
+void ConnectThread::runThread()
+{
+    force_stop = false;
+    while (!force_stop)
+    {
+        running = true;
+        assert(socket);
+        status = socket->connect(ip, port, sf::seconds(5));
+        if (status == sf::Socket::Done)
+        {
+            running = false;
+            return;
+        }
+        std::cout << "Can't connect" << std::endl;
+    }
+    running = false;
+}
+
+void ConnectThread::stop()
+{
+    if (thread.joinable())
+        thread.detach();
+    force_stop = true;
+}
+
+void ConnectThread::run(sf::TcpSocket *socket, sf::IpAddress ip, unsigned int port)
+{
+    this->socket = socket;
+    this->ip = ip;
+    this->port = port;
+    if (thread.joinable())
+    {
+        force_stop = true;
+        thread.join();
+    }
+    running = true;
+    thread = std::thread(ConnectThread::runThread, this);
 }
