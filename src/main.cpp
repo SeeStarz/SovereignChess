@@ -15,11 +15,11 @@
 #include <map>
 #include <cassert>
 
-Button *buttonAtPos(std::vector<Button *> buttons, sf::Vector2i mouse_pos)
+Button *buttonAtPos(std::vector<Button *> buttons, sf::Vector2f click_game_pos)
 {
     Button *clicked_button = NULL;
     for (Button *button : buttons)
-        if (button->active && button->rect.contains(sf::Vector2f(mouse_pos)))
+        if (button->active && button->rect.contains(click_game_pos))
             if (!clicked_button || button->layer > clicked_button->layer)
                 clicked_button = button;
     return clicked_button;
@@ -61,7 +61,7 @@ int main()
                 if (hold)
                     break;
 
-                clicked_button = buttonAtPos(buttons, sf::Mouse::getPosition(window));
+                clicked_button = buttonAtPos(buttons, window.mapPixelToCoords(sf::Mouse::getPosition(window)));
                 if (!clicked_button)
                     break;
                 clicked_button->press();
@@ -110,10 +110,10 @@ int main()
             clicked_button->hold();
         }
 
-        sf::Vector2i pos = sf::Mouse::getPosition(window);
+        sf::Vector2f pos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
         for (Button *button : buttons)
         {
-            if (button->rect.contains(sf::Vector2f(pos)))
+            if (button->rect.contains(pos))
                 button->hover = true;
             else
                 button->hover = false;
