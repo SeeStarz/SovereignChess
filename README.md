@@ -23,7 +23,7 @@ This project is by no means official, and this variation is not mine. Have a loo
 
 ## Multiplayer
 -Input a valid port (they probably should be the same on both machine idk don't ask).  
--If you are hosting just leave the host address empty (idk what it does, really). 
+-If you are hosting just leave the host address empty (idk what it does, really).  
 -If you are connecting, write down the host ip address.  
 -On local network (same wifi) you can "ipconfig" in cmd and copy paste the ipv4 address.  
 -On remote network, you can use hamachi's ip address.  
