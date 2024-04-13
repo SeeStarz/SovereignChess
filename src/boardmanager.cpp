@@ -217,7 +217,7 @@ void BoardManager::drawMoves()
     if (!selected_piece)
         return;
 
-    bool in_place = true;
+    bool in_place = false;
     for (int i = 0; i < moves.size(); i++)
     {
         const Move &move = moves[i];
@@ -225,8 +225,8 @@ void BoardManager::drawMoves()
             continue;
         if (move.piece_moved.faction != selected_piece->faction)
             continue;
-        if (in_place && move.start_pos != move.end_pos)
-            in_place = false;
+        if (!in_place && move.start_pos == move.end_pos)
+            in_place = true;
 
         if (move.piece_moved.type == Piece::Type::King && move.promotion_type == Piece::Type::Rook && getDistance(move.start_pos, move.end_pos) < 2)
         {
@@ -430,15 +430,15 @@ void BoardManager::onPress(TileButton &button)
             }
     }
     // Castling
-    else if (piece_moved.type == Piece::Type::King && getDistance(start_pos, end_pos) > 1.1f)
+    else if (piece_moved.type == Piece::Type::King && getDistance(start_pos, end_pos) > 1.5f)
     {
         if (!doMove(promotion_move))
         {
             Piece *piece = game_states.back().board[end_pos.y][end_pos.x].piece;
             std::vector<sf::Vector2i> pos_in_between = getInBetweens(start_pos, end_pos);
             // Get one distance move castle
-            if (piece->type == Piece::Type::Rook && pos_in_between.size() != 0)
-                assert(doMove(Move{start_pos, pos_in_between[0], piece_moved, false, Piece::Type::Rook}));
+            if (piece && piece->type == Piece::Type::Rook && pos_in_between.size() != 0)
+                doMove(Move{start_pos, pos_in_between[0], piece_moved, false, Piece::Type::Rook});
         }
         selected_piece = NULL;
     }
