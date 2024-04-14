@@ -1,5 +1,6 @@
 # Does not account for changed header files
 
+SHELL = cmd
 VPATH = ..\\src
 SFML = ..\\..\\libs\\SFML-2.5.1
 objects = boardmanager.o button.o gamestate.o helper.o main.o mainmenu.o move.o piece.o texture.o
