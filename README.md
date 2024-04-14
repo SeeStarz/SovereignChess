@@ -1,6 +1,8 @@
 # Sovereign Chess
 
-This project is a digital app version of a chess variation "Sovereign Chess" by Mark Bates. This project is a hobby project, expect there to be bugs and messy undocumented code.
+This project is a digital app version of a chess variation "Sovereign Chess" by Mark Bates. This project is a hobby project, expect there to be bugs and messy undocumented code.  
+
+### **!!! IMPORTANT !!! Currently only supports windows OS. Code is tested with windows 11.**
 
 This project is by no means official, and this variation is not mine. Have a look at https://www.infinitepigames.com/sovereign-chess.
 
