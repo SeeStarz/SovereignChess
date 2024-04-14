@@ -214,6 +214,14 @@ void BoardManager::drawMoves()
 {
     assert(legal_moves.size() == game_states.size());
     std::vector<Move> moves = legal_moves.back();
+
+    if (played_moves.size() > 0)
+    {
+        const Move &move = played_moves.back();
+        drawSquare(move.start_pos.x, move.start_pos.y, sf::Color(50, 255, 50, 50));
+        drawSquare(move.end_pos.x, move.end_pos.y, sf::Color(50, 255, 50, 50));
+    }
+
     if (!selected_piece)
         return;
 
@@ -253,6 +261,7 @@ void BoardManager::drawMoves()
         else
             drawSquare(move.end_pos.x, move.end_pos.y, sf::Color(255, 0, 0, 50));
     }
+
     if (!in_place)
         drawSquare(selected_piece->pos.x, selected_piece->pos.y, sf::Color(0, 255, 0, 50));
 
