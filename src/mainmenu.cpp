@@ -155,7 +155,10 @@ void MainMenu::drawMenu()
 void MainMenu::tick()
 {
     if (!in_menu)
+    {
+        board_manager.checkNetwork();
         return;
+    }
 
     if (!thread.running && thread.status == sf::Socket::Done)
     {

@@ -22,6 +22,7 @@ BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
     selected_piece = NULL;
     socket = NULL;
     player1_is_white = true;
+    swap_done = false;
     t_listener_id = -1;
     p_listener_id = -1;
     o_listener_id = -1;
@@ -73,9 +74,12 @@ void BoardManager::startGame(bool player1_is_white, sf::TcpSocket *socket)
     if (socket)
         socket->setBlocking(false);
     this->player1_is_white = player1_is_white;
+    swap_done = false;
 
     enableButtons();
     other_buttons["king0"].active = true;
+
+    checkmate = 0;
 }
 
 void BoardManager::drawSquare(int x, int y, sf::Color color)
@@ -376,6 +380,29 @@ void BoardManager::drawExtra()
         text.setString("P-2 Choose Color");
         window.draw(text);
     }
+
+    if (checkmate != 0)
+    {
+        assert(checkmate == -1 || checkmate == 1 || checkmate == 2);
+        std::string str;
+        text.setPosition(text_offset.x, text_offset.y + text_size * 7.5f);
+        if (checkmate == 2)
+            str = "Stalemate!";
+        else
+            str = "Checkmate!";
+        text.setString(str);
+        window.draw(text);
+
+        text.setPosition(text_offset.x, text_offset.y + text_size * 8.5f);
+        if (checkmate == 2)
+            str = "It's a Draw";
+        else if (checkmate == -1)
+            str = socket == NULL ? "Player 2 Wins" : "You Lost";
+        else
+            str = socket == NULL ? "Player 1 Wins" : "You Win";
+        text.setString(str);
+        window.draw(text);
+    }
 }
 
 void BoardManager::draw()
@@ -384,6 +411,24 @@ void BoardManager::draw()
     drawPieces();
     drawMoves();
     drawExtra();
+}
+
+void BoardManager::isGameDone()
+{
+    if (legal_moves.back().size() != 0)
+    {
+        checkmate = 0;
+        return;
+    }
+
+    GameState &game_state = game_states.back();
+    sf::Vector2i king_pos = game_state.player_white_to_move ? game_state.player_white_king->pos : game_state.player_black_king->pos;
+    int faction = game_state.player_white_to_move ? game_state.player_white_color : game_state.player_black_color;
+
+    if (game_state.getAllChecks(king_pos, faction).size() == 0)
+        checkmate = 2;
+    else
+        checkmate = player1_is_white == game_state.player_white_to_move ? -1 : 1;
 }
 
 void BoardManager::onPress(TileButton &button)
@@ -646,6 +691,8 @@ bool BoardManager::doMove(const Move &move)
     game_states.push_back(std::move(game_state));
     played_moves.push_back(move);
     legal_moves.push_back(game_states.back().getMoves());
+
+    isGameDone();
 
     refreshOtherButtons();
 

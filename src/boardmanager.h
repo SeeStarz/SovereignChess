@@ -59,6 +59,8 @@ private:
     bool doMove(const Move &move);
     void refreshOtherButtons();
 
+    void isGameDone();
+
 public:
     BoardManager(sf::RenderWindow &window);
     // Player 1 is the user playing, socket=NULL indicates offline play
@@ -68,6 +70,10 @@ public:
     void enableButtons();
     void checkNetwork();
     void draw();
+
+    // 0 = running, 1 = checkmate, -1 = checkmated, 2 = stalemate
+    // from player 1 standpoint
+    int checkmate;
 };
 
 #endif
