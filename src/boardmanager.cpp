@@ -7,6 +7,7 @@
 #include "button.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
+#include <SFML/Audio.hpp>
 #include <string>
 #include <utility>
 #include <cassert>
@@ -80,6 +81,9 @@ void BoardManager::startGame(bool player1_is_white, sf::TcpSocket *socket)
     other_buttons["king0"].active = true;
 
     checkmate = 0;
+
+    sound_player.setBuffer(loadable.sounds[0]);
+    sound_player.play();
 }
 
 void BoardManager::drawSquare(int x, int y, sf::Color color)
@@ -693,8 +697,15 @@ bool BoardManager::doMove(const Move &move)
     legal_moves.push_back(game_states.back().getMoves());
 
     isGameDone();
-
     refreshOtherButtons();
+
+    if (move.piece_moved.type == Piece::Type::King && move.promotion_type == Piece::Type::Rook)
+        sound_player.setBuffer(loadable.sounds[3]);
+    else if (move.is_capture)
+        sound_player.setBuffer(loadable.sounds[2]);
+    else
+        sound_player.setBuffer(loadable.sounds[1]);
+    sound_player.play();
 
     return true;
 }

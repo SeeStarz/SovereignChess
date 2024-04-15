@@ -10,6 +10,7 @@
 #include "button.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
+#include <SFML/Audio.hpp>
 #include <vector>
 #include <map>
 #include <string>
@@ -33,6 +34,7 @@ private:
     unsigned int t_listener_id;
     unsigned int p_listener_id;
     unsigned int o_listener_id;
+    sf::Sound sound_player;
 
     void drawSquare(int x, int y, sf::Color color);
     void drawBoard();

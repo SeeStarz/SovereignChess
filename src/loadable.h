@@ -12,7 +12,7 @@ public:
     std::array<sf::Texture, 6> piece_main;
     std::array<sf::Texture, 6> piece_base;
     std::array<sf::Texture, 6> piece_neutral;
-    std::array<sf::SoundBuffer, 3> sounds;
+    std::array<sf::SoundBuffer, 4> sounds;
     sf::Font font;
 
     void load();

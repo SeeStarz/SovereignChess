@@ -28,12 +28,11 @@ Button *buttonAtPos(std::vector<Button *> buttons, sf::Vector2f click_game_pos)
 int main()
 {
     sf::RenderWindow window(sf::VideoMode(width, height), "Sovereign Chess");
-    Loadable loadable;
-    loadable.load();
 
     sf::Image icon;
     if (!icon.loadFromFile("..\\img\\king.png"))
         throw std::runtime_error("");
+
     window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
     window.setFramerateLimit(60);
 
