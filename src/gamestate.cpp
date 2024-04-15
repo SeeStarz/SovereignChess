@@ -789,10 +789,16 @@ void GameState::getRookMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
             Tile &tile = board[end_pos.y][end_pos.x];
             if (tile.blocked)
                 continue;
-            if (tile.color == piece.faction)
-                continue;
 
             Piece *target_piece = tile.piece;
+            if (tile.color == piece.faction)
+            {
+                if (target_piece == NULL)
+                    continue;
+                else
+                    break;
+            }
+
             if (target_piece == NULL)
                 moves.push_back(Move{piece.pos, end_pos, piece, false});
             else if (target_piece->main_owner == enemy_color)
@@ -831,10 +837,15 @@ void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
             Tile &tile = board[end_pos.y][end_pos.x];
             if (tile.blocked)
                 continue;
-            if (tile.color == piece.faction)
-                continue;
-
             Piece *target_piece = tile.piece;
+            if (tile.color == piece.faction)
+            {
+                if (target_piece == NULL)
+                    continue;
+                else
+                    break;
+            }
+
             if (target_piece == NULL)
                 moves.push_back(Move{piece.pos, end_pos, piece, false});
             else if (target_piece->main_owner == enemy_color)
