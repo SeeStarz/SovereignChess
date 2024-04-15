@@ -56,7 +56,7 @@ Locate MakeFile inside obj directory
 Run ```make```  
 Executable can be found inside dll folder  
 
-### Version 1.1.x
+### Version 1.1.x and 1.0.x
 Download SFML 2.5.1 with compatible compiler/IDE  
 https://www.sfml-dev.org/tutorials/2.5/  
 compiler settings can be found in .vscode/tasks.json  
