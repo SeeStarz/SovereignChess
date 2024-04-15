@@ -37,6 +37,7 @@ https://www.infinitepigames.com/about
 Library: https://www.sfml-dev.org/ under Zlib.  
 https://www.sfml-dev.org/license.php  
 Pieces: https://github.com/lichess-org/lila/tree/master/public/piece/pixel under AGPLv3+.  
+-Changes to pieces: converted svg to png and ico, changed color to be monochromatic, modify pngs for piece bases  
 https://www.gnu.org/licenses/agpl-3.0.en.html  
 Audio: https://freesound.org/people/el_boss/packs/30764/ under CC0.  
 https://creativecommons.org/publicdomain/zero/1.0/legalcode.en
