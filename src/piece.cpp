@@ -1,5 +1,5 @@
 #include "piece.h"
-#include "texture.h"
+#include "loadable.h"
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Network/Packet.hpp>
 #include <stdexcept>

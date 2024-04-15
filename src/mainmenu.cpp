@@ -1,6 +1,6 @@
 #include "mainmenu.h"
 #include "displayconfig.h"
-#include "texture.h"
+#include "loadable.h"
 #include "helper.h"
 #include "event.h"
 #include <iostream>
@@ -12,7 +12,7 @@
 
 MainMenu::MainMenu(sf::RenderWindow &window) : window(window), board_manager(window)
 {
-    texture.load();
+    loadable.load();
 
     socket.setBlocking(true);
     listener.setBlocking(true);
@@ -58,7 +58,7 @@ void MainMenu::drawMenu()
     sf::RectangleShape shape = sf::RectangleShape(sf::Vector2f(text_size * 12, text_size * 2));
     shape.setFillColor(sf::Color(255, 255, 255, 127));
     sf::Text text;
-    text.setFont(texture.font);
+    text.setFont(loadable.font);
     text.setFillColor(sf::Color::Black);
     text.setCharacterSize(text_size);
     sf::FloatRect rect;

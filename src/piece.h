@@ -1,7 +1,7 @@
 #ifndef PIECE_H
 #define PIECE_H
 
-#include "texture.h"
+#include "loadable.h"
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Network/Packet.hpp>
 #include <array>

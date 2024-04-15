@@ -16,8 +16,8 @@
 
 BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
 {
-    texture = Texture();
-    texture.load();
+    loadable = Loadable();
+    loadable.load();
 
     selected_piece = NULL;
     socket = NULL;
@@ -166,7 +166,7 @@ void BoardManager::drawPieces()
 
 void BoardManager::drawPiece(const Piece &piece)
 {
-    sf::Sprite main_sprite(texture.piece_main[piece.type]);
+    sf::Sprite main_sprite(loadable.piece_main[piece.type]);
     main_sprite.setScale(scale, scale);
     main_sprite.setColor(colors[piece.faction]);
     main_sprite.setPosition(sf::Vector2f(piece.pos.x * tile_size, piece.pos.y * tile_size) + offset);
@@ -174,7 +174,7 @@ void BoardManager::drawPiece(const Piece &piece)
 
     if (piece.main_owner != -1)
     {
-        sf::Sprite base_sprite(texture.piece_base[piece.type]);
+        sf::Sprite base_sprite(loadable.piece_base[piece.type]);
         base_sprite.setScale(scale, scale);
         base_sprite.setColor(colors[piece.main_owner]);
         base_sprite.setPosition(sf::Vector2f(piece.pos.x * tile_size, piece.pos.y * tile_size) + offset);
@@ -182,7 +182,7 @@ void BoardManager::drawPiece(const Piece &piece)
     }
     else
     {
-        sf::Sprite neutral_sprite(texture.piece_neutral[piece.type]);
+        sf::Sprite neutral_sprite(loadable.piece_neutral[piece.type]);
         neutral_sprite.setScale(scale, scale);
         neutral_sprite.setPosition(sf::Vector2f(piece.pos.x * tile_size, piece.pos.y * tile_size) + offset);
         window.draw(neutral_sprite);
@@ -191,7 +191,7 @@ void BoardManager::drawPiece(const Piece &piece)
 
 void BoardManager::drawPiece(const Piece &piece, const sf::FloatRect &rect)
 {
-    sf::Sprite main_sprite(texture.piece_main[piece.type]);
+    sf::Sprite main_sprite(loadable.piece_main[piece.type]);
     main_sprite.setScale(rect.width / sprite_size, rect.height / sprite_size);
     main_sprite.setColor(colors[piece.faction]);
     main_sprite.setPosition(rect.left, rect.top);
@@ -199,7 +199,7 @@ void BoardManager::drawPiece(const Piece &piece, const sf::FloatRect &rect)
 
     if (piece.main_owner != -1)
     {
-        sf::Sprite base_sprite(texture.piece_base[piece.type]);
+        sf::Sprite base_sprite(loadable.piece_base[piece.type]);
         base_sprite.setScale(rect.width / sprite_size, rect.height / sprite_size);
         base_sprite.setColor(colors[piece.main_owner]);
         base_sprite.setPosition(rect.left, rect.top);
@@ -207,7 +207,7 @@ void BoardManager::drawPiece(const Piece &piece, const sf::FloatRect &rect)
     }
     else
     {
-        sf::Sprite neutral_sprite(texture.piece_neutral[piece.type]);
+        sf::Sprite neutral_sprite(loadable.piece_neutral[piece.type]);
         neutral_sprite.setScale(rect.width / sprite_size, rect.height / sprite_size);
         neutral_sprite.setPosition(rect.left, rect.top);
         window.draw(neutral_sprite);
@@ -288,7 +288,7 @@ void BoardManager::drawMoves()
 void BoardManager::drawExtra()
 {
     sf::Text text;
-    text.setFont(texture.font);
+    text.setFont(loadable.font);
     text.setCharacterSize(text_size);
     text.setFillColor(sf::Color::Black);
     text.setPosition(text_offset);

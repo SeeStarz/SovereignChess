@@ -2,7 +2,7 @@
 #define MAINMENU_H
 
 #include "button.h"
-#include "texture.h"
+#include "loadable.h"
 #include "event.h"
 #include "boardmanager.h"
 #include <SFML/Graphics.hpp>
@@ -38,7 +38,7 @@ private:
     sf::TcpSocket socket;
     std::map<std::string, OtherButton> buttons;
     std::array<TextFieldButton, 2> text_fields;
-    Texture texture;
+    Loadable loadable;
     bool in_menu;
     sf::IpAddress ip;
     unsigned short port;

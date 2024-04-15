@@ -1,5 +1,5 @@
 #include "piece.h"
-#include "texture.h"
+#include "loadable.h"
 #include "helper.h"
 #include "displayconfig.h"
 #include "gamestate.h"
@@ -28,8 +28,8 @@ Button *buttonAtPos(std::vector<Button *> buttons, sf::Vector2f click_game_pos)
 int main()
 {
     sf::RenderWindow window(sf::VideoMode(width, height), "Sovereign Chess");
-    Texture texture;
-    texture.load();
+    Loadable loadable;
+    loadable.load();
 
     sf::Image icon;
     if (!icon.loadFromFile("..\\img\\king.png"))

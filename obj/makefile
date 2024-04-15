@@ -3,7 +3,7 @@
 SHELL = cmd
 VPATH = ..\\src
 SFML = ..\\..\\libs\\SFML-2.5.1
-objects = boardmanager.o button.o gamestate.o helper.o main.o mainmenu.o move.o piece.o texture.o
+objects = boardmanager.o button.o gamestate.o helper.o loadable.o main.o mainmenu.o move.o piece.o
 
 main : $(objects)
 	g++ -fdiagnostics-color=always -g -pthread \

@@ -4,7 +4,7 @@
 #include "helper.h"
 #include "displayconfig.h"
 #include "gamestate.h"
-#include "texture.h"
+#include "loadable.h"
 #include "piece.h"
 #include "move.h"
 #include "button.h"
@@ -24,7 +24,7 @@ private:
     std::array<PromotionButton, 5> promotion_buttons;
     std::map<std::string, OtherButton> other_buttons;
     sf::RenderWindow &window;
-    Texture texture;
+    Loadable loadable;
     Piece *selected_piece;
     Piece defection_piece;
     sf::TcpSocket *socket;
