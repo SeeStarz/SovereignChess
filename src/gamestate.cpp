@@ -835,7 +835,7 @@ void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
                 break;
 
             Tile &tile = board[end_pos.y][end_pos.x];
-            if (tile.blocked)
+            if (tile.blocked && *tile.other_tile->piece != piece)
                 continue;
             Piece *target_piece = tile.piece;
             if (tile.color == piece.faction)
@@ -989,6 +989,7 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
                 moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::Bishop});
                 moves.push_back(Move{piece.pos, end_pos, piece, false, Piece::Type::Knight});
 
+                // Temporarily remove piece to find checks
                 Tile &tile = board[piece.pos.y][piece.pos.x];
                 Piece *pointed_piece = tile.piece;
                 assert(tile.piece != NULL);
