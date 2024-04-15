@@ -46,3 +46,17 @@ https://creativecommons.org/publicdomain/zero/1.0/legalcode.en
 <img src="https://i.imgur.com/8TsV77Z.png" width="600" />
 <img src="https://i.imgur.com/vCSwhJX.png" width="600" />
 <img src="https://i.imgur.com/GDuTJ3H.png" width="600" />
+
+## Build This Project Yourself
+### Version 1.2.x  
+Download SFML 2.6.1 with compatible compiler/IDE  
+https://www.sfml-dev.org/tutorials/2.6/  
+Download MakeFile  
+Locate MakeFile inside obj directory  
+Run ```make```  
+Executable can be found inside dll folder  
+
+### Version 1.1.x
+Download SFML 2.5.1 with compatible compiler/IDE  
+https://www.sfml-dev.org/tutorials/2.5/  
+compiler settings can be found in .vscode/tasks.json  
