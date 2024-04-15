@@ -31,6 +31,16 @@ This project is by no means official, and this variation is not mine. Have a loo
 -On remote network, you can use hamachi's ip address.  
 -Port forwarding probably works, try yourself idk how to do it.
 
+## Credits
+Variation maker: Mark Bates.  
+https://www.infinitepigames.com/about  
+Library: https://www.sfml-dev.org/ under Zlib.  
+https://www.sfml-dev.org/license.php  
+Pieces: https://github.com/lichess-org/lila/tree/master/public/piece/pixel under AGPLv3+.  
+https://www.gnu.org/licenses/agpl-3.0.en.html  
+Audio: https://freesound.org/people/el_boss/packs/30764/ under CC0.  
+https://creativecommons.org/publicdomain/zero/1.0/legalcode.en
+
 ## Images
 <img src="https://i.imgur.com/8TsV77Z.png" width="600" />
 <img src="https://i.imgur.com/vCSwhJX.png" width="600" />
