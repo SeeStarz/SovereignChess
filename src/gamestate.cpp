@@ -538,7 +538,8 @@ std::vector<Piece *> GameState::getAllChecks(sf::Vector2i pos, int faction)
             {
                 // Can't capture on own color
                 if (target_piece->faction == tile_color)
-                    break;
+                    if (target_piece->type != Piece::Type::King || tile.color == ally_color || tile.color == enemy_color || tile.color == -1) // King cannot do a moving defection
+                        break;
 
                 if (target_piece->type == Piece::Queen)
                     checking_pieces.push_back(target_piece);
@@ -676,7 +677,7 @@ void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
         if (!checkInBoard(end_pos))
             continue;
         Tile &tile = board[end_pos.y][end_pos.x];
-        if (tile.blocked)
+        if (tile.blocked && *tile.other_tile->piece != piece)
             continue;
         if (tile.color == piece.faction)
             continue;
@@ -712,7 +713,7 @@ void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
                 sf::Vector2i end_pos = king_piece.pos + directions[j];
                 assert(checkInBoard(king_piece.pos));
                 Tile &tile = board[end_pos.y][end_pos.x];
-                if (tile.blocked)
+                if (tile.blocked && *tile.other_tile->piece != piece)
                     continue;
                 if (getAllChecks(end_pos, king_piece.faction).size() != 0)
                     continue;
@@ -787,7 +788,7 @@ void GameState::getRookMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
                 break;
 
             Tile &tile = board[end_pos.y][end_pos.x];
-            if (tile.blocked)
+            if (tile.blocked && *tile.other_tile->piece != piece)
                 continue;
 
             Piece *target_piece = tile.piece;
@@ -880,7 +881,7 @@ void GameState::getKnightMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
             continue;
 
         Tile &tile = board[end_pos.y][end_pos.x];
-        if (tile.blocked)
+        if (tile.blocked && *tile.other_tile->piece != piece)
             continue;
         if (tile.color == piece.faction)
             continue;
@@ -968,7 +969,7 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
             continue;
 
         Tile &tile = board[end_pos.y][end_pos.x];
-        if (tile.blocked)
+        if (tile.blocked && *tile.other_tile->piece != piece)
             continue;
         if (tile.color == piece.faction)
             continue;
@@ -1026,7 +1027,7 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
             continue;
 
         Tile &tile = board[end_pos.y][end_pos.x];
-        if (tile.blocked)
+        if (tile.blocked && *tile.other_tile->piece != piece)
             continue;
         if (tile.color == piece.faction)
             continue;
