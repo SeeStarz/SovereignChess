@@ -31,6 +31,7 @@ private:
     sf::TcpSocket *socket;
     bool player1_is_white;
     bool swap_done;
+    bool swapped;
     unsigned int t_listener_id;
     unsigned int p_listener_id;
     unsigned int o_listener_id;
@@ -63,11 +64,15 @@ private:
     void refreshOtherButtons();
 
     void isGameDone();
+    void writeToFile();
+    std::string moveToStr(Move move);
+    Move strToMove(std::string string, char separator = ',');
 
 public:
     BoardManager(sf::RenderWindow &window);
     // Player 1 is the user playing, socket=NULL indicates offline play
     void startGame(bool player1_is_white = true, sf::TcpSocket *socket = NULL);
+    void debugGame(std::string file_path);
     void registerButtons(std::vector<Button *> &buttons);
     void disableButtons();
     void enableButtons();

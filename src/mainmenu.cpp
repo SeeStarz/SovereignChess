@@ -14,7 +14,6 @@ MainMenu::MainMenu(sf::RenderWindow &window) : window(window), board_manager(win
 {
     loadable.load();
 
-    // Socket can only accept in blocking mode
     socket.setBlocking(true);
     listener.setBlocking(true);
     in_menu = true;
@@ -318,6 +317,7 @@ void ConnectThread::runThread()
     {
         running = true;
         assert(socket);
+        assert(socket->isBlocking()); // Socket can only accept in blocking mode
         status = socket->connect(ip, port, sf::seconds(5));
         if (status == sf::Socket::Done)
         {

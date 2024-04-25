@@ -11,11 +11,11 @@ class Piece
 public:
     enum Type
     {
-        King,
         Queen,
+        Knight,
         Rook,
         Bishop,
-        Knight,
+        King,
         Pawn
     };
     Piece(const sf::Vector2i &pos, int faction, int main_owner, int direct_owner, const Type type);

@@ -14,6 +14,8 @@
 #include <iostream>
 #include <format>
 #include <functional>
+#include <fstream>
+#include <sstream>
 
 BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
 {
@@ -70,6 +72,9 @@ BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
         other_buttons["exityes"] = OtherButton(rect, 1, "exityes", false);
         rect.left = rect.left + rect.width + text_size;
         other_buttons["exitno"] = OtherButton(rect, 1, "exitno", false);
+
+        rect = sf::FloatRect(text_offset.x, height - offset.y - tile_size * 2 - text_size * 6, text_size * 11, text_size * 2);
+        other_buttons["savegame"] = OtherButton(rect, 0, "savegame", false);
     }
 }
 
@@ -86,6 +91,7 @@ void BoardManager::startGame(bool player1_is_white, sf::TcpSocket *socket)
         socket->setBlocking(false);
     this->player1_is_white = player1_is_white;
     swap_done = false;
+    swapped = false;
 
     enableButtons();
 
@@ -93,6 +99,51 @@ void BoardManager::startGame(bool player1_is_white, sf::TcpSocket *socket)
 
     sound_player.setBuffer(loadable.sounds[0]);
     sound_player.play();
+}
+
+void BoardManager::debugGame(std::string file_path)
+{
+    startGame();
+
+    std::ifstream file = std::ifstream(file_path);
+    std::string line;
+    while (std::getline(file, line))
+    {
+        std::stringstream ss(line);
+        char ch;
+        bool comment = false;
+        std::string token;
+        std::string value;
+        bool reading_token = true;
+        while (ss >> ch)
+        {
+            if (ch == '#')
+            {
+                comment = true;
+                break;
+            }
+            else if (ch == '=')
+            {
+                assert(reading_token);
+                reading_token = false;
+            }
+            else if (reading_token)
+                token += ch;
+            else
+                value += ch;
+        }
+        if (comment)
+            continue;
+
+        if (token == "move")
+        {
+            Move move = strToMove(value);
+            assert(doMove(move));
+        }
+    }
+    file.close();
+
+    enableButtons();
 }
 
 void BoardManager::drawSquare(int x, int y, sf::Color color)
@@ -439,6 +490,16 @@ void BoardManager::drawExtra()
         text.setString("Exit Game");
         alignText(text, rect);
         window.draw(text);
+
+        rect = other_buttons["savegame"].rect;
+        shape = sf::RectangleShape(sf::Vector2f(rect.width, rect.height));
+        shape.setPosition(rect.left, rect.top);
+        shape.setFillColor(sf::Color(255, 255, 255, 127));
+        window.draw(shape);
+
+        text.setString("Save Game");
+        alignText(text, rect);
+        window.draw(text);
     }
 
     if (other_buttons["exityes"].active)
@@ -506,6 +567,119 @@ void BoardManager::isGameDone()
         checkmate = 2;
     else
         checkmate = player1_is_white == game_state.player_white_to_move ? -1 : 1;
+}
+
+void BoardManager::writeToFile()
+{
+    int i = 0;
+    while (i < 100)
+    {
+        std::string path = "..\\games\\game" + std::to_string(i) + ".txt";
+        std::ifstream ifstream = std::ifstream(path);
+        if (ifstream) // File already exists
+        {
+            ifstream.close();
+            i++;
+            continue;
+        }
+
+        std::stringstream ss;
+        ss << "# This is a comment\n";
+        std::string str = player1_is_white != swapped ? "P1\n" : "P2\n";
+        ss << "# Started as: "
+           << str;
+        str = socket ? "Online\n" : "Offline\n";
+        ss << "# Play mode: "
+           << str;
+        if (played_moves.size() > 0)
+            ss << "move=" << moveToStr(played_moves[0]) << "\n";
+        ss << "swapped=" << swapped << "\n";
+        for (int i = 1; i < played_moves.size(); i++)
+        {
+            Move move = played_moves[i];
+            ss << "move=" << moveToStr(move) << "\n";
+        }
+        switch (checkmate)
+        {
+        case 0:
+            str = "Undecided\n";
+            break;
+        case 1:
+            str = "P1 Win\n";
+            break;
+        case -1:
+            str = "P2 Win\n";
+            break;
+        case 2:
+            str = "Draw\n";
+            break;
+        }
+        ss << "# Result: " << str;
+
+        std::ofstream file = std::ofstream(path);
+        if (!file.is_open())
+            std::cout << "Cannot Create File: " << path << std::endl;
+        file << ss.str();
+        file.close();
+        break;
+    }
+}
+
+std::string BoardManager::moveToStr(Move move)
+{
+    std::string str = "";
+    std::array<int, 6> arr;
+    arr[0] = move.start_pos.x;
+    arr[1] = move.start_pos.y;
+    arr[2] = move.end_pos.x;
+    arr[3] = move.end_pos.y;
+    arr[4] = move.promotion_type;
+    arr[5] = move.piece_moved.faction;
+
+    for (int i = 0; i < 6; i++)
+    {
+        if (arr[i] < 10)
+            str += "0";
+        str += std::to_string(arr[i]) + ",";
+    }
+    str = str.substr(0, str.size() - 1);
+    return str;
+}
+
+Move BoardManager::strToMove(std::string string, char separator)
+{
+    std::array<int, 6> arr;
+    std::string value = "";
+    std::stringstream ss(string);
+    int i = 0;
+    char ch;
+    while (ss >> ch)
+    {
+        if (ch == separator)
+        {
+            arr[i] = std::stoi(value);
+            i++;
+            value = "";
+        }
+        else
+        {
+            value += ch;
+        }
+    }
+    if (value != "")
+        arr[i] = std::stoi(value);
+
+    Piece piece = *game_states.back().board[arr[1]][arr[0]].piece;
+    bool is_capture = game_states.back().board[arr[3]][arr[2]].piece;
+    piece.faction = arr[5];
+    Move move = Move{
+        sf::Vector2i(arr[0], arr[1]),
+        sf::Vector2i(arr[2], arr[3]),
+        piece,
+        is_capture,
+        Piece::Type(arr[4])};
+
+    return move;
 }
 
 void BoardManager::onPress(TileButton &button)
@@ -635,12 +809,14 @@ void BoardManager::onPress(OtherButton &button)
         if (button.identifier.substr(4, 1) == "0")
         {
             swap_done = true;
+            swapped = false;
             refreshOtherButtons();
             packet << sf::Uint8(false);
         }
         else if (button.identifier.substr(4, 1) == "1")
         {
             swap_done = true;
+            swapped = true;
             player1_is_white = !player1_is_white;
             refreshOtherButtons();
             packet << sf::Uint8(true);
@@ -673,6 +849,10 @@ void BoardManager::onPress(OtherButton &button)
         {
             enableButtons();
         }
+    }
+    else if (button.identifier == "savegame")
+    {
+        writeToFile();
     }
 }
 
@@ -829,11 +1009,14 @@ void BoardManager::refreshOtherButtons()
     other_buttons["exitprompt"].active = true;
     other_buttons["exityes"].active = false;
     other_buttons["exitno"].active = false;
+    other_buttons["savegame"].active = true;
 }
 
 void BoardManager::checkNetwork()
 {
     if (socket == NULL)
+        return;
+    if (checkmate != 0)
         return;
     assert(!socket->isBlocking());
 
@@ -842,8 +1025,8 @@ void BoardManager::checkNetwork()
 
     if (status == sf::Socket::Disconnected)
     {
-        std::cout << "Disconnected, changing to offline mode" << std::endl;
-        socket = NULL;
+        std::cout << "Disconnected" << std::endl;
+        checkmate = 2;
         return;
     }
     else if (status != sf::Socket::Done)

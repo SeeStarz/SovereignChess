@@ -2,7 +2,7 @@
 
 void Loadable::load()
 {
-    std::array<std::string, 6> piece_names = {"king", "queen", "rook", "bishop", "knight", "pawn"};
+    std::array<std::string, 6> piece_names = {"queen", "knight", "rook", "bishop", "king", "pawn"};
     for (int i = 0; i < 6; i++)
     {
         if (!piece_main[i].loadFromFile("..\\img\\" + piece_names[i] + ".png"))
