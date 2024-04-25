@@ -37,6 +37,7 @@ private:
     sf::Sound sound_player;
 
     void drawSquare(int x, int y, sf::Color color);
+    void drawSprite(int x, int y, const sf::Texture &texture, sf::Color color = sf::Color::White);
     void drawBoard();
     void drawPieces();
     void drawExtra();

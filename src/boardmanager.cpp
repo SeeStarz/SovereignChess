@@ -94,6 +94,15 @@ void BoardManager::drawSquare(int x, int y, sf::Color color)
     window.draw(square);
 }
 
+void BoardManager::drawSprite(int x, int y, const sf::Texture &texture, sf::Color color)
+{
+    sf::Sprite sprite = sf::Sprite(texture);
+    sprite.setScale(scale, scale);
+    sprite.setPosition(offset + sf::Vector2f(tile_size * x, tile_size * y));
+    sprite.setColor(color);
+    window.draw(sprite);
+}
+
 void BoardManager::drawBoard()
 {
     for (int i = 0; i < 16; i++)
@@ -226,8 +235,10 @@ void BoardManager::drawMoves()
     if (played_moves.size() > 0)
     {
         const Move &move = played_moves.back();
-        drawSquare(move.start_pos.x, move.start_pos.y, sf::Color(50, 255, 50, 50));
-        drawSquare(move.end_pos.x, move.end_pos.y, sf::Color(50, 255, 50, 50));
+        // drawSquare(move.start_pos.x, move.start_pos.y, sf::Color(50, 255, 50, 50));
+        // drawSquare(move.end_pos.x, move.end_pos.y, sf::Color(50, 255, 50, 50));
+        drawSprite(move.start_pos.x, move.start_pos.y, loadable.move_marker, sf::Color(0, 0, 255));
+        drawSprite(move.end_pos.x, move.end_pos.y, loadable.move_marker, sf::Color(0, 0, 255));
     }
 
     if (!selected_piece)
@@ -240,6 +251,8 @@ void BoardManager::drawMoves()
         if (move.start_pos != selected_piece->pos)
             continue;
         if (move.piece_moved.faction != selected_piece->faction)
+            continue;
+        if (move.piece_moved.type == Piece::Type::Pawn && move.promotion_type != Piece::Type::Pawn && move.promotion_type != Piece::Type::Queen)
             continue;
         if (!in_place && move.start_pos == move.end_pos)
             in_place = true;
@@ -264,27 +277,19 @@ void BoardManager::drawMoves()
                     assert(piece->type == Piece::Type::King);
             }
 
-            drawSquare(rook_pos.x, rook_pos.y, sf::Color(255, 0, 0, 50));
+            // drawSquare(rook_pos.x, rook_pos.y, sf::Color(255, 0, 0, 50));
+            drawSprite(rook_pos.x, rook_pos.y, loadable.move_marker, sf::Color(0, 255, 0));
         }
+        else if (move.is_capture)
+            // drawSquare(move.end_pos.x, move.end_pos.y, sf::Color(255, 0, 0, 50));
+            drawSprite(move.end_pos.x, move.end_pos.y, loadable.move_marker, sf::Color(255, 0, 0));
         else
-            drawSquare(move.end_pos.x, move.end_pos.y, sf::Color(255, 0, 0, 50));
+            drawSprite(move.end_pos.x, move.end_pos.y, loadable.move_marker, sf::Color(0, 255, 0));
     }
 
     if (!in_place)
-        drawSquare(selected_piece->pos.x, selected_piece->pos.y, sf::Color(0, 255, 0, 50));
-
-    for (int i = 0; i < 5; i++)
-    {
-        if (!promotion_buttons[i].active)
-            continue;
-
-        PromotionButton &promotion_button = promotion_buttons[i];
-        drawSquare(promotion_button.pos.x, promotion_button.pos.y + i, sf::Color(255, 255, 255, 255));
-
-        std::array<Piece::Type, 5> piece_types = {Piece::Type::Queen, Piece::Type::Knight, Piece::Type::Rook, Piece::Type::Bishop, Piece::Type::King};
-
-        drawPiece(Piece(promotion_button.pos + sf::Vector2i{0, i}, selected_piece->faction, selected_piece->main_owner, selected_piece->direct_owner, piece_types[i]));
-    }
+        // drawSquare(selected_piece->pos.x, selected_piece->pos.y, sf::Color(0, 255, 0, 50));
+        drawSprite(selected_piece->pos.x, selected_piece->pos.y, loadable.move_marker, sf::Color(0, 255, 0));
 }
 
 void BoardManager::drawExtra()
@@ -405,13 +410,26 @@ void BoardManager::drawExtra()
         text.setString(str);
         window.draw(text);
     }
+
+    for (int i = 0; i < 5; i++)
+    {
+        if (!promotion_buttons[i].active)
+            continue;
+
+        PromotionButton &promotion_button = promotion_buttons[i];
+        drawSquare(promotion_button.pos.x, promotion_button.pos.y + i, sf::Color(255, 255, 255, 255));
+
+        std::array<Piece::Type, 5> piece_types = {Piece::Type::Queen, Piece::Type::Knight, Piece::Type::Rook, Piece::Type::Bishop, Piece::Type::King};
+
+        drawPiece(Piece(promotion_button.pos + sf::Vector2i{0, i}, selected_piece->faction, selected_piece->main_owner, selected_piece->direct_owner, piece_types[i]));
+    }
 }
 
 void BoardManager::draw()
 {
     drawBoard();
-    drawPieces();
     drawMoves();
+    drawPieces();
     drawExtra();
 }
 

@@ -22,4 +22,7 @@ void Loadable::load()
         if (!sounds[i].loadFromFile("..\\audio\\" + audio_names[i] + ".mp3"))
             throw std::runtime_error("");
     }
+
+    if (!move_marker.loadFromFile("..\\img\\move_marker.png"))
+        throw std::runtime_error("");
 }

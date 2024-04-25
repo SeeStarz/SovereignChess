@@ -14,6 +14,7 @@ public:
     std::array<sf::Texture, 6> piece_neutral;
     std::array<sf::SoundBuffer, 4> sounds;
     sf::Font font;
+    sf::Texture move_marker;
 
     void load();
 };
