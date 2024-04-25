@@ -6,22 +6,6 @@
 #include <tuple>
 #include <vector>
 
-enum Color
-{
-    White,
-    Green,
-    LightGray,
-    Cyan,
-    Blue,
-    Purple,
-    Pink,
-    Red,
-    Orange,
-    DarkGray,
-    Yellow,
-    Black
-};
-
 const std::array<sf::Color, 12> colors =
     {sf::Color(255, 255, 255), // White
      sf::Color(31, 159, 31),   // Green
@@ -57,31 +41,31 @@ std::vector<sf::Vector2i> getInBetweens(sf::Vector2i pos1, sf::Vector2i pos2);
 
 float getDistance(sf::Vector2i pos1, sf::Vector2i pos2);
 
-const std::map<sf::Vector2i, Color, Vector2iLess> color_map = {
-    {{7, 7}, Color::White},
-    {{8, 8}, Color::White},
-    {{5, 10}, Color::Green},
-    {{10, 5}, Color::Green},
-    {{9, 6}, Color::LightGray},
-    {{6, 9}, Color::LightGray},
-    {{10, 7}, Color::Cyan},
-    {{5, 8}, Color::Cyan},
-    {{11, 4}, Color::Blue},
-    {{4, 11}, Color::Blue},
-    {{8, 5}, Color::Purple},
-    {{7, 10}, Color::Purple},
-    {{7, 5}, Color::Pink},
-    {{8, 10}, Color::Pink},
-    {{4, 4}, Color::Red},
-    {{11, 11}, Color::Red},
-    {{5, 7}, Color::Orange},
-    {{10, 8}, Color::Orange},
-    {{6, 6}, Color::DarkGray},
-    {{9, 9}, Color::DarkGray},
-    {{5, 5}, Color::Yellow},
-    {{10, 10}, Color::Yellow},
-    {{8, 7}, Color::Black},
-    {{7, 8}, Color::Black}};
+const std::map<sf::Vector2i, int, Vector2iLess> color_map = {
+    {{7, 7}, 0},
+    {{8, 8}, 0},
+    {{5, 10}, 1},
+    {{10, 5}, 1},
+    {{9, 6}, 2},
+    {{6, 9}, 2},
+    {{10, 7}, 3},
+    {{5, 8}, 3},
+    {{11, 4}, 4},
+    {{4, 11}, 4},
+    {{8, 5}, 5},
+    {{7, 10}, 5},
+    {{7, 5}, 6},
+    {{8, 10}, 6},
+    {{4, 4}, 7},
+    {{11, 11}, 7},
+    {{5, 7}, 8},
+    {{10, 8}, 8},
+    {{6, 6}, 9},
+    {{9, 9}, 9},
+    {{5, 5}, 10},
+    {{10, 10}, 10},
+    {{8, 7}, 11},
+    {{7, 8}, 11}};
 
 void alignText(sf::Text &text, const sf::FloatRect &rect);
 

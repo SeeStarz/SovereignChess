@@ -433,7 +433,7 @@ void GameState::makeBoard()
     {
         sf::Vector2i pos = it->first;
         Tile &tile = board[pos.y][pos.x];
-        Color color = it->second;
+        int color = it->second;
 
         tile.color = color;
         if (!tile_pos[color])
