@@ -59,7 +59,6 @@ private:
 
     void updateButtons();
     void drawMenu();
-    void connect();
 
 public:
     BoardManager board_manager;

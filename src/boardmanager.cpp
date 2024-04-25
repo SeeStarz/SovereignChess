@@ -49,9 +49,9 @@ BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
         std::string identifier = "king" + std::to_string(i);
         sf::FloatRect rect;
         if (i < 6)
-            rect = sf::FloatRect(tile_size * (16 + i) + offset.x * 2, height - offset.y - tile_size * 2, tile_size, tile_size);
+            rect = sf::FloatRect(tile_size * i + text_offset.x, height - offset.y - tile_size * 2, tile_size, tile_size);
         else
-            rect = sf::FloatRect(tile_size * (10 + i) + offset.x * 2, height - offset.y - tile_size, tile_size, tile_size);
+            rect = sf::FloatRect(tile_size * (i - 6) + text_offset.x, height - offset.y - tile_size, tile_size, tile_size);
         other_buttons[identifier] = OtherButton(rect, 0, identifier, false);
     }
 
@@ -60,6 +60,16 @@ BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
         other_buttons["swap1"] = OtherButton(rect, 0, "swap1", false);
         rect.left = rect.left + rect.width + text_size;
         other_buttons["swap0"] = OtherButton(rect, 0, "swap0", false);
+    }
+
+    {
+        sf::FloatRect rect = sf::FloatRect(text_offset.x, height - offset.y - tile_size * 2 - text_size * 3, text_size * 11, text_size * 2);
+        other_buttons["exitprompt"] = OtherButton(rect, 0, "exitprompt", false);
+
+        rect = sf::FloatRect(width / 2 - text_size * 6, height / 2, text_size * 5.5f, text_size * 2);
+        other_buttons["exityes"] = OtherButton(rect, 1, "exityes", false);
+        rect.left = rect.left + rect.width + text_size;
+        other_buttons["exitno"] = OtherButton(rect, 1, "exitno", false);
     }
 }
 
@@ -78,7 +88,6 @@ void BoardManager::startGame(bool player1_is_white, sf::TcpSocket *socket)
     swap_done = false;
 
     enableButtons();
-    other_buttons["king0"].active = true;
 
     checkmate = 0;
 
@@ -341,18 +350,14 @@ void BoardManager::drawExtra()
 
     for (int i = 0; i < 12; i++)
     {
-        sf::FloatRect rect;
-        if (i < 6)
-            rect = sf::FloatRect(tile_size * (16 + i) + offset.x * 2, height - offset.y - tile_size * 2, tile_size, tile_size);
-        else
-            rect = sf::FloatRect(tile_size * (10 + i) + offset.x * 2, height - offset.y - tile_size, tile_size, tile_size);
+        std::string identifier = "king" + std::to_string(i);
 
+        sf::FloatRect rect = other_buttons[identifier].rect;
         sf::RectangleShape shape = sf::RectangleShape(sf::Vector2f(tile_size, tile_size));
         shape.setFillColor(sf::Color(colors[i].r, colors[i].g, colors[i].b, 127));
         shape.setPosition(rect.left, rect.top);
         window.draw(shape);
 
-        std::string identifier = "king" + std::to_string(i);
         int owner = other_buttons[identifier].active ? owner = i : owner = -1;
 
         Piece piece = Piece(sf::Vector2i(0, 0), i, owner, owner, Piece::Type::King);
@@ -361,8 +366,13 @@ void BoardManager::drawExtra()
 
     if (other_buttons["swap0"].active)
     {
+        sf::RectangleShape shape = sf::RectangleShape(sf::Vector2f(tile_size * 16, tile_size * 16));
+        shape.setPosition(offset);
+        shape.setFillColor(sf::Color(255, 255, 255, 127));
+        window.draw(shape);
+
         sf::FloatRect rect = other_buttons["swap0"].rect;
-        sf::RectangleShape shape = sf::RectangleShape(sf::Vector2f(rect.width, rect.height));
+        shape = sf::RectangleShape(sf::Vector2f(rect.width, rect.height));
         shape.setPosition(rect.left, rect.top);
         shape.setFillColor(sf::Color(255, 255, 255, 127));
         window.draw(shape);
@@ -422,6 +432,58 @@ void BoardManager::drawExtra()
         std::array<Piece::Type, 5> piece_types = {Piece::Type::Queen, Piece::Type::Knight, Piece::Type::Rook, Piece::Type::Bishop, Piece::Type::King};
 
         drawPiece(Piece(promotion_button.pos + sf::Vector2i{0, i}, selected_piece->faction, selected_piece->main_owner, selected_piece->direct_owner, piece_types[i]));
+    }
+
+    {
+        sf::FloatRect rect = other_buttons["exitprompt"].rect;
+        sf::RectangleShape shape = sf::RectangleShape(sf::Vector2f(rect.width, rect.height));
+        shape.setPosition(rect.left, rect.top);
+        shape.setFillColor(sf::Color(255, 255, 255, 127));
+        window.draw(shape);
+
+        text.setString("Exit Game");
+        alignText(text, rect);
+        window.draw(text);
+    }
+
+    if (other_buttons["exityes"].active)
+    {
+        sf::RectangleShape shape = sf::RectangleShape(sf::Vector2f(width, height));
+        shape.setPosition(0, 0);
+        shape.setFillColor(sf::Color(255, 255, 255, 127));
+        window.draw(shape);
+
+        sf::FloatRect rect = sf::FloatRect(width / 2 - text_size * 15, height / 2 - text_size * 2.5f, text_size * 30, text_size * 5);
+        shape = sf::RectangleShape(sf::Vector2f(rect.width, rect.height));
+        shape.setPosition(rect.left, rect.top);
+        shape.setFillColor(sf::Color(127, 127, 127));
+        window.draw(shape);
+
+        rect.top = height / 2 - text_size * 2;
+        rect.height = text_size * 2;
+        text.setString("Are You Sure You Want To Exit?");
+        alignText(text, rect);
+        window.draw(text);
+
+        rect = other_buttons["exityes"].rect;
+        shape = sf::RectangleShape(sf::Vector2f(rect.width, rect.height));
+        shape.setPosition(rect.left, rect.top);
+        shape.setFillColor(sf::Color(255, 255, 255, 127));
+        window.draw(shape);
+
+        text.setString("Yes");
+        alignText(text, rect);
+        window.draw(text);
+
+        rect = other_buttons["exitno"].rect;
+        shape = sf::RectangleShape(sf::Vector2f(rect.width, rect.height));
+        shape.setPosition(rect.left, rect.top);
+        shape.setFillColor(sf::Color(255, 255, 255, 127));
+        window.draw(shape);
+
+        text.setString("No");
+        alignText(text, rect);
+        window.draw(text);
     }
 }
 
@@ -600,6 +662,23 @@ void BoardManager::onPress(OtherButton &button)
             assert(status != sf::Socket::Error);
         }
     }
+    else if (button.identifier.substr(0, 4) == "exit")
+    {
+        if (button.identifier.substr(4) == "prompt")
+        {
+            disableButtons();
+            other_buttons["exityes"].active = true;
+            other_buttons["exitno"].active = true;
+        }
+        else if (button.identifier.substr(4) == "yes")
+        {
+            disableButtons();
+        }
+        else if (button.identifier.substr(4) == "no")
+        {
+            enableButtons();
+        }
+    }
 }
 
 void BoardManager::onHold(OtherButton &button) {}
@@ -719,6 +798,9 @@ bool BoardManager::doMove(const Move &move)
 
 void BoardManager::refreshOtherButtons()
 {
+    for (auto it = other_buttons.begin(); it != other_buttons.end(); it++)
+        it->second.active = false;
+
     GameState &game_state = game_states.back();
     for (int i = 0; i < 12; i++)
     {
@@ -748,6 +830,10 @@ void BoardManager::refreshOtherButtons()
                 button.active = true;
         }
     }
+
+    other_buttons["exitprompt"].active = true;
+    other_buttons["exityes"].active = false;
+    other_buttons["exitno"].active = false;
 }
 
 void BoardManager::checkNetwork()
@@ -761,7 +847,8 @@ void BoardManager::checkNetwork()
 
     if (status == sf::Socket::Disconnected)
     {
-        std::cout << "Disconnected" << std::endl;
+        std::cout << "Disconnected, changing to offline mode" << std::endl;
+        socket = NULL;
         return;
     }
     else if (status != sf::Socket::Done)
@@ -791,6 +878,9 @@ void BoardManager::enableButtons()
 {
     for (TileButton &button : tile_buttons)
         button.active = true;
+
+    for (PromotionButton &button : promotion_buttons)
+        button.active = false;
 
     refreshOtherButtons();
 }

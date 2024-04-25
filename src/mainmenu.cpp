@@ -14,6 +14,7 @@ MainMenu::MainMenu(sf::RenderWindow &window) : window(window), board_manager(win
 {
     loadable.load();
 
+    // Socket can only accept in blocking mode
     socket.setBlocking(true);
     listener.setBlocking(true);
     in_menu = true;
@@ -194,10 +195,6 @@ void MainMenu::tick()
     }
 }
 
-void MainMenu::connect()
-{
-}
-
 void MainMenu::registerButtons(std::vector<Button *> &buttons)
 {
     board_manager.registerButtons(buttons);
@@ -238,7 +235,6 @@ void MainMenu::onPress(OtherButton &button)
         updateButtons();
         board_manager.startGame(true, NULL);
     }
-
     else if (button.identifier == "host")
     {
         port = std::stoi(text_fields[0].text);
@@ -273,6 +269,16 @@ void MainMenu::onPress(OtherButton &button)
         listener.close();
         thread.stop();
         updateButtons();
+    }
+
+    else if (button.identifier == "exityes")
+    {
+        in_menu = true;
+        connecting = false;
+        hosting = false;
+        updateButtons();
+        socket.disconnect();
+        socket.setBlocking(true);
     }
 }
 void MainMenu::onHold(OtherButton &button)
@@ -318,7 +324,7 @@ void ConnectThread::runThread()
             running = false;
             return;
         }
-        std::cout << "Can't connect" << std::endl;
+        std::cout << "Can't connect, status: " << status << std::endl;
     }
     running = false;
 }
