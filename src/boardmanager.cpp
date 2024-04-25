@@ -143,6 +143,7 @@ void BoardManager::debugGame(std::string file_path)
     }
     file.close();
 
+    // Swap button probably turns off other buttons
     enableButtons();
 }
 

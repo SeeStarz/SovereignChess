@@ -234,7 +234,7 @@ GameState::GameState(const GameState &game_state, Move move)
         auto it = std::find_if(colored_tiles.begin(), colored_tiles.end(), [&start_color](Tile *tile) -> bool
                                { return tile->color == start_color && tile->piece != NULL; });
         if (it != colored_tiles.end())
-            faction_owner[start_color] = (*it)->color;
+            faction_owner[start_color] = (*it)->piece->faction;
     }
 
     // Castling
