@@ -669,13 +669,14 @@ Move BoardManager::strToMove(std::string string, char separator)
     if (value != "")
         arr[i] = std::stoi(value);
 
-    Piece piece = *game_states.back().board[arr[1]][arr[0]].piece;
-    bool is_capture = game_states.back().board[arr[3]][arr[2]].piece;
-    piece.faction = arr[5];
+    Piece moved_piece = *game_states.back().board[arr[1]][arr[0]].piece;
+    Piece *end_piece = game_states.back().board[arr[3]][arr[2]].piece;
+    bool is_capture = end_piece && end_piece->type != Piece::Type::King;
+    moved_piece.faction = arr[5];
     Move move = Move{
         sf::Vector2i(arr[0], arr[1]),
         sf::Vector2i(arr[2], arr[3]),
-        piece,
+        moved_piece,
         is_capture,
         Piece::Type(arr[4])};
 
