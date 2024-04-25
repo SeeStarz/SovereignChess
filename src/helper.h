@@ -23,18 +23,18 @@ enum Color
 };
 
 const std::array<sf::Color, 12> colors =
-    {sf::Color(255, 255, 255),
-     sf::Color(31, 159, 31),
-     sf::Color(207, 207, 207),
-     sf::Color(31, 191, 191),
-     sf::Color(31, 31, 191),
-     sf::Color(159, 0, 223),
-     sf::Color(223, 159, 223),
-     sf::Color(191, 31, 31),
-     sf::Color(223, 95, 31),
-     sf::Color(127, 127, 127),
-     sf::Color(255, 255, 31),
-     sf::Color(63, 63, 63)};
+    {sf::Color(255, 255, 255), // White
+     sf::Color(31, 159, 31),   // Green
+     sf::Color(207, 207, 207), // LightGray
+     sf::Color(31, 191, 191),  // Cyan
+     sf::Color(31, 31, 191),   // Blue
+     sf::Color(159, 0, 223),   // Purple
+     sf::Color(223, 159, 223), // Pink
+     sf::Color(191, 31, 31),   // Red
+     sf::Color(223, 95, 31),   // Orange
+     sf::Color(127, 127, 127), // DarkGray
+     sf::Color(255, 255, 31),  // Yellow
+     sf::Color(63, 63, 63)};   // Black
 
 const std::array<sf::Vector2i, 8> castle_rooks_pos = {
     sf::Vector2i(2, 15),

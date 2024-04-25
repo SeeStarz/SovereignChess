@@ -244,8 +244,6 @@ void BoardManager::drawMoves()
     if (played_moves.size() > 0)
     {
         const Move &move = played_moves.back();
-        // drawSquare(move.start_pos.x, move.start_pos.y, sf::Color(50, 255, 50, 50));
-        // drawSquare(move.end_pos.x, move.end_pos.y, sf::Color(50, 255, 50, 50));
         drawSprite(move.start_pos.x, move.start_pos.y, loadable.move_marker, sf::Color(0, 0, 255));
         drawSprite(move.end_pos.x, move.end_pos.y, loadable.move_marker, sf::Color(0, 0, 255));
     }
@@ -286,18 +284,15 @@ void BoardManager::drawMoves()
                     assert(piece->type == Piece::Type::King);
             }
 
-            // drawSquare(rook_pos.x, rook_pos.y, sf::Color(255, 0, 0, 50));
             drawSprite(rook_pos.x, rook_pos.y, loadable.move_marker, sf::Color(0, 255, 0));
         }
         else if (move.is_capture)
-            // drawSquare(move.end_pos.x, move.end_pos.y, sf::Color(255, 0, 0, 50));
             drawSprite(move.end_pos.x, move.end_pos.y, loadable.move_marker, sf::Color(255, 0, 0));
         else
             drawSprite(move.end_pos.x, move.end_pos.y, loadable.move_marker, sf::Color(0, 255, 0));
     }
 
     if (!in_place)
-        // drawSquare(selected_piece->pos.x, selected_piece->pos.y, sf::Color(0, 255, 0, 50));
         drawSprite(selected_piece->pos.x, selected_piece->pos.y, loadable.move_marker, sf::Color(0, 255, 0));
 }
 
