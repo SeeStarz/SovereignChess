@@ -33,3 +33,5 @@
 
 *.bat
 /.vscode
+*.zip
+*.rar
