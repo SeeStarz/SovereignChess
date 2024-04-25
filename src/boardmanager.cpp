@@ -38,7 +38,7 @@ BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
         }
     }
 
-    std::array<Piece::Type, 5> piece_types = {Piece::Type::King, Piece::Type::Queen, Piece::Type::Knight, Piece::Type::Rook, Piece::Type::Bishop};
+    std::array<Piece::Type, 5> piece_types = {Piece::Type::Queen, Piece::Type::Knight, Piece::Type::Rook, Piece::Type::Bishop, Piece::Type::King};
     for (int i = 0; i < 5; i++)
     {
         promotion_buttons[i] = PromotionButton{sf::FloatRect(0, 0, tile_size, tile_size), 1, {0, 0}, piece_types[i], false};
@@ -278,14 +278,12 @@ void BoardManager::drawMoves()
         if (!promotion_buttons[i].active)
             continue;
 
-        int j = promotion_buttons[0].active ? i : i - 1;
         PromotionButton &promotion_button = promotion_buttons[i];
+        drawSquare(promotion_button.pos.x, promotion_button.pos.y + i, sf::Color(255, 255, 255, 255));
 
-        drawSquare(promotion_button.pos.x, promotion_button.pos.y + j, sf::Color(255, 255, 255, 255));
+        std::array<Piece::Type, 5> piece_types = {Piece::Type::Queen, Piece::Type::Knight, Piece::Type::Rook, Piece::Type::Bishop, Piece::Type::King};
 
-        std::array<Piece::Type, 5> piece_types = {Piece::Type::King, Piece::Type::Queen, Piece::Type::Knight, Piece::Type::Rook, Piece::Type::Bishop};
-
-        drawPiece(Piece(promotion_button.pos + sf::Vector2i{0, j}, selected_piece->faction, selected_piece->main_owner, selected_piece->direct_owner, piece_types[i]));
+        drawPiece(Piece(promotion_button.pos + sf::Vector2i{0, i}, selected_piece->faction, selected_piece->main_owner, selected_piece->direct_owner, piece_types[i]));
     }
 }
 
@@ -468,24 +466,15 @@ void BoardManager::onPress(TileButton &button)
     // Pawn Promotion
     else if (isMoveValid(promotion_move) && piece_moved.type != Piece::Type::King)
     {
-        if (isMoveValid(king_promotion_move))
-            for (int i = 0; i < 5; i++)
-            {
-                PromotionButton &promotion_button = promotion_buttons[i];
-                promotion_button.active = true;
-                promotion_button.pos = end_pos;
-                promotion_button.rect.left = offset.x + end_pos.x * tile_size;
-                promotion_button.rect.top = offset.y + (end_pos.y + i) * tile_size;
-            }
-        else
-            for (int i = 1; i < 5; i++)
-            {
-                PromotionButton &promotion_button = promotion_buttons[i];
-                promotion_button.active = true;
-                promotion_button.pos = end_pos;
-                promotion_button.rect.left = offset.x + end_pos.x * tile_size;
-                promotion_button.rect.top = offset.y + (end_pos.y + i - 1) * tile_size;
-            }
+        for (int i = 0; i < 5; i++)
+        {
+            PromotionButton &promotion_button = promotion_buttons[i];
+            promotion_button.active = true;
+            promotion_button.pos = end_pos;
+            promotion_button.rect.left = offset.x + end_pos.x * tile_size;
+            promotion_button.rect.top = offset.y + (end_pos.y + i) * tile_size;
+        }
+        promotion_buttons[4].active = isMoveValid(king_promotion_move) ? true : false;
     }
     // Castling
     else if (piece_moved.type == Piece::Type::King && getDistance(start_pos, end_pos) > 1.5f)
