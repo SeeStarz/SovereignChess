@@ -1031,8 +1031,36 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
         if (tile.color == piece.faction)
             continue;
 
+        bool promotion = false;
+        if (end_pos.x > 5 && end_pos.x < 10 && end_pos.y > 5 && end_pos.y < 10)
+            promotion = true;
+
         Piece *target_piece = tile.piece;
         if (target_piece && target_piece->main_owner == enemy_color)
-            moves.push_back(Move{piece.pos, end_pos, piece, true});
+        {
+            if (!promotion)
+                moves.push_back(Move{piece.pos, end_pos, piece, true});
+            else
+            {
+                moves.push_back(Move{piece.pos, end_pos, piece, true, Piece::Type::Queen});
+                moves.push_back(Move{piece.pos, end_pos, piece, true, Piece::Type::Rook});
+                moves.push_back(Move{piece.pos, end_pos, piece, true, Piece::Type::Bishop});
+                moves.push_back(Move{piece.pos, end_pos, piece, true, Piece::Type::Knight});
+
+                // Temporarily remove piece to find checks
+                Tile &tile = board[piece.pos.y][piece.pos.x];
+                Piece *pointed_piece = tile.piece;
+                assert(tile.piece != NULL);
+                tile.piece = NULL;
+                assert(pointed_piece->is_alive);
+                pointed_piece->is_alive = false;
+
+                if (getAllChecks(end_pos, piece.faction).size() == 0)
+                    moves.push_back(Move{piece.pos, end_pos, piece, true, Piece::Type::King});
+
+                pointed_piece->is_alive = true;
+                tile.piece = pointed_piece;
+            }
+        }
     }
 }
