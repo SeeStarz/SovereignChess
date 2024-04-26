@@ -79,9 +79,9 @@ public:
     void checkNetwork();
     void draw();
 
-    // 0 = running, 1 = checkmate, -1 = checkmated, 2 = stalemate
-    // from player 1 standpoint
-    int checkmate;
+    // 1=P1 checkmate, -1=P2 checkmate, 0=stalemate, 2=undecided
+    int point;
+    bool running;
 };
 
 #endif

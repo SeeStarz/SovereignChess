@@ -95,7 +95,8 @@ void BoardManager::startGame(bool player1_is_white, sf::TcpSocket *socket)
 
     enableButtons();
 
-    checkmate = 0;
+    point = 2;
+    running = true;
 
     sound_player.setBuffer(loadable.sounds[0]);
     sound_player.play();
@@ -445,26 +446,49 @@ void BoardManager::drawExtra()
         window.draw(text);
     }
 
-    if (checkmate != 0)
+    if (!running)
     {
-        assert(checkmate == -1 || checkmate == 1 || checkmate == 2);
-        std::string str;
+        assert(point == -1 || point == 1 || point == 0 || point == 2);
+
         text.setPosition(text_offset.x, text_offset.y + text_size * 7.5f);
-        if (checkmate == 2)
-            str = "Stalemate!";
-        else
-            str = "Checkmate!";
-        text.setString(str);
+        switch (point)
+        {
+        case -1:
+        case 1:
+            text.setString("Checkmate!");
+            break;
+        case 0:
+            text.setString("Stalemate!");
+            break;
+        case 2:
+            text.setString("Game Stopped");
+            break;
+        }
         window.draw(text);
 
         text.setPosition(text_offset.x, text_offset.y + text_size * 8.5f);
-        if (checkmate == 2)
-            str = "It's a Draw";
-        else if (checkmate == -1)
-            str = socket == NULL ? "Player 2 Wins" : "You Lost";
-        else
-            str = socket == NULL ? "Player 1 Wins" : "You Win";
-        text.setString(str);
+        switch (point)
+        {
+        case -1:
+        {
+            if (socket == NULL)
+                text.setString("Player 2 Wins");
+            else
+                text.setString("You Lost");
+            break;
+        }
+        case 0:
+            text.setString("Match Draw");
+            break;
+        case 1:
+        {
+            if (socket == NULL)
+                text.setString("Player 1 Wins");
+            else
+                text.setString("You Win");
+            break;
+        }
+        }
         window.draw(text);
     }
 
@@ -556,7 +580,8 @@ void BoardManager::isGameDone()
 {
     if (legal_moves.back().size() != 0)
     {
-        checkmate = 0;
+        running = true;
+        point = 2;
         return;
     }
 
@@ -565,9 +590,15 @@ void BoardManager::isGameDone()
     int faction = game_state.player_white_to_move ? game_state.player_white_color : game_state.player_black_color;
 
     if (game_state.getAllChecks(king_pos, faction).size() == 0)
-        checkmate = 2;
+    {
+        running = false;
+        point = 0;
+    }
     else
-        checkmate = player1_is_white == game_state.player_white_to_move ? -1 : 1;
+    {
+        running = false;
+        point = player1_is_white == game_state.player_white_to_move ? -1 : 1;
+    }
 }
 
 void BoardManager::writeToFile()
@@ -600,10 +631,10 @@ void BoardManager::writeToFile()
             Move move = played_moves[i];
             ss << "move=" << moveToStr(move) << "\n";
         }
-        switch (checkmate)
+        switch (point)
         {
         case 0:
-            str = "Undecided\n";
+            str = "Draw\n";
             break;
         case 1:
             str = "P1 Win\n";
@@ -612,7 +643,7 @@ void BoardManager::writeToFile()
             str = "P2 Win\n";
             break;
         case 2:
-            str = "Draw\n";
+            str = "Undecided\n";
             break;
         }
         ss << "# Result: " << str;
@@ -1018,7 +1049,7 @@ void BoardManager::checkNetwork()
 {
     if (socket == NULL)
         return;
-    if (checkmate != 0)
+    if (!running)
         return;
     assert(!socket->isBlocking());
 
@@ -1028,7 +1059,7 @@ void BoardManager::checkNetwork()
     if (status == sf::Socket::Disconnected)
     {
         std::cout << "Disconnected" << std::endl;
-        checkmate = 2;
+        running = false;
         return;
     }
     else if (status != sf::Socket::Done)
