@@ -38,6 +38,6 @@ sf::Color Config::strToColor(std::vector<std::string> values)
 {
     assert(values.size() == 3 || values.size() == 4);
     int transparancy = values.size() == 4 ? std::stoi(values[3]) : 255;
-    sf::Color color = sf::Color(std::stoi(values[0]), std::stoi(values[1]), std::stoi(values[2]));
+    sf::Color color = sf::Color(std::stoi(values[0]), std::stoi(values[1]), std::stoi(values[2]), transparancy);
     return color;
 }

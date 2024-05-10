@@ -231,7 +231,7 @@ void BoardManager::drawBoard()
 void BoardManager::drawPieces()
 {
     const std::vector<Piece> &pieces = game_states.back().pieces;
-    for (int i = 0; i < pieces.size(); i++)
+    for (int i = 0; i < static_cast<int>(pieces.size()); i++)
     {
         const Piece &piece = pieces[i];
         if (!piece.is_alive)
@@ -311,7 +311,7 @@ void BoardManager::drawMoves()
         return;
 
     bool in_place = false;
-    for (int i = 0; i < moves.size(); i++)
+    for (int i = 0; i < static_cast<int>(moves.size()); i++)
     {
         const Move &move = moves[i];
         if (move.start_pos != selected_piece->pos)
@@ -414,7 +414,7 @@ void BoardManager::drawExtra()
         shape.setPosition(rect.left, rect.top);
         window.draw(shape);
 
-        int owner = other_buttons[identifier].active ? owner = i : owner = -1;
+        int owner = other_buttons[identifier].active ? i : -1;
 
         Piece piece = Piece(sf::Vector2i(0, 0), i, owner, owner, Piece::Type::King);
         drawPiece(piece, rect);
@@ -634,7 +634,7 @@ void BoardManager::writeToFile()
         if (played_moves.size() > 0)
             ss << "move=" << moveToStr(played_moves[0]) << "\n";
         ss << "swapped=" << swapped << "\n";
-        for (int i = 1; i < played_moves.size(); i++)
+        for (int i = 1; i < static_cast<int>(played_moves.size()); i++)
         {
             Move move = played_moves[i];
             ss << "move=" << moveToStr(move) << "\n";
@@ -976,8 +976,6 @@ bool BoardManager::doMove(const Move &move)
 {
     if (!isMoveValid(move))
         return false;
-
-    int player_to_move = game_states.back().player_white_to_move == player1_is_white ? 1 : 2;
 
     if (socket != NULL && player1_is_white == game_states.back().player_white_to_move)
     {

@@ -285,7 +285,7 @@ GameState::GameState(const GameState &game_state, Move move)
 
     if (update_owner)
     {
-        for (int i = 0; i < pieces.size(); i++)
+        for (int i = 0; i < static_cast<int>(pieces.size()); i++)
         {
             Piece &piece = pieces[i];
             if (!piece.is_alive)
@@ -317,7 +317,7 @@ std::vector<Move> GameState::getMoves()
     std::vector<Pin> pins = getAllPins(ally_king->pos, ally_color);
 
     std::vector<Move> moves;
-    for (int i = 0; i < pieces.size(); i++)
+    for (int i = 0; i < static_cast<int>(pieces.size()); i++)
     {
         Piece &piece = pieces[i];
         if (!piece.is_alive)
@@ -370,7 +370,7 @@ std::vector<Move> GameState::getMoves()
             if (can_convert)
             {
                 Tile *tile = NULL;
-                for (int i = 0; i < board.size(); i++)
+                for (int i = 0; i < static_cast<int>(board.size()); i++)
                 {
                     auto it = std::find_if(board[i].begin(), board[i].end(), [&faction](Tile &tile) -> bool
                                            { return tile.color == faction && !tile.blocked; });
@@ -419,9 +419,9 @@ std::vector<Move> GameState::getMoves()
 
 void GameState::makeBoard()
 {
-    for (int i = 0; i < board.size(); i++)
+    for (int i = 0; i < 16; i++)
     {
-        for (int j = 0; j < board[i].size(); j++)
+        for (int j = 0; j < 16; j++)
         {
             board[i][j] = Tile{{j, i}, -1, NULL, NULL, false};
         }
@@ -449,7 +449,7 @@ void GameState::makeBoard()
         j++;
     }
 
-    for (int i = 0; i < pieces.size(); i++)
+    for (int i = 0; i < static_cast<int>(pieces.size()); i++)
     {
         Piece &piece = pieces[i];
         if (!piece.is_alive)
@@ -463,6 +463,7 @@ void GameState::makeBoard()
             tile.other_tile->blocked = true;
 
         if (piece.type == Piece::Type::King)
+        {
             if (piece.faction == player_white_color)
             {
                 assert(player_white_king == NULL);
@@ -475,6 +476,7 @@ void GameState::makeBoard()
             }
             else
                 throw std::runtime_error("Unknown king color " + std::to_string(piece.faction));
+        }
     }
 }
 
@@ -518,7 +520,7 @@ std::vector<Piece *> GameState::getAllChecks(sf::Vector2i pos, int faction)
     std::array<sf::Vector2i, 8> orthogonal_directions = {{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}, {1, 0}, {0, 1}, {0, -1}, {-1, 0}}};
     // First four are bishops, last four are rooks
 
-    for (int i = 0; i < orthogonal_directions.size(); i++)
+    for (int i = 0; i < static_cast<int>(orthogonal_directions.size()); i++)
     {
         for (int j = 1; j <= 8; j++)
         {
@@ -579,7 +581,7 @@ std::vector<Piece *> GameState::getAllChecks(sf::Vector2i pos, int faction)
     }
 
     std::array<sf::Vector2i, 8> knight_directions = {{{2, 1}, {2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {-2, 1}, {-2, -1}}};
-    for (int i = 0; i < knight_directions.size(); i++)
+    for (int i = 0; i < static_cast<int>(knight_directions.size()); i++)
     {
         sf::Vector2i end_pos = pos + knight_directions[i];
         if (!checkInBoard(end_pos))
@@ -612,7 +614,7 @@ std::vector<Pin> GameState::getAllPins(sf::Vector2i pos, int faction)
     std::array<sf::Vector2i, 8> directions = {{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}, {1, 0}, {0, 1}, {0, -1}, {-1, 0}}};
     // First four are bishops, last four are rooks
 
-    for (int i = 0; i < directions.size(); i++)
+    for (int i = 0; i < static_cast<int>(directions.size()); i++)
     {
         Piece *pinned_piece = NULL;
         for (int j = 1; j <= 8; j++)
@@ -671,7 +673,7 @@ void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
 
     std::array<sf::Vector2i, 8> directions = {{{1, 1}, {1, 0}, {1, -1}, {0, 1}, {0, -1}, {-1, 1}, {-1, 0}, {-1, -1}}};
 
-    for (int i = 0; i < directions.size(); i++)
+    for (int i = 0; i < static_cast<int>(directions.size()); i++)
     {
         sf::Vector2i end_pos = piece.pos + directions[i];
         if (!checkInBoard(end_pos))
@@ -691,7 +693,7 @@ void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
             moves.push_back(Move{piece.pos, end_pos, piece, true});
     }
 
-    for (int faction = 0; faction < faction_owner.size(); faction++)
+    for (int faction = 0; faction < static_cast<int>(faction_owner.size()); faction++)
     {
         int owner = getMainOwner(faction);
 
@@ -708,7 +710,7 @@ void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
                 moves.push_back(Move{piece.pos, piece.pos, king_piece, false, Piece::Type::King});
         }
         else
-            for (int j = 0; j < directions.size(); j++)
+            for (int j = 0; j < static_cast<int>(directions.size()); j++)
             {
                 sf::Vector2i end_pos = king_piece.pos + directions[j];
                 assert(checkInBoard(king_piece.pos));
@@ -731,7 +733,7 @@ void GameState::getKingMoves(std::vector<Move> &moves, Piece piece)
         if (getAllChecks(piece.pos, piece.faction).size() != 0)
             break;
 
-        int j = player_white_to_move ? j = i : j = i + 4;
+        int j = player_white_to_move ? i : i + 4;
         if (!castle_rooks[j])
             continue;
 
@@ -767,7 +769,6 @@ void GameState::getQueenMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 
 void GameState::getRookMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 {
-    int ally_color = piece.main_owner;
     int enemy_color;
     if (piece.main_owner == player_white_color)
         enemy_color = player_black_color;
@@ -776,7 +777,7 @@ void GameState::getRookMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 
     std::array<sf::Vector2i, 4> directions = {{{1, 0}, {0, 1}, {0, -1}, {-1, 0}}};
 
-    for (int i = 0; i < directions.size(); i++)
+    for (int i = 0; i < static_cast<int>(directions.size()); i++)
     {
         if (pin != NULL && pin->pin_direction_1 != directions[i] && pin->pin_direction_2 != directions[i])
             continue;
@@ -815,7 +816,6 @@ void GameState::getRookMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 
 void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 {
-    int ally_color = piece.main_owner;
     int enemy_color;
     if (piece.main_owner == player_white_color)
         enemy_color = player_black_color;
@@ -824,7 +824,7 @@ void GameState::getBishopMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 
     std::array<sf::Vector2i, 4> directions = {{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}}};
 
-    for (int i = 0; i < directions.size(); i++)
+    for (int i = 0; i < static_cast<int>(directions.size()); i++)
     {
         if (pin != NULL && pin->pin_direction_1 != directions[i] && pin->pin_direction_2 != directions[i])
             continue;
@@ -865,7 +865,6 @@ void GameState::getKnightMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
     if (pin != NULL)
         return;
 
-    int ally_color = piece.main_owner;
     int enemy_color;
     if (piece.main_owner == player_white_color)
         enemy_color = player_black_color;
@@ -874,7 +873,7 @@ void GameState::getKnightMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 
     std::array<sf::Vector2i, 8> directions = {{{2, 1}, {2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {-2, 1}, {-2, -1}}};
 
-    for (int i = 0; i < directions.size(); i++)
+    for (int i = 0; i < static_cast<int>(directions.size()); i++)
     {
         sf::Vector2i end_pos = piece.pos + directions[i];
         if (!checkInBoard(end_pos))
@@ -896,7 +895,6 @@ void GameState::getKnightMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 
 void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
 {
-    int ally_color = piece.main_owner;
     int enemy_color;
     if (piece.main_owner == player_white_color)
         enemy_color = player_black_color;
@@ -957,7 +955,7 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
             valid_double_directions[2] = true;
     }
 
-    for (int i = 0; i < move_directions.size(); i++)
+    for (int i = 0; i < static_cast<int>(move_directions.size()); i++)
     {
         if (pin != NULL && pin->pin_direction_1 != move_directions[i] && pin->pin_direction_2 != move_directions[i])
             continue;
@@ -1015,7 +1013,7 @@ void GameState::getPawnMoves(std::vector<Move> &moves, Piece piece, Pin *pin)
         }
     }
 
-    for (int i = 0; i < capture_directions.size(); i++)
+    for (int i = 0; i < static_cast<int>(capture_directions.size()); i++)
     {
         if (pin != NULL && pin->pin_direction_1 != capture_directions[i] && pin->pin_direction_2 != capture_directions[i])
             continue;

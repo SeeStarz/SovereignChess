@@ -28,7 +28,6 @@ Button *buttonAtPos(std::vector<Button *> buttons, sf::Vector2f click_game_pos)
 
 int main()
 {
-    const Config &config = Config::getConfig();
     sf::RenderWindow window(sf::VideoMode(width, height), "Sovereign Chess");
 
     sf::Image icon;
@@ -67,12 +66,14 @@ int main()
                     break;
                 clicked_button->press();
                 hold = true;
+                break;
             }
             case sf::Event::MouseButtonReleased:
             {
                 if (clicked_button)
                     clicked_button->release();
                 hold = false;
+                break;
             }
 
             case sf::Event::TextEntered:
@@ -86,6 +87,7 @@ int main()
                     field->text += event.text.unicode;
                 else if (event.text.unicode == 8)
                     field->text.pop_back();
+                break;
             }
 
             case sf::Event::KeyPressed:
@@ -101,7 +103,10 @@ int main()
                     field->text += sf::Clipboard::getString();
                 if (event.key.control && event.key.code == sf::Keyboard::Backspace)
                     field->text = "";
+                break;
             }
+            default:
+                break;
             }
         }
 
