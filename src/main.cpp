@@ -6,6 +6,7 @@
 #include "move.h"
 #include "boardmanager.h"
 #include "mainmenu.h"
+#include "config.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
 #include <memory>
@@ -27,6 +28,7 @@ Button *buttonAtPos(std::vector<Button *> buttons, sf::Vector2f click_game_pos)
 
 int main()
 {
+    const Config &config = Config::getConfig();
     sf::RenderWindow window(sf::VideoMode(width, height), "Sovereign Chess");
 
     sf::Image icon;

@@ -5,20 +5,7 @@
 #include <array>
 #include <tuple>
 #include <vector>
-
-const std::array<sf::Color, 12> colors =
-    {sf::Color(255, 255, 255), // White
-     sf::Color(31, 159, 31),   // Green
-     sf::Color(207, 207, 207), // LightGray
-     sf::Color(31, 191, 191),  // Cyan
-     sf::Color(31, 31, 191),   // Blue
-     sf::Color(159, 0, 223),   // Purple
-     sf::Color(223, 159, 223), // Pink
-     sf::Color(191, 31, 31),   // Red
-     sf::Color(223, 95, 31),   // Orange
-     sf::Color(127, 127, 127), // DarkGray
-     sf::Color(255, 255, 31),  // Yellow
-     sf::Color(63, 63, 63)};   // Black
+#include <map>
 
 const std::array<sf::Vector2i, 8> castle_rooks_pos = {
     sf::Vector2i(2, 15),
@@ -68,5 +55,8 @@ const std::map<sf::Vector2i, int, Vector2iLess> color_map = {
     {{7, 8}, 11}};
 
 void alignText(sf::Text &text, const sf::FloatRect &rect);
+
+std::map<std::string, std::string> readFromFile(std::string path);
+std::vector<std::string> extractValues(std::string value, char separator = ',');
 
 #endif

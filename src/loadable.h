@@ -15,6 +15,7 @@ public:
     std::array<sf::SoundBuffer, 4> sounds;
     sf::Font font;
     sf::Texture move_marker;
+    sf::Texture colored_tile;
 
     void load();
 };

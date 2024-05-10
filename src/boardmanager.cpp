@@ -4,6 +4,7 @@
 #include "piece.h"
 #include "move.h"
 #include "event.h"
+#include "config.h"
 #include "button.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
@@ -17,7 +18,7 @@
 #include <fstream>
 #include <sstream>
 
-BoardManager::BoardManager(sf::RenderWindow &window) : window(window)
+BoardManager::BoardManager(sf::RenderWindow &window) : window(window), config(Config::getConfig())
 {
     loadable = Loadable();
     loadable.load();
@@ -179,7 +180,8 @@ void BoardManager::drawBoard()
     }
 
     for (auto it = color_map.begin(); it != color_map.end(); it++)
-        drawSquare(it->first.x, it->first.y, colors[it->second]);
+        // drawSquare(it->first.x, it->first.y, colors[it->second]);
+        drawSquare(it->first.x, it->first.y, config.colors[it->second]);
 
     sf::RectangleShape horizontal_line(sf::Vector2f(tile_size * 16, line_scale * 2));
     sf::RectangleShape vertical_line(sf::Vector2f(line_scale * 2, tile_size * 16));
@@ -243,7 +245,8 @@ void BoardManager::drawPiece(const Piece &piece)
 {
     sf::Sprite main_sprite(loadable.piece_main[piece.type]);
     main_sprite.setScale(scale, scale);
-    main_sprite.setColor(colors[piece.faction]);
+    // main_sprite.setColor(colors[piece.faction]);
+    main_sprite.setColor(config.colors[piece.faction]);
     main_sprite.setPosition(sf::Vector2f(piece.pos.x * tile_size, piece.pos.y * tile_size) + offset);
     window.draw(main_sprite);
 
@@ -251,7 +254,8 @@ void BoardManager::drawPiece(const Piece &piece)
     {
         sf::Sprite base_sprite(loadable.piece_base[piece.type]);
         base_sprite.setScale(scale, scale);
-        base_sprite.setColor(colors[piece.main_owner]);
+        // base_sprite.setColor(colors[piece.main_owner]);
+        base_sprite.setColor(config.colors[piece.faction]);
         base_sprite.setPosition(sf::Vector2f(piece.pos.x * tile_size, piece.pos.y * tile_size) + offset);
         window.draw(base_sprite);
     }
@@ -268,7 +272,8 @@ void BoardManager::drawPiece(const Piece &piece, const sf::FloatRect &rect)
 {
     sf::Sprite main_sprite(loadable.piece_main[piece.type]);
     main_sprite.setScale(rect.width / sprite_size, rect.height / sprite_size);
-    main_sprite.setColor(colors[piece.faction]);
+    // main_sprite.setColor(colors[piece.faction]);
+    main_sprite.setColor(config.colors[piece.faction]);
     main_sprite.setPosition(rect.left, rect.top);
     window.draw(main_sprite);
 
@@ -276,7 +281,8 @@ void BoardManager::drawPiece(const Piece &piece, const sf::FloatRect &rect)
     {
         sf::Sprite base_sprite(loadable.piece_base[piece.type]);
         base_sprite.setScale(rect.width / sprite_size, rect.height / sprite_size);
-        base_sprite.setColor(colors[piece.main_owner]);
+        // base_sprite.setColor(colors[piece.main_owner]);
+        base_sprite.setColor(config.colors[piece.main_owner]);
         base_sprite.setPosition(rect.left, rect.top);
         window.draw(base_sprite);
     }
@@ -297,8 +303,8 @@ void BoardManager::drawMoves()
     if (played_moves.size() > 0)
     {
         const Move &move = played_moves.back();
-        drawSprite(move.start_pos.x, move.start_pos.y, loadable.move_marker, sf::Color(0, 0, 255));
-        drawSprite(move.end_pos.x, move.end_pos.y, loadable.move_marker, sf::Color(0, 0, 255));
+        drawSprite(move.start_pos.x, move.start_pos.y, loadable.move_marker, sf::Color(127, 0, 127));
+        drawSprite(move.end_pos.x, move.end_pos.y, loadable.move_marker, sf::Color(127, 0, 127));
     }
 
     if (!selected_piece)
@@ -337,16 +343,16 @@ void BoardManager::drawMoves()
                     assert(piece->type == Piece::Type::King);
             }
 
-            drawSprite(rook_pos.x, rook_pos.y, loadable.move_marker, sf::Color(0, 255, 0));
+            drawSprite(rook_pos.x, rook_pos.y, loadable.move_marker, sf::Color(0, 0, 255));
         }
         else if (move.is_capture)
             drawSprite(move.end_pos.x, move.end_pos.y, loadable.move_marker, sf::Color(255, 0, 0));
         else
-            drawSprite(move.end_pos.x, move.end_pos.y, loadable.move_marker, sf::Color(0, 255, 0));
+            drawSprite(move.end_pos.x, move.end_pos.y, loadable.move_marker, sf::Color(0, 0, 255));
     }
 
     if (!in_place)
-        drawSprite(selected_piece->pos.x, selected_piece->pos.y, loadable.move_marker, sf::Color(0, 255, 0));
+        drawSprite(selected_piece->pos.x, selected_piece->pos.y, loadable.move_marker, sf::Color(0, 127, 0));
 }
 
 void BoardManager::drawExtra()
@@ -381,7 +387,8 @@ void BoardManager::drawExtra()
     sf::RectangleShape square = sf::RectangleShape(sf::Vector2f(text_height, text_height));
     square.setOutlineColor(sf::Color::Black);
     square.setOutlineThickness(2);
-    square.setFillColor(colors[player1_color]);
+    // square.setFillColor(colors[player1_color]);
+    square.setFillColor(config.colors[player1_color]);
     square.setPosition(text.getGlobalBounds().left + text.getGlobalBounds().width + offset.x, offset.y + text_down + text_size);
     window.draw(square);
 
@@ -392,7 +399,8 @@ void BoardManager::drawExtra()
         text.setString("Opponent Color:");
     window.draw(text);
 
-    square.setFillColor(colors[player2_color]);
+    // square.setFillColor(colors[player2_color]);
+    square.setFillColor(config.colors[player2_color]);
     square.setPosition(text.getGlobalBounds().left + text.getGlobalBounds().width + offset.x, offset.y + text_down + text_size * 2);
     window.draw(square);
 
@@ -402,7 +410,7 @@ void BoardManager::drawExtra()
 
         sf::FloatRect rect = other_buttons[identifier].rect;
         sf::RectangleShape shape = sf::RectangleShape(sf::Vector2f(tile_size, tile_size));
-        shape.setFillColor(sf::Color(colors[i].r, colors[i].g, colors[i].b, 127));
+        shape.setFillColor(sf::Color(config.colors[i].r, config.colors[i].g, config.colors[i].b, 127));
         shape.setPosition(rect.left, rect.top);
         window.draw(shape);
 

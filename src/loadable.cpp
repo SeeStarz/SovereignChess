@@ -25,4 +25,7 @@ void Loadable::load()
 
     if (!move_marker.loadFromFile("..\\img\\move_marker.png"))
         throw std::runtime_error("");
+
+    if (!colored_tile.loadFromFile("..\\img\\colored_tile.png"))
+        throw std::runtime_error("");
 }

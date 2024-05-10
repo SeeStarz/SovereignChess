@@ -8,6 +8,7 @@
 #include "piece.h"
 #include "move.h"
 #include "button.h"
+#include "config.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
 #include <SFML/Audio.hpp>
@@ -36,6 +37,8 @@ private:
     unsigned int p_listener_id;
     unsigned int o_listener_id;
     sf::Sound sound_player;
+
+    const Config &config;
 
     void drawSquare(int x, int y, sf::Color color);
     void drawSprite(int x, int y, const sf::Texture &texture, sf::Color color = sf::Color::White);
