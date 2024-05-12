@@ -15,7 +15,8 @@ Config::~Config()
 Config::Config(std::string path)
 {
     std::map<std::string, std::string> token_to_value;
-    token_to_value = readFromFile("..\\config\\config.cfg");
+    // TODO CHECK IF CONFIG EXISTS
+    token_to_value = readFromFile("../config/config.cfg");
     for (int i = 0; i < 12; i++)
     {
         std::string token = "color" + std::to_string(i);
@@ -29,7 +30,7 @@ Config::Config(std::string path)
 const Config &Config::getConfig()
 {
     if (!config_)
-        config_ = new Config("..\\config\\config.cfg");
+        config_ = new Config("../config/config.cfg");
 
     return *config_;
 }

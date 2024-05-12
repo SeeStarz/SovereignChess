@@ -13,7 +13,6 @@
 #include <utility>
 #include <cassert>
 #include <iostream>
-#include <format>
 #include <functional>
 #include <fstream>
 #include <sstream>
@@ -904,9 +903,9 @@ void BoardManager::onRelease(OtherButton &button) {}
 void BoardManager::registerListener()
 {
     using tfunc = std::function<void(TileButton & button)>;
-    void (BoardManager::*top)(TileButton &button) = &onPress;
-    void (BoardManager::*toh)(TileButton &button) = &onHold;
-    void (BoardManager::*tor)(TileButton &button) = &onRelease;
+    void (BoardManager::*top)(TileButton &button) = &BoardManager::onPress;
+    void (BoardManager::*toh)(TileButton &button) = &BoardManager::onHold;
+    void (BoardManager::*tor)(TileButton &button) = &BoardManager::onRelease;
 
     tfunc tpress = std::bind(top, this, std::placeholders::_1);
     tfunc thold = std::bind(toh, this, std::placeholders::_1);
@@ -914,9 +913,9 @@ void BoardManager::registerListener()
     t_listener_id = ButtonEventChannel<TileButton>::registerListener(tpress, thold, trelease);
 
     using pfunc = std::function<void(PromotionButton & button)>;
-    void (BoardManager::*pop)(PromotionButton &button) = &onPress;
-    void (BoardManager::*poh)(PromotionButton &button) = &onHold;
-    void (BoardManager::*por)(PromotionButton &button) = &onRelease;
+    void (BoardManager::*pop)(PromotionButton &button) = &BoardManager::onPress;
+    void (BoardManager::*poh)(PromotionButton &button) = &BoardManager::onHold;
+    void (BoardManager::*por)(PromotionButton &button) = &BoardManager::onRelease;
 
     pfunc ppress = std::bind(pop, this, std::placeholders::_1);
     pfunc phold = std::bind(poh, this, std::placeholders::_1);
@@ -924,9 +923,9 @@ void BoardManager::registerListener()
     p_listener_id = ButtonEventChannel<PromotionButton>::registerListener(ppress, phold, prelease);
 
     using ofunc = std::function<void(OtherButton & button)>;
-    void (BoardManager::*oop)(OtherButton &button) = &onPress;
-    void (BoardManager::*ooh)(OtherButton &button) = &onHold;
-    void (BoardManager::*oor)(OtherButton &button) = &onRelease;
+    void (BoardManager::*oop)(OtherButton &button) = &BoardManager::onPress;
+    void (BoardManager::*ooh)(OtherButton &button) = &BoardManager::onHold;
+    void (BoardManager::*oor)(OtherButton &button) = &BoardManager::onRelease;
 
     ofunc opress = std::bind(oop, this, std::placeholders::_1);
     ofunc ohold = std::bind(ooh, this, std::placeholders::_1);

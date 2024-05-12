@@ -290,9 +290,9 @@ void MainMenu::onRelease(OtherButton &button)
 void MainMenu::registerListener()
 {
     using ffunc = std::function<void(TextFieldButton & button)>;
-    void (MainMenu::*tfop)(TextFieldButton &button) = &onPress;
-    void (MainMenu::*tfoh)(TextFieldButton &button) = &onHold;
-    void (MainMenu::*tfor)(TextFieldButton &button) = &onRelease;
+    void (MainMenu::*tfop)(TextFieldButton &button) = &MainMenu::onPress;
+    void (MainMenu::*tfoh)(TextFieldButton &button) = &MainMenu::onHold;
+    void (MainMenu::*tfor)(TextFieldButton &button) = &MainMenu::onRelease;
 
     ffunc tfpress = std::bind(tfop, this, std::placeholders::_1);
     ffunc tfhold = std::bind(tfoh, this, std::placeholders::_1);
@@ -300,9 +300,9 @@ void MainMenu::registerListener()
     o_listener_id = ButtonEventChannel<TextFieldButton>::registerListener(tfpress, tfhold, tfrelease);
 
     using ofunc = std::function<void(OtherButton & button)>;
-    void (MainMenu::*oop)(OtherButton &button) = &onPress;
-    void (MainMenu::*ooh)(OtherButton &button) = &onHold;
-    void (MainMenu::*oor)(OtherButton &button) = &onRelease;
+    void (MainMenu::*oop)(OtherButton &button) = &MainMenu::onPress;
+    void (MainMenu::*ooh)(OtherButton &button) = &MainMenu::onHold;
+    void (MainMenu::*oor)(OtherButton &button) = &MainMenu::onRelease;
 
     ofunc opress = std::bind(oop, this, std::placeholders::_1);
     ofunc ohold = std::bind(ooh, this, std::placeholders::_1);
@@ -347,5 +347,5 @@ void ConnectThread::run(sf::TcpSocket *socket, sf::IpAddress ip, unsigned int po
         thread.join();
     }
     running = true;
-    thread = std::thread(ConnectThread::runThread, this);
+    thread = std::thread(&ConnectThread::runThread, this);
 }

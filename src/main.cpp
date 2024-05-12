@@ -31,7 +31,7 @@ int main()
     sf::RenderWindow window(sf::VideoMode(width, height), "Sovereign Chess");
 
     sf::Image icon;
-    if (!icon.loadFromFile("..\\img\\king.png"))
+    if (!icon.loadFromFile("../img/king.png"))
         throw std::runtime_error("");
 
     window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
