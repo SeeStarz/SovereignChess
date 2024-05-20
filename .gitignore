@@ -33,6 +33,7 @@
 
 *.bat
 /.vscode
+/dll/main
 *.zip
 *.rar
 *.txt
