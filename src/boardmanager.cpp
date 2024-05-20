@@ -254,7 +254,7 @@ void BoardManager::drawPiece(const Piece &piece)
         sf::Sprite base_sprite(loadable.piece_base[piece.type]);
         base_sprite.setScale(scale, scale);
         // base_sprite.setColor(colors[piece.main_owner]);
-        base_sprite.setColor(config.colors[piece.faction]);
+        base_sprite.setColor(config.colors[piece.main_owner]);
         base_sprite.setPosition(sf::Vector2f(piece.pos.x * tile_size, piece.pos.y * tile_size) + offset);
         window.draw(base_sprite);
     }
