@@ -7,6 +7,12 @@
 #include <vector>
 #include <map>
 
+const std::string img_dir = "../assets/img/";
+const std::string audio_dir = "../assets/audio/";
+const std::string font_dir = "../assets/font/";
+const std::string config_dir = "../config/";
+const std::string game_dir = "../games/";
+
 const std::array<sf::Vector2i, 8> castle_rooks_pos = {
     sf::Vector2i(2, 15),
     sf::Vector2i(4, 15),
