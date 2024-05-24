@@ -613,7 +613,7 @@ void BoardManager::writeToFile()
     int i = 0;
     while (i < 100)
     {
-        std::string path = game_dir + "game" + std::to_string(i) + ".txt";
+        std::string path = config.game_dir + "game" + std::to_string(i) + ".txt";
         std::ifstream ifstream = std::ifstream(path);
         if (ifstream) // File already exists
         {

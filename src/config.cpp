@@ -20,10 +20,15 @@ Config::Config(std::string path)
     for (int i = 0; i < 12; i++)
     {
         std::string token = "color" + std::to_string(i);
-        auto it = token_to_value.find(token);
-        assert(it != token_to_value.end());
-        std::vector<std::string> values = extractValues(it->second);
+        std::string color = token_to_value.at(token);
+        std::vector<std::string> values = extractValues(color);
         colors[i] = strToColor(values);
+    }
+    {
+        img_dir = token_to_value.at("img_dir");
+        audio_dir = token_to_value.at("audio_dir");
+        game_dir = token_to_value.at("game_dir");
+        font_path = token_to_value.at("font_path");
     }
 }
 

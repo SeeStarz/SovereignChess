@@ -21,7 +21,11 @@ public:
 
     static const Config &getConfig();
 
-    std::array<sf::Color, 12> colors{};
+    std::array<sf::Color, 12> colors;
+    std::string img_dir;
+    std::string audio_dir;
+    std::string game_dir;
+    std::string font_path;
 };
 
 #endif
