@@ -1,0 +1,48 @@
+{
+  "app-id": "io.github.SovereignChess",
+  "runtime": "org.freedesktop.Platform",
+  "runtime-version": "23.08",
+  "sdk": "org.freedesktop.Sdk",
+  "command": "flatpak.sh",
+  "modules": [
+    {
+      "name": "sfml",
+      "cleanup": [
+        "/bin",
+        "/include"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "url": "https://github.com/SFML/SFML.git",
+          "tag": "2.6.1"
+        }
+      ],
+      "buildsystem": "cmake"
+    },
+    {
+      "name": "SovereignChess",
+      "buildsystem": "simple",
+      "build-commands":
+      [
+          "make -C obj -f makeflatpak",
+          "install -D flatpak.sh /app/bin/flatpak.sh",
+          "cp -r assets /app/assets",
+          "mkdir /app/games",
+          "cp -r config /app/config"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "."
+        }
+      ]
+    } 
+  ],
+  "finish-args": [
+    "--socket=x11",
+    "--device=dri",
+    "--socket=pulseaudio",
+    "--share=network"
+  ]
+}
