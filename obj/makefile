@@ -20,5 +20,5 @@ main : $(objects)
 
 .PHONY : clean
 clean :
-	rm *.o || 1
-	rm ../dll/main.exe || 1
+	rm *.o || true
+	rm ../dll/main.exe || true
