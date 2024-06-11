@@ -96,7 +96,7 @@ int main()
                 TextFieldButton *field = dynamic_cast<TextFieldButton *>(clicked_button);
                 if (std::isprint(event.text.unicode))
                     field->text += event.text.unicode;
-                else if (event.text.unicode == 8)
+                else if (event.text.unicode == 8 && field->text.size() != 0)
                     field->text.pop_back();
                 break;
             }
