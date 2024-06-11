@@ -28,10 +28,21 @@ Button *buttonAtPos(std::vector<Button *> buttons, sf::Vector2f click_game_pos)
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(width, height), "Sovereign Chess");
+    const Config& config = Config::getConfig();
+    sf::VideoMode mode;
+    if (config.maximize)
+        mode = sf::VideoMode::getDesktopMode();
+    else
+        mode = sf::VideoMode(config.screen_width, config.screen_height);
+    sf::RenderWindow window(mode , "Sovereign Chess");
+    sf::View view(sf::FloatRect(0.f, 0.f, width, height));
+    window.setView(view);
+
+    sf::RectangleShape background(sf::Vector2f(width,height));
+    background.setFillColor(sf::Color(161, 102, 47));
 
     sf::Image icon;
-    if (!icon.loadFromFile(Config::getConfig().img_dir + "king.png"))
+    if (!icon.loadFromFile(config.img_dir + "king.png"))
         throw std::runtime_error("");
 
     window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
@@ -105,6 +116,29 @@ int main()
                     field->text = "";
                 break;
             }
+            case sf::Event::Resized:
+            {
+                if (!config.force_aspect_ratio)
+                    break;
+
+                float ratio = float(width)/height;
+                if (float(event.size.width) / event.size.height >= ratio) 
+                {
+                    float resized_width = event.size.height * ratio;
+                    float view_scale = resized_width / event.size.width;
+                    float view_offset = (event.size.width - resized_width) / (2*event.size.width);
+                    view.setViewport(sf::FloatRect(view_offset, 0.f, view_scale, 1.f));
+                }
+                else
+                {
+                    float resized_height = event.size.width / ratio;
+                    float view_scale = resized_height / event.size.height;
+                    float view_offset = (event.size.height - resized_height) / (2*event.size.height);
+                    view.setViewport(sf::FloatRect(0.f, view_offset, 1.f, view_scale));
+                } 
+                window.setView(view);
+                break;
+            }
             default:
                 break;
             }
@@ -125,7 +159,8 @@ int main()
                 button->hover = false;
         }
 
-        window.clear(sf::Color(161, 102, 47));
+        window.clear();
+        window.draw(background);
         main_menu.draw();
         main_menu.tick();
         window.display();

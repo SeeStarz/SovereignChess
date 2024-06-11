@@ -29,6 +29,11 @@ Config::Config(std::string path)
         audio_dir = token_to_value.at("audio_dir");
         game_dir = token_to_value.at("game_dir");
         font_path = token_to_value.at("font_path");
+
+        maximize = token_to_value.at("maximize") == "true" ? true : false;
+        force_aspect_ratio = token_to_value.at("force_aspect_ratio") == "true" ? true : false;
+        screen_width = std::stoi(token_to_value.at("screen_width"));
+        screen_height = std::stoi(token_to_value.at("screen_height"));
     }
 }
 

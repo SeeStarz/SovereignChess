@@ -26,6 +26,11 @@ public:
     std::string audio_dir;
     std::string game_dir;
     std::string font_path;
+
+    bool maximize;
+    bool force_aspect_ratio;
+    unsigned int screen_width;
+    unsigned int screen_height;
 };
 
 #endif
