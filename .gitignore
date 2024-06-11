@@ -35,6 +35,7 @@
 /.vscode
 /.flatpak-builder
 /dll/main
+/lib/main
 /build
 *.zip
 *.rar
