@@ -8,7 +8,7 @@
 class Config
 {
 private:
-    Config(std::string path);
+    Config(std::string path, std::string fallback);
     ~Config();
 
     static Config *config_;
@@ -19,7 +19,7 @@ public:
     Config(Config &other) = delete;
     void operator=(const Config &other) = delete;
 
-    static const Config &getConfig();
+    static const Config &getConfig(std::string path = "" ,std::string fallback = "../config/default.cfg");
 
     std::array<sf::Color, 12> colors;
     std::string img_dir;

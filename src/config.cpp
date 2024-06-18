@@ -12,11 +12,14 @@ Config::~Config()
         delete config_;
 }
 
-Config::Config(std::string path)
+Config::Config(std::string path, std::string fallback)
 {
     std::map<std::string, std::string> token_to_value;
-    // TODO CHECK IF CONFIG EXISTS
-    token_to_value = readFromFile("../config/config.cfg");
+    std::map<std::string, std::string> fallback_value;
+    token_to_value = readFromFile(path);
+    fallback_value = readFromFile(fallback);
+    token_to_value.insert(fallback_value.begin(), fallback_value.end());
+
     for (int i = 0; i < 12; i++)
     {
         std::string token = "color" + std::to_string(i);
@@ -37,10 +40,10 @@ Config::Config(std::string path)
     }
 }
 
-const Config &Config::getConfig()
+const Config &Config::getConfig(std::string path, std::string fallback)
 {
     if (!config_)
-        config_ = new Config("../config/config.cfg");
+        config_ = new Config(path, fallback);
 
     return *config_;
 }
