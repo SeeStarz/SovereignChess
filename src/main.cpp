@@ -30,7 +30,6 @@ int main(int argc, char* argv[])
 {
     std::string path = argc > 1 ? argv[1] : "";
     const Config& config = (argc > 2) ? Config::getConfig(path, argv[2]) : Config::getConfig(path);
-    std::cout << argc << " " << argv << std::endl;
     sf::VideoMode mode;
     if (config.maximize)
         mode = sf::VideoMode::getDesktopMode();
