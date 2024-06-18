@@ -67,8 +67,8 @@ Arch: ```sudo pacman -S sfml```
 ```git clone https://github.com/SeeStarz/SovereignChess.git```  
 ```cd SovereignChess```  
 ```make -C obj -f makelinux```  
-Executable can be found inside lib folder
-Run app using start.bat
+Executable can be found inside dll folder
+Run app using start.sh
 
 ### Version 1.2.x and 1.3.0  
 Download SFML 2.6.1 with compatible compiler/IDE  

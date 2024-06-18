@@ -1,7 +1,7 @@
 ## Does not account for changed header files
 
 ## Edit this to your sfml location (not needed if on path)
-SFML = /app
+SFML = ../../SFML-2.6.1
 
 SHELL = bash
 VPATH = ../src
