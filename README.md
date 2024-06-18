@@ -2,7 +2,8 @@
 
 This project is a digital app version of a chess variation "Sovereign Chess" by Mark Bates. This project is a hobby project, expect there to be bugs and messy undocumented code.  
 
-### **!!! IMPORTANT !!! Currently only supports windows OS. Code is tested with windows 11.**
+### ~~**!!! IMPORTANT !!! Currently only supports windows OS. Code is tested with windows 11.**~~
+Now supports both windows and linux via flatpak
 
 This project is by no means official, and this variation is not mine. Have a look at https://www.infinitepigames.com/sovereign-chess.
 
@@ -43,17 +44,38 @@ Audio: https://freesound.org/people/el_boss/packs/30764/ under CC0.
 https://creativecommons.org/publicdomain/zero/1.0/legalcode.en
 
 ## Images
-<img src="https://i.imgur.com/8TsV77Z.png" width="600" />
-<img src="https://i.imgur.com/vCSwhJX.png" width="600" />
-<img src="https://i.imgur.com/GDuTJ3H.png" width="600" />
+<img src="https://i.imgur.com/7A515Zp.png" width="600" />
+<img src="https://i.imgur.com/Zrtr3cx.png" width="600" />
+<img src="https://i.imgur.com/EugWGji.png" width="600" />
 
 ## Build This Project Yourself
-### Version 1.2.x  
+### Version 1.4.x
+####Windows
 Download SFML 2.6.1 with compatible compiler/IDE  
 https://www.sfml-dev.org/tutorials/2.6/  
 Download MakeFile  
 Locate MakeFile inside obj directory  
-Run ```make```  
+Run ```make -f makewindows``` or its alternative version (e.g. ming32-make)  
+Executable can be found inside dll folder  
+Run app using start.bat
+
+####Linux
+Install SFML 2.6.1 from your package manager or build it yourself
+https://www.sfml-dev.org/tutorials/2.6/compile-with-cmake.php  
+Arch: ```sudo pacman -S sfml```  
+  
+```git clone https://github.com/SeeStarz/SovereignChess.git```  
+```cd SovereignChess```  
+```make -C obj -f makelinux```  
+Executable can be found inside lib folder
+Run app using start.bat
+
+### Version 1.2.x and 1.3.0  
+Download SFML 2.6.1 with compatible compiler/IDE  
+https://www.sfml-dev.org/tutorials/2.6/  
+Download MakeFile  
+Locate MakeFile inside obj directory  
+Run ```make``` or its alternative version (e.g. ming32-make)  
 Executable can be found inside dll folder  
 
 ### Version 1.1.x and 1.0.x
