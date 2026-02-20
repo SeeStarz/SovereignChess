@@ -20,7 +20,7 @@ fn draw(mut handle: RaylibDrawHandle) {
     handle.clear_background(Color::WHITE);
     for r in 0..16 {
         for c in 0..16 {
-            let coordinate = Coordinate::new(r, c);
+            let coordinate = Coordinate::new_unchecked(r, c);
             let color = if let Some(special) = tile::Special::at(&coordinate) {
                 Color::ROYALBLUE
             } else {

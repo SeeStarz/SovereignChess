@@ -6,3 +6,4 @@ pub mod tile;
 
 pub use coordinate::Coordinate;
 pub use piece::Piece;
+pub use tile::Tile;

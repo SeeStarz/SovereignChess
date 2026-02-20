@@ -1,20 +1,30 @@
+mod board;
 mod init_pieces;
 
-use super::{Coordinate, piece::Piece};
-use std::collections::HashMap;
+use super::piece::Piece;
+use board::Board;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Gamestate {
-    pieces: HashMap<Coordinate, Piece>,
+    board: Board,
 }
 
 impl Gamestate {
-    pub fn pieces(&self) -> Vec<&Piece> {
-        self.pieces.values().collect()
+    pub fn pieces(&self) -> Vec<Piece> {
+        self.board
+            .tiles
+            .iter()
+            .flatten()
+            .filter_map(|&x| x)
+            .collect()
     }
 
     pub fn new() -> Self {
-        Self {
-            pieces: init_pieces::normal(),
+        let mut board = Board::new();
+        for (coordinate, piece) in init_pieces::normal() {
+            assert!(board.at(coordinate).is_none());
+            board.set_at(coordinate, Some(piece));
         }
+        Self { board }
     }
 }
