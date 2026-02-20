@@ -12,10 +12,14 @@ pub struct Special {
 }
 
 impl Special {
-    fn other(&self) -> &Special {
+    pub fn other(&self) -> &Special {
         SPECIAL_MAP
             .get(&self.other)
             .expect("Special tile has no pair")
+    }
+
+    pub fn at(coordinate: &Coordinate) -> Option<&Special> {
+        SPECIAL_MAP.get(coordinate)
     }
 }
 

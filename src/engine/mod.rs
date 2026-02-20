@@ -2,4 +2,6 @@ mod coordinate;
 mod faction;
 mod gamestate;
 mod piece;
-mod tile;
+pub mod tile;
+
+pub use coordinate::Coordinate;
