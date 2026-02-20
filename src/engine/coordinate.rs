@@ -6,7 +6,7 @@ pub struct Coordinate {
 
 impl Coordinate {
     pub const fn new(row: i32, col: i32) -> Self {
-        Coordinate { row, col }
+        Self { row, col }
     }
 }
 
@@ -14,7 +14,7 @@ impl std::ops::Add for Coordinate {
     type Output = Self;
 
     fn add(self, rhs: Coordinate) -> Self::Output {
-        Coordinate::new(self.row + rhs.row, self.col + rhs.col)
+        Self::new(self.row + rhs.row, self.col + rhs.col)
     }
 }
 
@@ -22,7 +22,7 @@ impl std::ops::Neg for Coordinate {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Coordinate::new(self.row, -self.col)
+        Self::new(self.row, -self.col)
     }
 }
 

@@ -1,3 +1,5 @@
+pub use Color::*;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Color {
     White,

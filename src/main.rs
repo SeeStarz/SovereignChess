@@ -1,8 +1,7 @@
 mod engine;
 
+use crate::engine::{Coordinate, tile};
 use raylib::prelude::*;
-
-use crate::engine::{Coordinate, tile::Special};
 
 fn main() {
     let (mut raylib_handle, thread) = raylib::init()
@@ -22,7 +21,7 @@ fn draw(mut handle: RaylibDrawHandle) {
     for r in 0..16 {
         for c in 0..16 {
             let coordinate = Coordinate::new(r, c);
-            let color = if let Some(special) = Special::at(&coordinate) {
+            let color = if let Some(special) = tile::Special::at(&coordinate) {
                 Color::ROYALBLUE
             } else {
                 if (r + c) % 2 == 0 {
