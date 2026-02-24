@@ -1,7 +1,10 @@
 mod board;
 mod init_pieces;
 
-use crate::engine::piece::Piece;
+use crate::engine::{
+    Coordinate,
+    piece::{Piece, PieceExternal},
+};
 use board::Board;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -10,13 +13,22 @@ pub struct Gamestate {
 }
 
 impl Gamestate {
-    pub fn pieces(&self) -> Vec<Piece> {
+    pub fn pieces(&self) -> impl Iterator<Item = PieceExternal> {
         self.board
             .tiles
             .iter()
+            .enumerate()
+            .map(|(row, line)| {
+                line.iter().enumerate().filter_map(move |(col, tile)| {
+                    tile.map(|piece| {
+                        PieceExternal::from_piece(
+                            piece,
+                            Coordinate::new_unchecked(row as i32, col as i32),
+                        )
+                    })
+                })
+            })
             .flatten()
-            .filter_map(|&x| x)
-            .collect()
     }
 
     pub fn new() -> Self {
