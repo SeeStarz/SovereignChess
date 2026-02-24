@@ -1,4 +1,4 @@
-use super::{Piece, coordinate::Coordinate, faction};
+use crate::engine::{Piece, coordinate::Coordinate, faction};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 

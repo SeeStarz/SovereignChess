@@ -1,7 +1,7 @@
 mod board;
 mod init_pieces;
 
-use super::piece::Piece;
+use crate::engine::piece::Piece;
 use board::Board;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

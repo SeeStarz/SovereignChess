@@ -1,4 +1,4 @@
-use super::faction;
+use crate::engine::faction;
 
 pub use piece::Type;
 pub use piece::Type::*;

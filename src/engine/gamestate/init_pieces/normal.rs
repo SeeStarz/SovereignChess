@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::super::super::{Coordinate, faction, piece, piece::Piece};
+use crate::engine::{Coordinate, faction, piece, piece::Piece};
 
 pub fn generate() -> HashMap<Coordinate, Piece> {
     HashMap::from([

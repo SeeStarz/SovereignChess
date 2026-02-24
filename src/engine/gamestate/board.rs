@@ -1,4 +1,4 @@
-use super::super::{Coordinate, Piece, Tile};
+use crate::engine::{Coordinate, Piece, Tile};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Board {
