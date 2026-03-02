@@ -1,7 +1,7 @@
 mod engine;
 mod sprite;
 
-use crate::engine::{Coordinate, Gamestate, faction, piece, tile};
+use crate::engine::export::{Coordinate, Gamestate, faction, piece, tile};
 use raylib::prelude::*;
 
 struct Data {
