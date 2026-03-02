@@ -1,5 +1,5 @@
 mod coordinate;
-mod faction;
+pub mod faction;
 mod gamestate;
 pub mod piece;
 pub mod tile;
