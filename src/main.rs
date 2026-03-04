@@ -100,9 +100,6 @@ impl ToColor for faction::Color {
 fn draw_pieces(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Data) {
     let size = 32;
     for piece in data.gamestate.pieces() {
-        if piece.piece_type == piece::King {
-            println!("{:#?}", piece);
-        }
         let texture = data.sprite_manager.get(piece.piece_type.to_sprite()).1;
         handle.draw_texture(
             texture,
