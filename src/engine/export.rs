@@ -14,3 +14,7 @@ pub mod piece {
 pub mod tile {
     pub use crate::engine::tile::Special;
 }
+
+pub mod gamestate {
+    pub use crate::engine::gamestate::Move;
+}

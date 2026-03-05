@@ -1,7 +1,7 @@
 mod engine;
 mod sprite;
 
-use crate::engine::export::{Coordinate, Gamestate, faction, piece, tile};
+use crate::engine::export::{Coordinate, Gamestate, faction, gamestate::Move, piece, tile};
 use raylib::prelude::*;
 
 struct Data {
@@ -17,13 +17,37 @@ fn main() {
         .vsync()
         .build();
 
-    let data = Data {
+    let mut data = Data {
         gamestate: Gamestate::new(),
         sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
     };
 
+    let mut click_begin = None;
+
     while !raylib_handle.window_should_close() {
-        raylib_handle.draw(&thread, |handle| draw(handle, &thread, &data));
+        if raylib_handle.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
+            let row = (raylib_handle.get_mouse_y() / 32) - 1;
+            let col = (raylib_handle.get_mouse_x() / 32) - 1;
+            if let Some(coordinate1) = Coordinate::new(row, col) {
+                if let Some(coordinate2) = click_begin {
+                    data.gamestate = data.gamestate.apply_move(Move {
+                        origin: coordinate2,
+                        destination: coordinate1,
+                    });
+                    click_begin = None;
+                } else {
+                    click_begin = Some(coordinate1);
+                }
+            }
+        }
+
+        //// Below is the preferred way of doing things, but is still broken (double END_DRAWING) as per version 5.5.1
+        // raylib_handle.draw(&thread, |handle| draw(handle, &thread, &data));
+        //// Working version
+        {
+            let draw_handle = raylib_handle.begin_drawing(&thread);
+            draw(draw_handle, &thread, &data);
+        }
     }
 }
 

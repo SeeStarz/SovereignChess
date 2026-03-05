@@ -1,6 +1,6 @@
 use crate::engine::{
     Coordinate,
-    gamestate::{board::Board, init_pieces},
+    gamestate::{Move, board::Board, init_pieces},
     piece::PieceExternal,
 };
 
@@ -33,6 +33,16 @@ impl Gamestate {
         for (coordinate, piece) in init_pieces::normal() {
             assert!(board.at(coordinate).is_none());
             board.set_at(coordinate, Some(piece));
+        }
+        Self { board }
+    }
+
+    // TODO: Proper move logic
+    pub fn apply_move(&self, move_: Move) -> Self {
+        let mut board = self.board;
+        if let Some(piece) = board.at(move_.origin) {
+            board.set_at(move_.origin, None);
+            board.set_at(move_.destination, Some(piece));
         }
         Self { board }
     }
