@@ -1,8 +1,4 @@
-use crate::engine::{
-    Coordinate,
-    gamestate::{Move, board::Board, init_pieces},
-    piece::PieceExternal,
-};
+use crate::engine::{Coordinate, Move, board::Board, gamestate::init_pieces, piece::PieceExternal};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Gamestate {
