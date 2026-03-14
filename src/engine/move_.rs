@@ -1,6 +1,6 @@
 use crate::engine::{
+    Coordinate, Gamestate,
     coordinate::Direction,
-    export::{Coordinate, Gamestate},
     faction,
     piece::{self, Piece},
 };
@@ -53,7 +53,6 @@ fn get_knight_directions() -> &'static [Direction] {
 impl Gamestate {
     pub fn get_moves(&self) -> Vec<Move> {
         let mut moves = Vec::new();
-        DIRECTION_STORE.iter();
         self.pieces().for_each(|p| {
             match p.piece_type {
                 piece::King | piece::Queen | piece::Rook | piece::Bishop => {
@@ -123,8 +122,7 @@ impl Gamestate {
         struct PawnMoveDirection {
             direction: Direction,
             double_move: bool,
-        };
-        type PawnAttackDirection = Direction;
+        }
 
         let move_directions = {
             let mut move_directions = Vec::new();
