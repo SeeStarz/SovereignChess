@@ -1,8 +1,28 @@
-use crate::engine::{Coordinate, Move, board::Board, gamestate::init_pieces, piece::PieceExternal};
+use crate::engine::{
+    Coordinate, Move, board::Board, faction, gamestate::init_pieces, piece::PieceExternal,
+};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum TurnToPlay {
+    Player1 = 0,
+    Player2 = 1,
+}
+
+impl TurnToPlay {
+    pub fn other(&self) -> TurnToPlay {
+        use TurnToPlay::*;
+        match self {
+            Player1 => Player2,
+            Player2 => Player1,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Gamestate {
-    board: Board,
+    pub(in crate::engine) board: Board,
+    pub(in crate::engine) player_colors: [faction::Color; 2],
+    pub(in crate::engine) turn_to_play: TurnToPlay,
 }
 
 impl Gamestate {
@@ -30,7 +50,13 @@ impl Gamestate {
             assert!(board.at(coordinate).is_none());
             board.set_at(coordinate, Some(piece));
         }
-        Self { board }
+        let player_colors = [faction::White, faction::Black];
+        let turn_to_play = TurnToPlay::Player1;
+        Self {
+            board,
+            player_colors,
+            turn_to_play,
+        }
     }
 
     // TODO: Proper move logic
@@ -40,6 +66,12 @@ impl Gamestate {
             board.set_at(move_.origin, None);
             board.set_at(move_.destination, Some(piece));
         }
-        Self { board }
+        let player_colors = self.player_colors;
+        let turn_to_play = self.turn_to_play.other();
+        Self {
+            board,
+            player_colors,
+            turn_to_play,
+        }
     }
 }

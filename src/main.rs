@@ -83,7 +83,7 @@ fn draw_board(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, _data: &Dat
     for r in 0..16 {
         for c in 0..16 {
             let coordinate = Coordinate::new_unchecked(r, c);
-            let color = if let Some(special) = tile::Special::at(&coordinate) {
+            let color = if let Some(special) = tile::Special::at(coordinate) {
                 special.faction.to_color()
             } else {
                 if (r + c) % 2 == 0 {
