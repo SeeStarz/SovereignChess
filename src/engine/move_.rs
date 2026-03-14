@@ -62,8 +62,8 @@ impl Gamestate {
                 piece::Knight => {
                     self.add_knight_moves_naive(&mut moves, p.faction, p.coordinate);
                 }
-                _ => {
-                    all_squares(&mut moves, p.coordinate);
+                piece::Pawn => {
+                    self.add_pawn_moves_naive(&mut moves, p.faction, p.coordinate);
                 }
             };
         });
@@ -113,8 +113,106 @@ impl Gamestate {
             });
         }
     }
+
+    fn add_pawn_moves_naive(
+        &self,
+        moves: &mut Vec<Move>,
+        faction: faction::Color,
+        origin: Coordinate,
+    ) {
+        struct PawnMoveDirection {
+            direction: Direction,
+            double_move: bool,
+        };
+        type PawnAttackDirection = Direction;
+
+        let move_directions = {
+            let mut move_directions = Vec::new();
+            if origin.row < 7 {
+                move_directions.push(PawnMoveDirection {
+                    direction: Direction::new(1, 0),
+                    double_move: origin.row < 2,
+                });
+            } else if origin.row > 8 {
+                move_directions.push(PawnMoveDirection {
+                    direction: Direction::new(-1, 0),
+                    double_move: origin.row > 13,
+                });
+            }
+
+            if origin.col < 7 {
+                move_directions.push(PawnMoveDirection {
+                    direction: Direction::new(0, 1),
+                    double_move: origin.col < 2,
+                });
+            } else if origin.col > 8 {
+                move_directions.push(PawnMoveDirection {
+                    direction: Direction::new(0, -1),
+                    double_move: origin.col > 13,
+                });
+            }
+            move_directions
+        };
+
+        let attack_directions = {
+            let mut attack_directions = Vec::new();
+
+            if move_directions.len() == 1 {
+                let direction = move_directions[0].direction;
+                if (direction.row != 0) {
+                    attack_directions.push(direction + Direction::new(0, 1));
+                    attack_directions.push(direction + Direction::new(0, -1));
+                } else {
+                    attack_directions.push(direction + Direction::new(1, 0));
+                    attack_directions.push(direction + Direction::new(-1, 0));
+                }
+            } else {
+                // A pawn is somehow in the inner ring
+                assert!(move_directions.len() == 2);
+
+                let dir1 = move_directions[0].direction;
+                let dir2 = move_directions[1].direction;
+
+                attack_directions.push(dir1 + dir2);
+                attack_directions.push((-dir1) + dir2);
+                attack_directions.push(dir1 + (-dir2));
+            }
+            attack_directions
+        };
+
+        for direction in move_directions {
+            let Some(destination) = origin.offset(direction.direction) else {
+                continue;
+            };
+            moves.push(Move {
+                origin,
+                destination,
+            });
+
+            if direction.double_move
+                && let Some(destination) = origin.offset(direction.direction * 2)
+            {
+                moves.push(Move {
+                    origin,
+                    destination,
+                });
+            }
+        }
+
+        for direction in attack_directions {
+            let Some(destination) = origin.offset(direction) else {
+                continue;
+            };
+            moves.push(Move {
+                origin,
+                destination,
+            });
+        }
+    }
 }
 
+// For debug purposes, e.g. allowing a piece to move anywhere
+#[allow(dead_code)]
 fn all_squares(moves: &mut Vec<Move>, origin: Coordinate) {
     for row in 0..16 {
         for col in 0..16 {
