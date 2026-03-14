@@ -167,7 +167,7 @@ impl Gamestate {
                     attack_directions.push(direction + Direction::new(-1, 0));
                 }
             } else {
-                // A pawn is somehow in the inner ring
+                // A pawn is somehow in the inner 2x2 ring if false
                 assert!(move_directions.len() == 2);
 
                 let dir1 = move_directions[0].direction;

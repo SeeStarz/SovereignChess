@@ -7,6 +7,7 @@ use raylib::prelude::*;
 struct Data {
     gamestate: Gamestate,
     legal_moves: Vec<Move>,
+    selected_square: Option<Coordinate>,
     sprite_manager: sprite::Manager,
 }
 
@@ -23,18 +24,17 @@ fn main() {
         Data {
             gamestate,
             legal_moves: gamestate.get_moves(),
+            selected_square: None,
             sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
         }
     };
-
-    let mut click_begin = None;
 
     while !raylib_handle.window_should_close() {
         if raylib_handle.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
             let row = (raylib_handle.get_mouse_y() / 32) - 1;
             let col = (raylib_handle.get_mouse_x() / 32) - 1;
             if let Some(coordinate1) = Coordinate::new(row, col) {
-                if let Some(coordinate2) = click_begin {
+                if let Some(coordinate2) = data.selected_square {
                     let attempted_move = Move {
                         origin: coordinate2,
                         destination: coordinate1,
@@ -49,14 +49,14 @@ fn main() {
                         data.gamestate = data.gamestate.apply_move(attempted_move);
                         data.legal_moves = data.gamestate.get_moves();
                     }
-                    click_begin = None;
+                    data.selected_square = None;
                 } else if data
                     .gamestate
                     .pieces()
                     .find(|p| p.coordinate == coordinate1)
                     .is_some()
                 {
-                    click_begin = Some(coordinate1);
+                    data.selected_square = Some(coordinate1);
                 }
             }
         }
@@ -76,6 +76,7 @@ fn draw(mut handle: RaylibDrawHandle, thread: &RaylibThread, data: &Data) {
 
     draw_board(&mut handle, thread, data);
     draw_pieces(&mut handle, thread, data);
+    draw_legal_moves(&mut handle, thread, data);
 }
 
 fn draw_board(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, _data: &Data) {
@@ -150,6 +151,26 @@ fn draw_pieces(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Dat
             piece.coordinate.col as i32 * size + size,
             piece.coordinate.row as i32 * size + size,
             piece.faction.to_color(),
+        );
+    }
+}
+
+fn draw_legal_moves(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Data) {
+    let Some(selected_square) = data.selected_square else {
+        return;
+    };
+
+    let size = 32;
+    for move_ in data
+        .legal_moves
+        .iter()
+        .filter(|&&mv| mv.origin == selected_square)
+    {
+        handle.draw_circle(
+            (move_.destination.col as i32 + 1) * size + size / 2,
+            (move_.destination.row as i32 + 1) * size + size / 2,
+            size as f32 / 3.0,
+            Color::BLUE.alpha(0.25),
         );
     }
 }
