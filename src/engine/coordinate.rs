@@ -67,7 +67,7 @@ impl std::ops::Neg for Direction {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Self::new(self.row, -self.col)
+        Self::new(-self.row, -self.col)
     }
 }
 
