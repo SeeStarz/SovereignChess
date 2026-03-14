@@ -6,6 +6,7 @@ use raylib::prelude::*;
 
 struct Data {
     gamestate: Gamestate,
+    legal_moves: Vec<Move>,
     sprite_manager: sprite::Manager,
 }
 
@@ -17,9 +18,13 @@ fn main() {
         .vsync()
         .build();
 
-    let mut data = Data {
-        gamestate: Gamestate::new(),
-        sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
+    let mut data = {
+        let gamestate = Gamestate::new();
+        Data {
+            gamestate,
+            legal_moves: gamestate.get_moves(),
+            sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
+        }
     };
 
     let mut click_begin = None;
@@ -30,12 +35,27 @@ fn main() {
             let col = (raylib_handle.get_mouse_x() / 32) - 1;
             if let Some(coordinate1) = Coordinate::new(row, col) {
                 if let Some(coordinate2) = click_begin {
-                    data.gamestate = data.gamestate.apply_move(Move {
+                    let attempted_move = Move {
                         origin: coordinate2,
                         destination: coordinate1,
-                    });
+                    };
+
+                    if data
+                        .legal_moves
+                        .iter()
+                        .find(|&&x| x == attempted_move)
+                        .is_some()
+                    {
+                        data.gamestate = data.gamestate.apply_move(attempted_move);
+                        data.legal_moves = data.gamestate.get_moves();
+                    }
                     click_begin = None;
-                } else {
+                } else if data
+                    .gamestate
+                    .pieces()
+                    .find(|p| p.coordinate == coordinate1)
+                    .is_some()
+                {
                     click_begin = Some(coordinate1);
                 }
             }
