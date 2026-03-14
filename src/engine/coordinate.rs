@@ -81,12 +81,29 @@ impl std::ops::Sub for Direction {
 
 impl std::ops::AddAssign for Direction {
     fn add_assign(&mut self, rhs: Self) {
-        *self = *self + rhs;
+        self.row += rhs.row;
+        self.col += rhs.col;
     }
 }
 
 impl std::ops::SubAssign for Direction {
     fn sub_assign(&mut self, rhs: Self) {
-        *self = *self - rhs;
+        self.row -= rhs.row;
+        self.col -= rhs.col;
+    }
+}
+
+impl std::ops::Mul<i32> for Direction {
+    type Output = Self;
+
+    fn mul(self, rhs: i32) -> Self::Output {
+        Self::new(self.row * rhs, self.col * rhs)
+    }
+}
+
+impl std::ops::MulAssign<i32> for Direction {
+    fn mul_assign(&mut self, rhs: i32) {
+        self.row *= rhs;
+        self.col *= rhs;
     }
 }
