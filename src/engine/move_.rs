@@ -1,6 +1,7 @@
 use crate::engine::{
     coordinate::Direction,
     export::{Coordinate, Gamestate},
+    faction,
     piece::{self, Piece},
 };
 
@@ -58,6 +59,9 @@ impl Gamestate {
                 piece::King | piece::Queen | piece::Rook | piece::Bishop => {
                     self.add_linear_moves_naive(&mut moves, p.into(), p.coordinate);
                 }
+                piece::Knight => {
+                    self.add_knight_moves_naive(&mut moves, p.faction, p.coordinate);
+                }
                 _ => {
                     all_squares(&mut moves, p.coordinate);
                 }
@@ -89,6 +93,24 @@ impl Gamestate {
                     destination,
                 });
             }
+        }
+    }
+
+    fn add_knight_moves_naive(
+        &self,
+        moves: &mut Vec<Move>,
+        faction: faction::Color,
+        origin: Coordinate,
+    ) {
+        for &direction in get_knight_directions() {
+            let Some(destination) = origin.offset(direction) else {
+                continue;
+            };
+
+            moves.push(Move {
+                origin,
+                destination,
+            });
         }
     }
 }
