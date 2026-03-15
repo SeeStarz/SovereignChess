@@ -1,8 +1,9 @@
 use crate::engine::{
     Coordinate, Gamestate,
     coordinate::Direction,
-    faction,
+    faction::{self, Allegiance},
     piece::{self, Piece},
+    tile,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -53,19 +54,24 @@ fn get_knight_directions() -> &'static [Direction] {
 impl Gamestate {
     pub fn get_moves(&self) -> Vec<Move> {
         let mut moves = Vec::new();
-        self.pieces().for_each(|p| {
-            match p.piece_type {
-                piece::King | piece::Queen | piece::Rook | piece::Bishop => {
-                    self.add_linear_moves_naive(&mut moves, p.into(), p.coordinate);
-                }
-                piece::Knight => {
-                    self.add_knight_moves_naive(&mut moves, p.faction, p.coordinate);
-                }
-                piece::Pawn => {
-                    self.add_pawn_moves_naive(&mut moves, p.faction, p.coordinate);
-                }
-            };
-        });
+        self.pieces()
+            .filter(|p| {
+                self.derived.faction_owners[p.faction as usize]
+                    == Some(self.c().player_colors[self.c().turn_to_play as usize])
+            })
+            .for_each(|p| {
+                match p.piece_type {
+                    piece::King | piece::Queen | piece::Rook | piece::Bishop => {
+                        self.add_linear_moves_naive(&mut moves, p.into(), p.coordinate);
+                    }
+                    piece::Knight => {
+                        self.add_knight_moves_naive(&mut moves, p.faction, p.coordinate);
+                    }
+                    piece::Pawn => {
+                        self.add_pawn_moves_naive(&mut moves, p.faction, p.coordinate);
+                    }
+                };
+            });
         moves
     }
 
@@ -87,10 +93,32 @@ impl Gamestate {
                     break;
                 };
 
-                moves.push(Move {
-                    origin,
-                    destination,
-                });
+                if let Some(victim) = self.c().board.at(destination) {
+                    if self.get_allegiance(victim.faction) == Allegiance::Enemy {
+                        // It should be always allowed since the other tile must be empty
+                        assert!(
+                            self.check_special_tile_occupibility_rules_ok(
+                                destination,
+                                piece.faction
+                            )
+                        );
+
+                        moves.push(Move {
+                            origin,
+                            destination,
+                        });
+                    }
+                    break;
+                } else if tile::Special::at(destination)
+                    .is_none_or(|s| self.c().board.at(s.coordinate).is_none())
+                {
+                    if self.check_special_tile_occupibility_rules_ok(destination, piece.faction) {
+                        moves.push(Move {
+                            origin,
+                            destination,
+                        });
+                    }
+                }
             }
         }
     }
@@ -105,11 +133,18 @@ impl Gamestate {
             let Some(destination) = origin.offset(direction) else {
                 continue;
             };
+            if let Some(victim) = self.c().board.at(destination) {
+                if self.get_allegiance(victim.faction) != Allegiance::Enemy {
+                    continue;
+                }
+            }
 
-            moves.push(Move {
-                origin,
-                destination,
-            });
+            if self.check_special_tile_occupibility_rules_ok(destination, faction) {
+                moves.push(Move {
+                    origin,
+                    destination,
+                });
+            }
         }
     }
 
@@ -182,18 +217,30 @@ impl Gamestate {
             let Some(destination) = origin.offset(direction.direction) else {
                 continue;
             };
-            moves.push(Move {
-                origin,
-                destination,
-            });
+            if self.c().board.at(destination).is_some() {
+                continue;
+            }
 
-            if direction.double_move
-                && let Some(destination) = origin.offset(direction.direction * 2)
-            {
+            if self.check_special_tile_occupibility_rules_ok(destination, faction) {
                 moves.push(Move {
                     origin,
                     destination,
                 });
+            }
+
+            if direction.double_move
+                && let Some(destination) = origin.offset(direction.direction * 2)
+            {
+                if self.c().board.at(destination).is_some() {
+                    continue;
+                }
+
+                if self.check_special_tile_occupibility_rules_ok(destination, faction) {
+                    moves.push(Move {
+                        origin,
+                        destination,
+                    });
+                }
             }
         }
 
@@ -201,10 +248,19 @@ impl Gamestate {
             let Some(destination) = origin.offset(direction) else {
                 continue;
             };
-            moves.push(Move {
-                origin,
-                destination,
-            });
+            let Some(victim) = self.c().board.at(destination) else {
+                continue;
+            };
+            if self.get_allegiance(victim.faction) != Allegiance::Enemy {
+                continue;
+            }
+
+            if self.check_special_tile_occupibility_rules_ok(destination, faction) {
+                moves.push(Move {
+                    origin,
+                    destination,
+                });
+            }
         }
     }
 }

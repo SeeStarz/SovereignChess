@@ -1,4 +1,4 @@
-use crate::engine::{Piece, coordinate::Coordinate, faction};
+use crate::engine::{Gamestate, Piece, coordinate::Coordinate, faction};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 
@@ -31,6 +31,32 @@ impl Special {
 
     pub fn all() -> &'static [Special] {
         &SPECIAL_TILES
+    }
+}
+
+impl Gamestate {
+    pub(in crate::engine) fn check_special_tile_occupibility_rules_ok(
+        &self,
+        coordinate: Coordinate,
+        faction: faction::Color,
+    ) -> bool {
+        Special::at(coordinate).is_none_or(|&s| self.is_special_tile_occupiable(s, faction))
+    }
+
+    pub(in crate::engine) fn is_special_tile_occupiable(
+        &self,
+        special: Special,
+        faction: faction::Color,
+    ) -> bool {
+        if special.faction == faction {
+            return false;
+        }
+
+        if let Some(_) = self.c().board.at(special.other().coordinate) {
+            false
+        } else {
+            true
+        }
     }
 }
 

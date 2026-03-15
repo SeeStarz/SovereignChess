@@ -1,4 +1,4 @@
-use crate::engine::{faction, gamestate::CanonicalState, tile};
+use crate::engine::{Gamestate, faction, gamestate::CanonicalState, tile};
 use strum::{EnumIter, IntoEnumIterator};
 
 pub use Color::*;
@@ -16,6 +16,13 @@ pub enum Color {
     Ash,
     Violet,
     Black,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Allegiance {
+    Ally,
+    Neutral,
+    Enemy,
 }
 
 impl CanonicalState {
@@ -45,5 +52,22 @@ impl CanonicalState {
             }
         }
         real_owners
+    }
+}
+
+impl Gamestate {
+    pub(in crate::engine) fn get_allegiance(&self, faction: faction::Color) -> Allegiance {
+        match self.derived.faction_owners[faction as usize] {
+            None => Allegiance::Neutral,
+            Some(faction) if faction == self.c().player_colors[self.c().turn_to_play as usize] => {
+                Allegiance::Ally
+            }
+            Some(faction)
+                if faction == self.c().player_colors[self.c().turn_to_play.other() as usize] =>
+            {
+                Allegiance::Enemy
+            }
+            _ => panic!("Faction {:?} is neither neutral, ally, nor enemy", faction),
+        }
     }
 }
