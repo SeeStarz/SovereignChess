@@ -192,7 +192,7 @@ impl Gamestate {
 
             if move_directions.len() == 1 {
                 let direction = move_directions[0].direction;
-                if (direction.row != 0) {
+                if direction.row != 0 {
                     attack_directions.push(direction + Direction::new(0, 1));
                     attack_directions.push(direction + Direction::new(0, -1));
                 } else {
