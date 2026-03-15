@@ -102,24 +102,27 @@ impl Gamestate {
 
                 if let Some(victim) = self.c().board.at(destination) {
                     if self.get_allegiance(victim.faction) == Allegiance::Enemy {
-                        if self.check_special_tile_occupibility_rules_ok(destination, piece.faction)
-                        {
-                            moves.push(Move {
+                        self.try_add_move_check_special_tile_rules(
+                            moves,
+                            Move {
                                 origin,
                                 destination,
-                            });
-                        }
+                            },
+                            piece.faction,
+                        );
                     }
                     break;
                 } else if tile::Special::at(destination)
                     .is_none_or(|s| self.c().board.at(s.coordinate).is_none())
                 {
-                    if self.check_special_tile_occupibility_rules_ok(destination, piece.faction) {
-                        moves.push(Move {
+                    self.try_add_move_check_special_tile_rules(
+                        moves,
+                        Move {
                             origin,
                             destination,
-                        });
-                    }
+                        },
+                        piece.faction,
+                    );
                 }
             }
         }
@@ -141,12 +144,14 @@ impl Gamestate {
                 }
             }
 
-            if self.check_special_tile_occupibility_rules_ok(destination, faction) {
-                moves.push(Move {
+            self.try_add_move_check_special_tile_rules(
+                moves,
+                Move {
                     origin,
                     destination,
-                });
-            }
+                },
+                faction,
+            );
         }
     }
 
@@ -165,12 +170,14 @@ impl Gamestate {
                 continue;
             }
 
-            if self.check_special_tile_occupibility_rules_ok(destination, faction) {
-                moves.push(Move {
+            self.try_add_move_check_special_tile_rules(
+                moves,
+                Move {
                     origin,
                     destination,
-                });
-            }
+                },
+                faction,
+            );
 
             if direction.double_move {
                 let Some(destination) = origin.offset(direction.direction * 2) else {
@@ -180,12 +187,14 @@ impl Gamestate {
                     continue;
                 }
 
-                if self.check_special_tile_occupibility_rules_ok(destination, faction) {
-                    moves.push(Move {
+                self.try_add_move_check_special_tile_rules(
+                    moves,
+                    Move {
                         origin,
                         destination,
-                    });
-                }
+                    },
+                    faction,
+                );
             }
         }
 
@@ -200,12 +209,40 @@ impl Gamestate {
                 continue;
             }
 
-            if self.check_special_tile_occupibility_rules_ok(destination, faction) {
-                moves.push(Move {
+            self.try_add_move_check_special_tile_rules(
+                moves,
+                Move {
                     origin,
                     destination,
-                });
-            }
+                },
+                faction,
+            );
+        }
+    }
+
+    fn try_add_move_check_special_tile_rules(
+        &self,
+        moves: &mut Vec<Move>,
+        move_: Move,
+        faction: faction::Color,
+    ) {
+        let Some(&special_destination) = tile::Special::at(move_.destination) else {
+            moves.push(move_);
+            return;
+        };
+
+        // Means that we are not trying to occupy special tile colored the same as current faction
+        // We are also not trying to occupy special tile where there currently is a piece on the other pair
+        if self.is_special_tile_occupiable(special_destination, faction) {
+            moves.push(move_);
+            return;
+        }
+
+        // If the current moved piece is the one on the other pair, it's safe to move there
+        if let Some(&special_origin) = tile::Special::at(move_.origin)
+            && special_origin.other() == special_destination
+        {
+            moves.push(move_);
         }
     }
 }

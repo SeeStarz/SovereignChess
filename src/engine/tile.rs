@@ -35,14 +35,6 @@ impl Special {
 }
 
 impl Gamestate {
-    pub(in crate::engine) fn check_special_tile_occupibility_rules_ok(
-        &self,
-        coordinate: Coordinate,
-        faction: faction::Color,
-    ) -> bool {
-        Special::at(coordinate).is_none_or(|&s| self.is_special_tile_occupiable(s, faction))
-    }
-
     pub(in crate::engine) fn is_special_tile_occupiable(
         &self,
         special: Special,
