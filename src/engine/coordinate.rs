@@ -1,11 +1,18 @@
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Coordinate {
-    pub row: usize,
-    pub col: usize,
-    pub _private: (),
+    row: usize,
+    col: usize,
 }
 
 impl Coordinate {
+    pub const fn row(&self) -> usize {
+        self.row
+    }
+
+    pub const fn col(&self) -> usize {
+        self.col
+    }
+
     pub const fn new(row: i32, col: i32) -> Option<Self> {
         if row < 0 || row > 15 || col < 0 || col > 15 {
             return None;
@@ -14,7 +21,6 @@ impl Coordinate {
         Some(Self {
             row: row as usize,
             col: col as usize,
-            _private: (),
         })
     }
 
@@ -23,16 +29,11 @@ impl Coordinate {
         Self {
             row: row as usize,
             col: col as usize,
-            _private: (),
         }
     }
 
     pub const fn zero() -> Self {
-        Self {
-            row: 0,
-            col: 0,
-            _private: (),
-        }
+        Self { row: 0, col: 0 }
     }
 
     pub const fn offset(&self, direction: Direction) -> Option<Self> {

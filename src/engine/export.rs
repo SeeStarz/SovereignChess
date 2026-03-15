@@ -1,6 +1,6 @@
 pub use crate::engine::coordinate::Coordinate;
 pub use crate::engine::gamestate::Gamestate;
-pub use crate::engine::move_::Move;
+pub use crate::engine::move_::Move; // TODO: Separate from internal
 
 pub mod faction {
     pub use crate::engine::faction::Color;

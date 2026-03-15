@@ -126,27 +126,27 @@ impl Gamestate {
 
         let move_directions = {
             let mut move_directions = Vec::new();
-            if origin.row < 7 {
+            if origin.row() < 7 {
                 move_directions.push(PawnMoveDirection {
                     direction: Direction::new(1, 0),
-                    double_move: origin.row < 2,
+                    double_move: origin.row() < 2,
                 });
-            } else if origin.row > 8 {
+            } else if origin.row() > 8 {
                 move_directions.push(PawnMoveDirection {
                     direction: Direction::new(-1, 0),
-                    double_move: origin.row > 13,
+                    double_move: origin.row() > 13,
                 });
             }
 
-            if origin.col < 7 {
+            if origin.col() < 7 {
                 move_directions.push(PawnMoveDirection {
                     direction: Direction::new(0, 1),
-                    double_move: origin.col < 2,
+                    double_move: origin.col() < 2,
                 });
-            } else if origin.col > 8 {
+            } else if origin.col() > 8 {
                 move_directions.push(PawnMoveDirection {
                     direction: Direction::new(0, -1),
-                    double_move: origin.col > 13,
+                    double_move: origin.col() > 13,
                 });
             }
             move_directions

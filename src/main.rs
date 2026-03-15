@@ -148,8 +148,8 @@ fn draw_pieces(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Dat
         let texture = data.sprite_manager.get(piece.piece_type.to_sprite()).1;
         handle.draw_texture(
             texture,
-            piece.coordinate.col as i32 * size + size,
-            piece.coordinate.row as i32 * size + size,
+            piece.coordinate.col() as i32 * size + size,
+            piece.coordinate.row() as i32 * size + size,
             piece.faction.to_color(),
         );
     }
@@ -167,8 +167,8 @@ fn draw_legal_moves(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data:
         .filter(|&&mv| mv.origin == selected_square)
     {
         handle.draw_circle(
-            (move_.destination.col as i32 + 1) * size + size / 2,
-            (move_.destination.row as i32 + 1) * size + size / 2,
+            (move_.destination.col() as i32 + 1) * size + size / 2,
+            (move_.destination.row() as i32 + 1) * size + size / 2,
             size as f32 / 3.0,
             Color::BLUE.alpha(0.25),
         );

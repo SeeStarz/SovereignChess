@@ -6,17 +6,17 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new() -> Board {
+    pub fn empty() -> Board {
         Board {
             tiles: [[None; 16]; 16],
         }
     }
 
     pub fn at(&self, coordinate: Coordinate) -> Tile {
-        self.tiles[coordinate.row][coordinate.col]
+        self.tiles[coordinate.row()][coordinate.col()]
     }
 
     pub fn set_at(&mut self, coordinate: Coordinate, piece: Option<Piece>) {
-        self.tiles[coordinate.row][coordinate.col] = piece;
+        self.tiles[coordinate.row()][coordinate.col()] = piece;
     }
 }
