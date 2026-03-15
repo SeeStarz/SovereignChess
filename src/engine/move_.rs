@@ -95,18 +95,14 @@ impl Gamestate {
 
                 if let Some(victim) = self.c().board.at(destination) {
                     if self.get_allegiance(victim.faction) == Allegiance::Enemy {
-                        // It should be always allowed since the other tile must be empty
-                        assert!(
-                            self.check_special_tile_occupibility_rules_ok(
+                        if (self
+                            .check_special_tile_occupibility_rules_ok(destination, piece.faction))
+                        {
+                            moves.push(Move {
+                                origin,
                                 destination,
-                                piece.faction
-                            )
-                        );
-
-                        moves.push(Move {
-                            origin,
-                            destination,
-                        });
+                            });
+                        }
                     }
                     break;
                 } else if tile::Special::at(destination)
