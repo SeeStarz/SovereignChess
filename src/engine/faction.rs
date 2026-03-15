@@ -23,11 +23,11 @@ impl Gamestate {
         let direct_owners = {
             let mut direct_owners = [None; 12];
             for special in tile::Special::all() {
-                let Some(piece) = self.board.at(special.coordinate) else {
+                let Some(piece) = self.c().board.at(special.coordinate) else {
                     continue;
                 };
 
-                assert!(self.board.at(special.other().coordinate).is_none());
+                assert!(self.c().board.at(special.other().coordinate).is_none());
                 direct_owners[special.faction as usize] = Some(piece.faction);
             }
             direct_owners
@@ -40,7 +40,7 @@ impl Gamestate {
                 owner = next;
             }
 
-            if self.player_colors.iter().any(|&f| f == owner) {
+            if self.c().player_colors.iter().any(|&f| f == owner) {
                 real_owners[faction as usize] = Some(owner);
             }
         }
