@@ -32,10 +32,6 @@ impl Coordinate {
         }
     }
 
-    pub const fn zero() -> Self {
-        Self { row: 0, col: 0 }
-    }
-
     pub const fn offset(&self, direction: Direction) -> Option<Self> {
         Self::new(
             self.row as i32 + direction.row,

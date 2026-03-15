@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 pub use crate::engine::coordinate::Coordinate;
 pub use crate::engine::gamestate::Gamestate;
 pub use crate::engine::move_::Move; // TODO: Separate from internal
