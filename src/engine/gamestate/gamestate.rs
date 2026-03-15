@@ -26,7 +26,9 @@ pub struct CanonicalState {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct DerivedState {}
+pub struct DerivedState {
+    pub(in crate::engine) faction_owners: [Option<faction::Color>; 12],
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Gamestate {
@@ -74,7 +76,7 @@ impl Gamestate {
             }
         };
 
-        let derived = DerivedState {};
+        let derived = DerivedState::new(&canonical);
 
         Self { canonical, derived }
     }
@@ -96,8 +98,15 @@ impl Gamestate {
             }
         };
 
-        let derived = DerivedState {};
+        let derived = DerivedState::new(&canonical);
 
         Self { canonical, derived }
+    }
+}
+
+impl DerivedState {
+    fn new(state: &CanonicalState) -> Self {
+        let faction_owners = state.get_faction_owners();
+        Self { faction_owners }
     }
 }

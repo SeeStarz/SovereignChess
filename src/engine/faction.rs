@@ -1,4 +1,4 @@
-use crate::engine::{Gamestate, faction, tile};
+use crate::engine::{faction, gamestate::CanonicalState, tile};
 use strum::{EnumIter, IntoEnumIterator};
 
 pub use Color::*;
@@ -18,16 +18,16 @@ pub enum Color {
     Black,
 }
 
-impl Gamestate {
+impl CanonicalState {
     pub(in crate::engine) fn get_faction_owners(&self) -> [Option<faction::Color>; 12] {
         let direct_owners = {
             let mut direct_owners = [None; 12];
             for special in tile::Special::all() {
-                let Some(piece) = self.c().board.at(special.coordinate) else {
+                let Some(piece) = self.board.at(special.coordinate) else {
                     continue;
                 };
 
-                assert!(self.c().board.at(special.other().coordinate).is_none());
+                assert!(self.board.at(special.other().coordinate).is_none());
                 direct_owners[special.faction as usize] = Some(piece.faction);
             }
             direct_owners
@@ -40,7 +40,7 @@ impl Gamestate {
                 owner = next;
             }
 
-            if self.c().player_colors.iter().any(|&f| f == owner) {
+            if self.player_colors.iter().any(|&f| f == owner) {
                 real_owners[faction as usize] = Some(owner);
             }
         }
