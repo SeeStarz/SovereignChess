@@ -14,18 +14,18 @@ impl SpritePath for sprite::Prototype {
     fn path(self) -> PathBuf {
         use sprite::Prototype::*;
         match self {
-            KingOwnerMask => PathBuf::from("assets/img/king.png"),
-            KingFactionMask => PathBuf::from("assets/img/king_base.png"),
-            QueenOwnerMask => PathBuf::from("assets/img/queen.png"),
-            QueenFactionMask => PathBuf::from("assets/img/queen_base.png"),
-            RookOwnerMask => PathBuf::from("assets/img/rook.png"),
-            RookFactionMask => PathBuf::from("assets/img/rook_base.png"),
-            BishopOwnerMask => PathBuf::from("assets/img/bishop.png"),
-            BishopFactionMask => PathBuf::from("assets/img/bishop_base.png"),
-            KnightOwnerMask => PathBuf::from("assets/img/knight.png"),
-            KnightFactionMask => PathBuf::from("assets/img/knight_base.png"),
-            PawnOwnerMask => PathBuf::from("assets/img/pawn.png"),
-            PawnFactionMask => PathBuf::from("assets/img/pawn_base.png"),
+            KingOwnerMask => PathBuf::from("assets/img/king_base.png"),
+            KingFactionMask => PathBuf::from("assets/img/king.png"),
+            QueenOwnerMask => PathBuf::from("assets/img/queen_base.png"),
+            QueenFactionMask => PathBuf::from("assets/img/queen.png"),
+            RookOwnerMask => PathBuf::from("assets/img/rook_base.png"),
+            RookFactionMask => PathBuf::from("assets/img/rook.png"),
+            BishopOwnerMask => PathBuf::from("assets/img/bishop_base.png"),
+            BishopFactionMask => PathBuf::from("assets/img/bishop.png"),
+            KnightOwnerMask => PathBuf::from("assets/img/knight_base.png"),
+            KnightFactionMask => PathBuf::from("assets/img/knight.png"),
+            PawnOwnerMask => PathBuf::from("assets/img/pawn_base.png"),
+            PawnFactionMask => PathBuf::from("assets/img/pawn.png"),
         }
     }
 }
