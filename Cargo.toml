@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+glam = "0.32.1"
 lazy_static = "1.5.0"
 raylib = { version = "5.5.1" }
 strum = { version = "0.28.0", features = ["derive", "strum_macros"] }
