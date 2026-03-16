@@ -121,7 +121,7 @@ impl ToColor for faction::Color {
             Navy => Color::NAVY,
             Ash => Color::GRAY,
             Violet => Color::VIOLET,
-            Black => Color::BLACK,
+            Black => Color::BLACK.brightness(0.2),
         }
     }
 }
