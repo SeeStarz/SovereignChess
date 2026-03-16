@@ -1,7 +1,10 @@
 mod engine;
 mod sprite;
 
-use crate::engine::export::{Coordinate, Gamestate, Move, faction, piece, tile};
+use crate::{
+    engine::export::{Coordinate, Gamestate, Move, faction, tile},
+    sprite::{CompositeDraw, PieceSprite},
+};
 use raylib::prelude::*;
 
 struct Data {
@@ -99,25 +102,6 @@ fn draw_board(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, _data: &Dat
     }
 }
 
-trait ToSprite {
-    fn to_sprite(self) -> sprite::Prototype;
-}
-
-impl ToSprite for piece::Type {
-    fn to_sprite(self) -> sprite::Prototype {
-        use piece::Type::*;
-        use sprite::Prototype::*;
-        match self {
-            King => KingOwnerMask,
-            Queen => QueenOwnerMask,
-            Rook => RookOwnerMask,
-            Bishop => BishopOwnerMask,
-            Knight => KnightOwnerMask,
-            Pawn => PawnOwnerMask,
-        }
-    }
-}
-
 trait ToColor {
     fn to_color(self) -> Color;
 }
@@ -145,12 +129,18 @@ impl ToColor for faction::Color {
 fn draw_pieces(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Data) {
     let size = 32;
     for piece in data.gamestate.pieces() {
-        let texture = data.sprite_manager.get(piece.piece_type.to_sprite()).1;
-        handle.draw_texture(
-            texture,
+        let sprite = PieceSprite {
+            piece_type: piece.piece_type,
+            faction: piece.faction,
+            owner: Some(piece.faction),
+        };
+
+        handle.draw_composite(
+            &data.sprite_manager,
+            sprite,
             piece.coordinate.col() as i32 * size + size,
             piece.coordinate.row() as i32 * size + size,
-            piece.faction.to_color(),
+            Color::WHITE,
         );
     }
 }
