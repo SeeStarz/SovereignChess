@@ -137,7 +137,7 @@ fn draw_pieces(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Dat
 
         handle.draw_composite(
             &data.sprite_manager,
-            sprite,
+            &sprite,
             piece.coordinate.col() as i32 * size + size,
             piece.coordinate.row() as i32 * size + size,
             Color::WHITE,

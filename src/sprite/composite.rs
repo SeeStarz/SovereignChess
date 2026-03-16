@@ -17,30 +17,35 @@ pub struct CompositeSpritePart {
 }
 
 pub trait CompositeSprite {
-    fn get_parts(&self) -> Vec<CompositeSpritePart>;
+    fn for_each_part<T>(&self, f: &mut T)
+    where
+        T: FnMut(CompositeSpritePart);
 }
 
-pub trait CompositeDraw {
+pub trait CompositeDraw<T> {
     fn draw_composite(
         &mut self,
         asset_manager: &Manager,
-        composite: impl CompositeSprite,
+        composite: &T,
         x: i32,
         y: i32,
         tint: Color,
-    );
+    ) where
+        T: CompositeSprite;
 }
 
-impl<'a> CompositeDraw for RaylibDrawHandle<'a> {
+impl<'a, T> CompositeDraw<T> for RaylibDrawHandle<'a> {
     fn draw_composite(
         &mut self,
         asset_manager: &Manager,
-        composite: impl CompositeSprite,
+        composite: &T,
         x: i32,
         y: i32,
         tint: Color,
-    ) {
-        for part in composite.get_parts() {
+    ) where
+        T: CompositeSprite,
+    {
+        composite.for_each_part(&mut |part| {
             let (_texture_rect, texture) = asset_manager.get(part.sprite);
             self.draw_texture(
                 texture,
@@ -53,7 +58,7 @@ impl<'a> CompositeDraw for RaylibDrawHandle<'a> {
                     a: (tint.a as u16 * part.tint.a as u16 / 255) as u8,
                 },
             );
-        }
+        });
     }
 }
 
@@ -64,7 +69,10 @@ pub struct PieceSprite {
 }
 
 impl CompositeSprite for PieceSprite {
-    fn get_parts(&self) -> Vec<CompositeSpritePart> {
+    fn for_each_part<T>(&self, f: &mut T)
+    where
+        T: FnMut(CompositeSpritePart),
+    {
         let faction_mask = {
             use piece::Type::*;
             use sprite::Prototype::*;
@@ -77,6 +85,14 @@ impl CompositeSprite for PieceSprite {
                 Pawn => PawnFactionMask,
             }
         };
+
+        // Body sprite
+        f(CompositeSpritePart {
+            sprite: faction_mask,
+            offset_x: 0,
+            offset_y: 0,
+            tint: self.faction.to_color(),
+        });
 
         let owner_mask = {
             use piece::Type::*;
@@ -91,20 +107,12 @@ impl CompositeSprite for PieceSprite {
             }
         };
 
-        let body_sprite = CompositeSpritePart {
-            sprite: faction_mask,
-            offset_x: 0,
-            offset_y: 0,
-            tint: self.faction.to_color(),
-        };
-
-        let bottom_sprite = CompositeSpritePart {
+        // Lower part sprite
+        f(CompositeSpritePart {
             sprite: owner_mask,
             offset_x: 0,
             offset_y: 0,
             tint: self.owner.map_or(Color::GRAY.alpha(0.5), |c| c.to_color()),
-        };
-
-        vec![body_sprite, bottom_sprite]
+        });
     }
 }
