@@ -132,7 +132,7 @@ fn draw_pieces(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Dat
         let sprite = PieceSprite {
             piece_type: piece.piece_type,
             faction: piece.faction,
-            owner: Some(piece.faction),
+            owner: piece.owner,
         };
 
         handle.draw_composite(

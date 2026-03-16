@@ -18,14 +18,15 @@ pub struct Piece {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct PieceWCoordinate {
+pub struct PieceExternal {
     pub faction: faction::Color,
+    pub owner: Option<faction::Color>,
     pub piece_type: self::Type,
     pub coordinate: Coordinate,
 }
 
-impl From<PieceWCoordinate> for Piece {
-    fn from(piece: PieceWCoordinate) -> Piece {
+impl From<PieceExternal> for Piece {
+    fn from(piece: PieceExternal) -> Piece {
         Piece {
             faction: piece.faction,
             piece_type: piece.piece_type,
@@ -33,10 +34,11 @@ impl From<PieceWCoordinate> for Piece {
     }
 }
 
-impl PieceWCoordinate {
-    pub fn from_piece(piece: Piece, coordinate: Coordinate) -> Self {
+impl PieceExternal {
+    pub fn from_piece(piece: Piece, owner: Option<faction::Color>, coordinate: Coordinate) -> Self {
         Self {
             faction: piece.faction,
+            owner,
             piece_type: piece.piece_type,
             coordinate,
         }

@@ -1,5 +1,5 @@
 use crate::engine::{
-    Coordinate, Move, board::Board, faction, gamestate::init_pieces, piece::PieceWCoordinate,
+    Coordinate, Move, board::Board, faction, gamestate::init_pieces, piece::PieceExternal,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -41,23 +41,24 @@ impl Gamestate {
         &self.canonical
     }
 
-    pub fn pieces(&self) -> impl Iterator<Item = PieceWCoordinate> {
+    pub fn pieces(&self) -> impl Iterator<Item = PieceExternal> {
         self.c()
             .board
             .tiles
             .iter()
             .enumerate()
-            .map(|(row, line)| {
+            .flat_map(move |(row, line)| {
                 line.iter().enumerate().filter_map(move |(col, tile)| {
                     tile.map(|piece| {
-                        PieceWCoordinate::from_piece(
+                        PieceExternal::from_piece(
                             piece,
+                            self.derived.faction_owners[piece.faction as usize],
+                            // None,
                             Coordinate::new_unchecked(row as i32, col as i32),
                         )
                     })
                 })
             })
-            .flatten()
     }
 
     pub fn new() -> Self {
