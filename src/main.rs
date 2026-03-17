@@ -1,10 +1,13 @@
 mod engine;
 mod sprite;
+mod ui;
 
 use crate::{
     engine::export::{Coordinate, Gamestate, Move, faction, tile},
     sprite::{CompositeDraw, PieceSprite},
+    ui::WidgetIntent,
 };
+use glam::IVec2;
 use raylib::prelude::*;
 
 struct Data {
@@ -12,6 +15,7 @@ struct Data {
     legal_moves: Vec<Move>,
     selected_square: Option<Coordinate>,
     sprite_manager: sprite::Manager,
+    widget_tree: WidgetIntent,
 }
 
 fn main() {
@@ -24,10 +28,49 @@ fn main() {
 
     let mut data = {
         let gamestate = Gamestate::new();
+        let widget_tree = {
+            let x = WidgetIntent {
+                children: Vec::new(),
+                layout: ui::Layout::Fixed(IRect {
+                    position: IPosition(IVec2 { x: 50, y: 50 }),
+                    size: ISize {
+                        width: 100,
+                        height: 100,
+                    },
+                }),
+                input_handler: None,
+            };
+
+            let y = WidgetIntent {
+                children: Vec::new(),
+                layout: ui::Layout::Relative(IRect {
+                    position: IPosition(IVec2 { x: 400, y: 50 }),
+                    size: ISize {
+                        width: 50,
+                        height: 50,
+                    },
+                }),
+                input_handler: None,
+            };
+
+            let z = WidgetIntent {
+                children: vec![x, y],
+                layout: ui::Layout::Fixed(IRect {
+                    position: IPosition(IVec2 { x: 200, y: 200 }),
+                    size: ISize {
+                        width: 200,
+                        height: 200,
+                    },
+                }),
+                input_handler: None,
+            };
+            z
+        };
         Data {
             gamestate,
             legal_moves: gamestate.get_moves(),
             selected_square: None,
+            widget_tree,
             sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
         }
     };
@@ -80,6 +123,7 @@ fn draw(mut handle: RaylibDrawHandle, thread: &RaylibThread, data: &Data) {
     draw_board(&mut handle, thread, data);
     draw_pieces(&mut handle, thread, data);
     draw_legal_moves(&mut handle, thread, data);
+    draw_ui(&mut handle, thread, data);
 }
 
 fn draw_board(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, _data: &Data) {
@@ -161,6 +205,60 @@ fn draw_legal_moves(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data:
             (move_.destination.row() as i32 + 1) * size + size / 2,
             size as f32 / 3.0,
             Color::BLUE.alpha(0.25),
+        );
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+struct IPosition(pub IVec2);
+impl From<IVec2> for IPosition {
+    fn from(value: IVec2) -> Self {
+        Self(value)
+    }
+}
+impl From<IPosition> for IVec2 {
+    fn from(value: IPosition) -> Self {
+        value.0
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+struct ISize {
+    width: i32,
+    height: i32,
+}
+impl From<IVec2> for ISize {
+    fn from(value: IVec2) -> Self {
+        Self {
+            width: value.x,
+            height: value.y,
+        }
+    }
+}
+impl From<ISize> for IVec2 {
+    fn from(value: ISize) -> Self {
+        IVec2 {
+            x: value.width,
+            y: value.height,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+struct IRect {
+    position: IPosition,
+    size: ISize,
+}
+
+fn draw_ui(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Data) {
+    for widget in data.widget_tree.compute(IRect::default()).iter() {
+        handle.draw_rectangle(
+            widget.rect.position.0.x,
+            widget.rect.position.0.y,
+            widget.rect.size.width,
+            widget.rect.size.height,
+            Color::REBECCAPURPLE,
         );
     }
 }
