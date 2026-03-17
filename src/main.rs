@@ -2,8 +2,6 @@ mod engine;
 mod sprite;
 mod ui;
 
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{
     engine::export::{Coordinate, Gamestate, Move, faction, tile},
     sprite::{CompositeDraw, PieceSprite},
@@ -14,6 +12,7 @@ use crate::{
 };
 use glam::IVec2;
 use raylib::prelude::*;
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 struct Data {
     gamestate: Gamestate,
@@ -30,7 +29,7 @@ fn main() {
         .vsync()
         .build();
 
-    let data = Rc::new(RefCell::new({
+    let data_mutator = Rc::new(RefCell::new({
         let gamestate = Gamestate::new();
         Data {
             gamestate,
@@ -39,6 +38,8 @@ fn main() {
             sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
         }
     }));
+
+    let data_observer = Observer::from(data_mutator.clone());
 
     let widget_tree = {
         let board = WidgetIntent {
@@ -49,7 +50,7 @@ fn main() {
             }),
             input_handler: Box::new(widget::ignore_input),
             render_function: Box::new({
-                let d = data.clone();
+                let d = data_observer.clone();
                 move |handle, thread, _rect| {
                     draw_board(handle, thread, &d.borrow());
                     draw_pieces(handle, thread, &d.borrow());
@@ -68,35 +69,35 @@ fn main() {
             let row = (raylib_handle.get_mouse_y() / 32) - 1;
             let col = (raylib_handle.get_mouse_x() / 32) - 1;
             if let Some(coordinate1) = Coordinate::new(row, col) {
-                let selected_square = data.borrow().selected_square;
+                let selected_square = data_mutator.borrow().selected_square;
                 if let Some(coordinate2) = selected_square {
                     let attempted_move = Move {
                         origin: coordinate2,
                         destination: coordinate1,
                     };
 
-                    let is_legal = data
+                    let is_legal = data_mutator
                         .borrow()
                         .legal_moves
                         .iter()
                         .find(|&&x| x == attempted_move)
                         .is_some();
                     if is_legal {
-                        let gs = data.borrow().gamestate.apply_move(attempted_move);
-                        data.borrow_mut().gamestate = gs;
-                        let moves = data.borrow().gamestate.get_moves();
-                        data.borrow_mut().legal_moves = moves;
+                        let gs = data_mutator.borrow().gamestate.apply_move(attempted_move);
+                        data_mutator.borrow_mut().gamestate = gs;
+                        let moves = data_mutator.borrow().gamestate.get_moves();
+                        data_mutator.borrow_mut().legal_moves = moves;
                     }
-                    data.borrow_mut().selected_square = None;
+                    data_mutator.borrow_mut().selected_square = None;
                 } else {
-                    let is_piece_here = data
+                    let is_piece_here = data_mutator
                         .borrow()
                         .gamestate
                         .pieces()
                         .find(|p| p.coordinate == coordinate1)
                         .is_some();
                     if is_piece_here {
-                        data.borrow_mut().selected_square = Some(coordinate1);
+                        data_mutator.borrow_mut().selected_square = Some(coordinate1);
                     }
                 }
             }
@@ -242,4 +243,27 @@ impl From<ISize> for IVec2 {
 struct IRect {
     position: IPosition,
     size: ISize,
+}
+
+#[repr(transparent)]
+#[derive(Debug, PartialEq, Eq)]
+struct Observer<T>(Rc<RefCell<T>>);
+impl<T> From<Rc<RefCell<T>>> for Observer<T> {
+    fn from(value: Rc<RefCell<T>>) -> Self {
+        Self(value)
+    }
+}
+
+impl<T> Observer<T> {
+    /// # Panics
+    /// Panics if the value is currently mutably borrowed.
+    pub fn borrow(&self) -> impl Deref<Target = T> {
+        self.0.borrow()
+    }
+}
+
+impl<T> Clone for Observer<T> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
 }
