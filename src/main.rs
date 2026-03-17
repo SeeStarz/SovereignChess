@@ -2,7 +2,7 @@ mod engine;
 mod sprite;
 mod ui;
 
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     engine::export::{Coordinate, Gamestate, Move, faction, tile},
@@ -20,7 +20,6 @@ struct Data {
     legal_moves: Vec<Move>,
     selected_square: Option<Coordinate>,
     sprite_manager: sprite::Manager,
-    widget_tree: ComputedWidget,
 }
 
 fn main() {
@@ -31,46 +30,37 @@ fn main() {
         .vsync()
         .build();
 
-    let mut data = {
+    let data = Rc::new(RefCell::new({
         let gamestate = Gamestate::new();
-        let widget_tree = {
-            let x = ui::widget::debug_rect(ui::Layout::Fixed(IRect {
-                position: IPosition(IVec2 { x: 700, y: 0 }),
-                size: ISize {
-                    width: 50,
-                    height: 50,
-                },
-            }));
-
-            let y = ui::widget::debug_rect(ui::Layout::Relative(IRect {
-                position: IPosition(IVec2 { x: 400, y: 50 }),
-                size: ISize {
-                    width: 50,
-                    height: 50,
-                },
-            }));
-
-            let z = WidgetIntent {
-                children: vec![x, y],
-                layout: ui::Layout::Fixed(IRect {
-                    position: IPosition(IVec2 { x: 200, y: 200 }),
-                    size: ISize {
-                        width: 200,
-                        height: 200,
-                    },
-                }),
-                input_handler: Box::new(widget::ignore_input),
-                render_function: Box::new(widget::no_render),
-            };
-            z.compute(IRect::default())
-        };
         Data {
             gamestate,
             legal_moves: gamestate.get_moves(),
             selected_square: None,
-            widget_tree,
             sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
         }
+    }));
+
+    let widget_tree = {
+        let board = WidgetIntent {
+            children: Vec::new(),
+            layout: ui::Layout::Relative(IRect {
+                position: IPosition::default(),
+                size: ISize::from(IVec2::new(32 * 16, 32 * 18)),
+            }),
+            input_handler: Box::new(widget::ignore_input),
+            render_function: Box::new({
+                let d = data.clone();
+                move |handle, thread, _rect| {
+                    draw_board(handle, thread, &d.borrow());
+                    draw_pieces(handle, thread, &d.borrow());
+                    draw_legal_moves(handle, thread, &d.borrow());
+                }
+            }),
+        };
+        board.compute(IRect {
+            position: IPosition::from(IVec2::new(32, 32)),
+            size: ISize::default(),
+        })
     };
 
     while !raylib_handle.window_should_close() {
@@ -78,29 +68,36 @@ fn main() {
             let row = (raylib_handle.get_mouse_y() / 32) - 1;
             let col = (raylib_handle.get_mouse_x() / 32) - 1;
             if let Some(coordinate1) = Coordinate::new(row, col) {
-                if let Some(coordinate2) = data.selected_square {
+                let selected_square = data.borrow().selected_square;
+                if let Some(coordinate2) = selected_square {
                     let attempted_move = Move {
                         origin: coordinate2,
                         destination: coordinate1,
                     };
 
-                    if data
+                    let is_legal = data
+                        .borrow()
                         .legal_moves
                         .iter()
                         .find(|&&x| x == attempted_move)
-                        .is_some()
-                    {
-                        data.gamestate = data.gamestate.apply_move(attempted_move);
-                        data.legal_moves = data.gamestate.get_moves();
+                        .is_some();
+                    if is_legal {
+                        let gs = data.borrow().gamestate.apply_move(attempted_move);
+                        data.borrow_mut().gamestate = gs;
+                        let moves = data.borrow().gamestate.get_moves();
+                        data.borrow_mut().legal_moves = moves;
                     }
-                    data.selected_square = None;
-                } else if data
-                    .gamestate
-                    .pieces()
-                    .find(|p| p.coordinate == coordinate1)
-                    .is_some()
-                {
-                    data.selected_square = Some(coordinate1);
+                    data.borrow_mut().selected_square = None;
+                } else {
+                    let is_piece_here = data
+                        .borrow()
+                        .gamestate
+                        .pieces()
+                        .find(|p| p.coordinate == coordinate1)
+                        .is_some();
+                    if is_piece_here {
+                        data.borrow_mut().selected_square = Some(coordinate1);
+                    }
                 }
             }
         }
@@ -110,18 +107,16 @@ fn main() {
         //// Working version
         {
             let draw_handle = raylib_handle.begin_drawing(&thread);
-            draw(draw_handle, &thread, &data);
+            draw(draw_handle, &thread, &widget_tree);
         }
     }
 }
 
-fn draw(mut handle: RaylibDrawHandle, thread: &RaylibThread, data: &Data) {
+fn draw(mut handle: RaylibDrawHandle, thread: &RaylibThread, widget_tree: &ComputedWidget) {
     handle.clear_background(Color::BLACK);
-
-    draw_board(&mut handle, thread, data);
-    draw_pieces(&mut handle, thread, data);
-    draw_legal_moves(&mut handle, thread, data);
-    draw_ui(&mut handle, thread, data);
+    widget_tree
+        .iter()
+        .for_each(|w| (w.render_function)(&mut handle, thread, &w.rect));
 }
 
 fn draw_board(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, _data: &Data) {
@@ -247,10 +242,4 @@ impl From<ISize> for IVec2 {
 struct IRect {
     position: IPosition,
     size: ISize,
-}
-
-fn draw_ui(handle: &mut RaylibDrawHandle, thread: &RaylibThread, data: &Data) {
-    data.widget_tree
-        .iter()
-        .for_each(|w| (w.render_function)(handle, thread, &w.rect));
 }

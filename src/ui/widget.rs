@@ -3,8 +3,8 @@ use glam::IVec2;
 use raylib::{RaylibThread, color::Color, core::drawing::RaylibDrawHandle, prelude::RaylibDraw};
 
 type Input = ();
-type InputHandler = Box<dyn FnMut(&Input) -> bool>;
-type RenderFunction = Box<dyn Fn(&mut RaylibDrawHandle, &RaylibThread, &IRect)>;
+type InputHandler = Box<dyn FnMut(&Input) -> bool + 'static>;
+type RenderFunction = Box<dyn Fn(&mut RaylibDrawHandle, &RaylibThread, &IRect) + 'static>;
 
 pub fn ignore_input(_input: &Input) -> bool {
     false
