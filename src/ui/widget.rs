@@ -1,19 +1,47 @@
-use crate::{IRect, ui::Layout};
+use crate::{Data, IRect, ui::Layout};
 use glam::IVec2;
-use std::rc::Rc;
+use raylib::{RaylibThread, color::Color, core::drawing::RaylibDrawHandle, prelude::RaylibDraw};
 
 type Input = ();
-type InputHandler = Rc<dyn Fn(&Input) -> bool>;
+type InputHandler = Box<dyn FnMut(&Input) -> bool>;
+type RenderFunction = Box<dyn Fn(&mut RaylibDrawHandle, &RaylibThread, &IRect)>;
 
-#[derive(Clone)]
+pub fn ignore_input(_input: &Input) -> bool {
+    false
+}
+
+pub fn no_render(_handle: &mut RaylibDrawHandle, _thread: &RaylibThread, _rect: &IRect) {}
+
+pub fn debug_rect(layout: Layout) -> WidgetIntent {
+    let children = Vec::new();
+    let input_handler = Box::new(ignore_input);
+    let render_function: RenderFunction = Box::new(|handle, _thread, rect| {
+        handle.draw_rectangle(
+            rect.position.0.x,
+            rect.position.0.y,
+            rect.size.width,
+            rect.size.height,
+            Color::RED,
+        );
+    });
+
+    WidgetIntent {
+        children,
+        layout,
+        input_handler,
+        render_function,
+    }
+}
+
 pub struct WidgetIntent {
     pub children: Vec<WidgetIntent>,
     pub layout: Layout,
-    pub input_handler: Option<InputHandler>,
+    pub input_handler: InputHandler,
+    pub render_function: RenderFunction,
 }
 
 impl WidgetIntent {
-    pub fn compute(&self, parent: IRect) -> ComputedWidget {
+    pub fn compute(self, parent: IRect) -> ComputedWidget {
         use Layout::*;
         let rect = match self.layout {
             Fixed(rect) => rect,
@@ -23,27 +51,31 @@ impl WidgetIntent {
             },
         };
 
-        let children = self.children.iter().map(|c| c.compute(rect)).collect();
+        let children = self.children.into_iter().map(|c| c.compute(rect)).collect();
         ComputedWidget {
             children,
             rect,
-            input_handler: self.input_handler.clone(),
+            input_handler: self.input_handler,
+            render_function: self.render_function,
         }
     }
 }
 
-#[derive(Clone)]
 pub struct ComputedWidget {
     pub children: Vec<ComputedWidget>,
     pub rect: IRect,
-    pub input_handler: Option<InputHandler>,
+    pub input_handler: InputHandler,
+    pub render_function: RenderFunction,
 }
 
 impl ComputedWidget {
     /// Recursively calls handle_input on existing input_handler until a widget consumes it
-    pub fn handle_input(&self, input: &Input) -> bool {
-        self.children.iter().rev().any(|c| c.handle_input(input))
-            || self.input_handler.as_ref().map_or(false, |f| f(input))
+    pub fn handle_input(&mut self, input: &Input) -> bool {
+        self.children
+            .iter_mut()
+            .rev()
+            .any(|c| c.handle_input(input))
+            || (self.input_handler)(input)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Self> {

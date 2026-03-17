@@ -2,10 +2,15 @@ mod engine;
 mod sprite;
 mod ui;
 
+use std::rc::Rc;
+
 use crate::{
     engine::export::{Coordinate, Gamestate, Move, faction, tile},
     sprite::{CompositeDraw, PieceSprite},
-    ui::WidgetIntent,
+    ui::{
+        WidgetIntent,
+        widget::{self, ComputedWidget},
+    },
 };
 use glam::IVec2;
 use raylib::prelude::*;
@@ -15,7 +20,7 @@ struct Data {
     legal_moves: Vec<Move>,
     selected_square: Option<Coordinate>,
     sprite_manager: sprite::Manager,
-    widget_tree: WidgetIntent,
+    widget_tree: ComputedWidget,
 }
 
 fn main() {
@@ -29,29 +34,21 @@ fn main() {
     let mut data = {
         let gamestate = Gamestate::new();
         let widget_tree = {
-            let x = WidgetIntent {
-                children: Vec::new(),
-                layout: ui::Layout::Fixed(IRect {
-                    position: IPosition(IVec2 { x: 50, y: 50 }),
-                    size: ISize {
-                        width: 100,
-                        height: 100,
-                    },
-                }),
-                input_handler: None,
-            };
+            let x = ui::widget::debug_rect(ui::Layout::Fixed(IRect {
+                position: IPosition(IVec2 { x: 700, y: 0 }),
+                size: ISize {
+                    width: 50,
+                    height: 50,
+                },
+            }));
 
-            let y = WidgetIntent {
-                children: Vec::new(),
-                layout: ui::Layout::Relative(IRect {
-                    position: IPosition(IVec2 { x: 400, y: 50 }),
-                    size: ISize {
-                        width: 50,
-                        height: 50,
-                    },
-                }),
-                input_handler: None,
-            };
+            let y = ui::widget::debug_rect(ui::Layout::Relative(IRect {
+                position: IPosition(IVec2 { x: 400, y: 50 }),
+                size: ISize {
+                    width: 50,
+                    height: 50,
+                },
+            }));
 
             let z = WidgetIntent {
                 children: vec![x, y],
@@ -62,9 +59,10 @@ fn main() {
                         height: 200,
                     },
                 }),
-                input_handler: None,
+                input_handler: Box::new(widget::ignore_input),
+                render_function: Box::new(widget::no_render),
             };
-            z
+            z.compute(IRect::default())
         };
         Data {
             gamestate,
@@ -251,14 +249,8 @@ struct IRect {
     size: ISize,
 }
 
-fn draw_ui(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Data) {
-    for widget in data.widget_tree.compute(IRect::default()).iter() {
-        handle.draw_rectangle(
-            widget.rect.position.0.x,
-            widget.rect.position.0.y,
-            widget.rect.size.width,
-            widget.rect.size.height,
-            Color::REBECCAPURPLE,
-        );
-    }
+fn draw_ui(handle: &mut RaylibDrawHandle, thread: &RaylibThread, data: &Data) {
+    data.widget_tree
+        .iter()
+        .for_each(|w| (w.render_function)(handle, thread, &w.rect));
 }

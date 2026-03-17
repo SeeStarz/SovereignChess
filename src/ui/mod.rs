@@ -1,5 +1,5 @@
 mod layout;
-mod widget;
+pub mod widget;
 
 pub use layout::Layout;
 pub use widget::WidgetIntent;
