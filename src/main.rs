@@ -104,7 +104,7 @@ fn main() {
         }
 
         //// Below is the preferred way of doing things, but is still broken (double END_DRAWING) as per version 5.5.1
-        // raylib_handle.draw(&thread, |handle| draw(handle, &thread, &data));
+        // raylib_handle.draw(&thread, |handle| ...);
         //// Working version
         {
             let draw_handle = raylib_handle.begin_drawing(&thread);
