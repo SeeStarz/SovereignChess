@@ -1,28 +1,25 @@
-use crate::{geometry::IRect, ui::Layout};
-use glam::IVec2;
+use crate::{
+    geometry::{FPosition, FRect},
+    ui::Layout,
+};
+use glam::Vec2;
 use raylib::{RaylibThread, color::Color, core::drawing::RaylibDrawHandle, prelude::RaylibDraw};
 
-type Input = ();
+type Input = (); // TODO
 type InputHandler = Box<dyn FnMut(&Input) -> bool + 'static>;
-type RenderFunction = Box<dyn Fn(&mut RaylibDrawHandle, &RaylibThread, &IRect) + 'static>;
+type RenderFunction = Box<dyn Fn(&mut RaylibDrawHandle, &RaylibThread, FRect) + 'static>;
 
 pub fn ignore_input(_input: &Input) -> bool {
     false
 }
 
-pub fn no_render(_handle: &mut RaylibDrawHandle, _thread: &RaylibThread, _rect: &IRect) {}
+pub fn no_render(_handle: &mut RaylibDrawHandle, _thread: &RaylibThread, _rect: FRect) {}
 
 pub fn debug_rect(layout: Layout) -> WidgetIntent {
     let children = Vec::new();
     let input_handler = Box::new(ignore_input);
     let render_function: RenderFunction = Box::new(|handle, _thread, rect| {
-        handle.draw_rectangle(
-            rect.position.x,
-            rect.position.y,
-            rect.size.width,
-            rect.size.height,
-            Color::RED,
-        );
+        handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::RED);
     });
 
     WidgetIntent {
@@ -41,12 +38,12 @@ pub struct WidgetIntent {
 }
 
 impl WidgetIntent {
-    pub fn compute(self, parent: IRect) -> ComputedWidget {
+    pub fn compute(self, parent: FRect) -> ComputedWidget {
         use Layout::*;
         let rect = match self.layout {
             Fixed(rect) => rect,
-            Relative(rect) => IRect {
-                position: (IVec2::from(rect.position) + IVec2::from(parent.position)).into(),
+            Relative(rect) => FRect {
+                position: (Vec2::from(rect.position) + Vec2::from(parent.position)).into(),
                 size: rect.size,
             },
         };
@@ -63,7 +60,7 @@ impl WidgetIntent {
 
 pub struct ComputedWidget {
     pub children: Vec<ComputedWidget>,
-    pub rect: IRect,
+    pub rect: FRect,
     pub input_handler: InputHandler,
     pub render_function: RenderFunction,
 }

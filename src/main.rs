@@ -13,13 +13,13 @@ fn main() {
 pub mod game {
     use crate::{
         engine::export::{Coordinate, Gamestate, Move},
-        geometry::{IPosition, IRect, ISize},
+        geometry::{FPosition, FRect, FSize},
         render::{draw, draw_game},
         sprite,
         ui::{Layout, WidgetIntent, widget},
         util::Observer,
     };
-    use glam::IVec2;
+    use glam::Vec2;
     use raylib::prelude::*;
     use std::{cell::RefCell, rc::Rc};
 
@@ -53,21 +53,21 @@ pub mod game {
         let widget_tree = {
             let board = WidgetIntent {
                 children: Vec::new(),
-                layout: Layout::Relative(IRect {
-                    position: IPosition::default(),
-                    size: ISize::from(IVec2::new(32 * 16, 32 * 18)),
+                layout: Layout::Relative(FRect {
+                    position: FPosition::default(),
+                    size: FSize::from(Vec2::new(32.0 * 16.0, 32.0 * 16.0)),
                 }),
                 input_handler: Box::new(widget::ignore_input),
                 render_function: Box::new({
                     let d = data_observer.clone();
-                    move |handle, thread, _rect| {
-                        draw_game(handle, thread, &d.borrow());
+                    move |handle, thread, rect| {
+                        draw_game(handle, thread, rect, &d.borrow());
                     }
                 }),
             };
-            board.compute(IRect {
-                position: IPosition::from(IVec2::new(32, 32)),
-                size: ISize::default(),
+            board.compute(FRect {
+                position: FPosition::from(Vec2::new(32.0, 32.0)),
+                size: FSize::default(),
             })
         };
 

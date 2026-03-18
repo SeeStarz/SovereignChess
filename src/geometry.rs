@@ -1,4 +1,4 @@
-use glam::IVec2;
+use glam::{IVec2, Vec2};
 use raylib::ffi::Rectangle;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
@@ -23,7 +23,23 @@ impl From<IVec2> for IPosition {
 }
 impl From<IPosition> for IVec2 {
     fn from(value: IPosition) -> Self {
-        IVec2 {
+        Self {
+            x: value.x,
+            y: value.y,
+        }
+    }
+}
+impl From<FPosition> for Vec2 {
+    fn from(value: FPosition) -> Self {
+        Self {
+            x: value.x,
+            y: value.y,
+        }
+    }
+}
+impl From<Vec2> for FPosition {
+    fn from(value: Vec2) -> Self {
+        Self {
             x: value.x,
             y: value.y,
         }
@@ -31,7 +47,7 @@ impl From<IPosition> for IVec2 {
 }
 impl From<FPosition> for raylib::ffi::Vector2 {
     fn from(value: FPosition) -> Self {
-        raylib::ffi::Vector2 {
+        Self {
             x: value.x,
             y: value.y,
         }
@@ -61,9 +77,25 @@ impl From<IVec2> for ISize {
 }
 impl From<ISize> for IVec2 {
     fn from(value: ISize) -> Self {
-        IVec2 {
+        Self {
             x: value.width,
             y: value.height,
+        }
+    }
+}
+impl From<FSize> for Vec2 {
+    fn from(value: FSize) -> Self {
+        Self {
+            x: value.width,
+            y: value.height,
+        }
+    }
+}
+impl From<Vec2> for FSize {
+    fn from(value: Vec2) -> Self {
+        Self {
+            width: value.x,
+            height: value.y,
         }
     }
 }
@@ -85,7 +117,7 @@ impl<T> Rect<T> {
 }
 impl From<FRect> for raylib::ffi::Rectangle {
     fn from(value: FRect) -> Self {
-        raylib::ffi::Rectangle {
+        Self {
             x: value.position.x,
             y: value.position.y,
             width: value.size.width,

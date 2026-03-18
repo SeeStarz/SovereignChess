@@ -1,7 +1,7 @@
-use crate::geometry::IRect;
+use crate::geometry::FRect;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Layout {
-    Fixed(IRect),
-    Relative(IRect),
+    Fixed(FRect),
+    Relative(FRect),
 }
