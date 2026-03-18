@@ -1,22 +1,22 @@
 #![allow(dead_code)]
 
 mod engine;
+mod geometry;
+pub mod render;
 mod sprite;
 mod ui;
 
 use crate::{
-    engine::export::{Coordinate, Gamestate, Move, faction, tile},
-    sprite::{CompositeDraw, PieceSprite},
-    ui::{
-        WidgetIntent,
-        widget::{self, ComputedWidget},
-    },
+    engine::export::{Coordinate, Gamestate, Move},
+    geometry::*,
+    render::{draw, draw_game},
+    ui::{WidgetIntent, widget},
 };
 use glam::IVec2;
 use raylib::prelude::*;
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-struct Data {
+pub struct Data {
     gamestate: Gamestate,
     legal_moves: Vec<Move>,
     selected_square: Option<Coordinate>,
@@ -54,9 +54,7 @@ fn main() {
             render_function: Box::new({
                 let d = data_observer.clone();
                 move |handle, thread, _rect| {
-                    draw_board(handle, thread, &d.borrow());
-                    draw_pieces(handle, thread, &d.borrow());
-                    draw_legal_moves(handle, thread, &d.borrow());
+                    draw_game(handle, thread, &d.borrow());
                 }
             }),
         };
@@ -115,211 +113,9 @@ fn main() {
     }
 }
 
-fn draw(mut handle: RaylibDrawHandle, thread: &RaylibThread, widget_tree: &ComputedWidget) {
-    handle.clear_background(Color::BLACK);
-    widget_tree
-        .iter()
-        .for_each(|w| (w.render_function)(&mut handle, thread, &w.rect));
-}
-
-fn draw_board(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, _data: &Data) {
-    for r in 0..16 {
-        for c in 0..16 {
-            let coordinate = Coordinate::new_unchecked(r, c);
-            let color = if let Some(special) = tile::Special::at(coordinate) {
-                special.faction.to_color()
-            } else {
-                if (r + c) % 2 == 0 {
-                    Color::BROWN
-                } else {
-                    Color::LIGHTGRAY
-                }
-            };
-
-            let size = 32;
-            handle.draw_rectangle(size + c * size, size + r * size, size, size, color);
-        }
-    }
-}
-
-trait ToColor {
-    fn to_color(self) -> Color;
-}
-
-impl ToColor for faction::Color {
-    fn to_color(self) -> Color {
-        use faction::Color::*;
-        match self {
-            White => Color::WHITE,
-            Pink => Color::PINK,
-            Slate => Color::SLATEGRAY,
-            Red => Color::RED,
-            Orange => Color::ORANGE,
-            Yellow => Color::YELLOW,
-            Green => Color::GREEN,
-            Cyan => Color::CYAN,
-            Navy => Color::NAVY,
-            Ash => Color::GRAY,
-            Violet => Color::VIOLET,
-            Black => Color::BLACK.brightness(0.2),
-        }
-    }
-}
-
-fn draw_pieces(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Data) {
-    let size = 32.0;
-    for piece in data.gamestate.pieces() {
-        let sprite = PieceSprite {
-            piece_type: piece.piece_type,
-            faction: piece.faction,
-            owner: piece.owner,
-        };
-
-        let dest = FRect {
-            position: FPosition {
-                x: piece.coordinate.col() as f32 * size + size,
-                y: piece.coordinate.row() as f32 * size + size,
-            },
-            size: FSize {
-                width: size,
-                height: size,
-            },
-        };
-
-        handle.draw_composite_pro(&data.sprite_manager, &sprite, dest, 0.0, Color::WHITE);
-    }
-}
-
-fn draw_legal_moves(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Data) {
-    let Some(selected_square) = data.selected_square else {
-        return;
-    };
-
-    let size = 32;
-    for move_ in data
-        .legal_moves
-        .iter()
-        .filter(|&&mv| mv.origin == selected_square)
-    {
-        handle.draw_circle(
-            (move_.destination.col() as i32 + 1) * size + size / 2,
-            (move_.destination.row() as i32 + 1) * size + size / 2,
-            size as f32 / 3.0,
-            Color::BLUE.alpha(0.25),
-        );
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
-struct Position<T> {
-    x: T,
-    y: T,
-}
-impl<T> Position<T> {
-    fn new(x: T, y: T) -> Self {
-        Self { x, y }
-    }
-}
-type IPosition = Position<i32>;
-type FPosition = Position<f32>;
-impl From<IVec2> for IPosition {
-    fn from(value: IVec2) -> Self {
-        Self {
-            x: value.x,
-            y: value.y,
-        }
-    }
-}
-impl From<IPosition> for IVec2 {
-    fn from(value: IPosition) -> Self {
-        IVec2 {
-            x: value.x,
-            y: value.y,
-        }
-    }
-}
-impl From<FPosition> for raylib::ffi::Vector2 {
-    fn from(value: FPosition) -> Self {
-        raylib::ffi::Vector2 {
-            x: value.x,
-            y: value.y,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
-struct Size<T> {
-    width: T,
-    height: T,
-}
-type ISize = Size<i32>;
-type FSize = Size<f32>;
-
-impl<T> Size<T> {
-    fn new(width: T, height: T) -> Self {
-        Self { width, height }
-    }
-}
-impl From<IVec2> for ISize {
-    fn from(value: IVec2) -> Self {
-        Self {
-            width: value.x,
-            height: value.y,
-        }
-    }
-}
-impl From<ISize> for IVec2 {
-    fn from(value: ISize) -> Self {
-        IVec2 {
-            x: value.width,
-            y: value.height,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
-struct Rect<T> {
-    position: Position<T>,
-    size: Size<T>,
-}
-type IRect = Rect<i32>;
-type FRect = Rect<f32>;
-impl<T> Rect<T> {
-    fn new(x: T, y: T, width: T, height: T) -> Self {
-        Self {
-            position: Position { x, y },
-            size: Size { width, height },
-        }
-    }
-}
-impl From<FRect> for raylib::ffi::Rectangle {
-    fn from(value: FRect) -> Self {
-        raylib::ffi::Rectangle {
-            x: value.position.x,
-            y: value.position.y,
-            width: value.size.width,
-            height: value.size.height,
-        }
-    }
-}
-impl From<Rectangle> for FRect {
-    fn from(value: Rectangle) -> Self {
-        Self {
-            position: FPosition {
-                x: value.x,
-                y: value.y,
-            },
-            size: FSize {
-                width: value.width,
-                height: value.height,
-            },
-        }
-    }
-}
-
 #[repr(transparent)]
 #[derive(Debug, PartialEq, Eq)]
-struct Observer<T>(Rc<RefCell<T>>);
+pub struct Observer<T>(Rc<RefCell<T>>);
 impl<T> From<Rc<RefCell<T>>> for Observer<T> {
     fn from(value: Rc<RefCell<T>>) -> Self {
         Self(value)
