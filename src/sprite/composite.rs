@@ -1,7 +1,8 @@
-use crate::ToColor;
+use crate::{FPosition, FRect, ToColor};
 use raylib::{
     color::Color,
     core::drawing::{RaylibDraw, RaylibDrawHandle},
+    math::Rectangle,
 };
 
 use crate::{
@@ -32,6 +33,15 @@ pub trait CompositeDraw<T> {
         tint: Color,
     ) where
         T: CompositeSprite;
+    fn draw_composite_pro(
+        &mut self,
+        asset_manager: &Manager,
+        composite: &T,
+        dest: FRect,
+        rotation: f32,
+        tint: Color,
+    ) where
+        T: CompositeSprite;
 }
 
 impl<'a, T> CompositeDraw<T> for RaylibDrawHandle<'a> {
@@ -51,6 +61,34 @@ impl<'a, T> CompositeDraw<T> for RaylibDrawHandle<'a> {
                 texture,
                 x + part.offset_x,
                 y + part.offset_y,
+                Color {
+                    r: (tint.r as u16 * part.tint.r as u16 / 255) as u8,
+                    g: (tint.g as u16 * part.tint.g as u16 / 255) as u8,
+                    b: (tint.b as u16 * part.tint.b as u16 / 255) as u8,
+                    a: (tint.a as u16 * part.tint.a as u16 / 255) as u8,
+                },
+            );
+        });
+    }
+
+    fn draw_composite_pro(
+        &mut self,
+        asset_manager: &Manager,
+        composite: &T,
+        dest: FRect,
+        rotation: f32,
+        tint: Color,
+    ) where
+        T: CompositeSprite,
+    {
+        composite.for_each_part(&mut |part| {
+            let (texture_rect, texture) = asset_manager.get(part.sprite);
+            self.draw_texture_pro(
+                texture,
+                texture_rect,
+                dest,
+                FPosition::new(0.0, 0.0),
+                rotation,
                 Color {
                     r: (tint.r as u16 * part.tint.r as u16 / 255) as u8,
                     g: (tint.g as u16 * part.tint.g as u16 / 255) as u8,

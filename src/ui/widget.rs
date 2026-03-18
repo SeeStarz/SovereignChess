@@ -17,8 +17,8 @@ pub fn debug_rect(layout: Layout) -> WidgetIntent {
     let input_handler = Box::new(ignore_input);
     let render_function: RenderFunction = Box::new(|handle, _thread, rect| {
         handle.draw_rectangle(
-            rect.position.0.x,
-            rect.position.0.y,
+            rect.position.x,
+            rect.position.y,
             rect.size.width,
             rect.size.height,
             Color::RED,

@@ -165,7 +165,7 @@ impl ToColor for faction::Color {
 }
 
 fn draw_pieces(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Data) {
-    let size = 32;
+    let size = 32.0;
     for piece in data.gamestate.pieces() {
         let sprite = PieceSprite {
             piece_type: piece.piece_type,
@@ -173,13 +173,18 @@ fn draw_pieces(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data: &Dat
             owner: piece.owner,
         };
 
-        handle.draw_composite(
-            &data.sprite_manager,
-            &sprite,
-            piece.coordinate.col() as i32 * size + size,
-            piece.coordinate.row() as i32 * size + size,
-            Color::WHITE,
-        );
+        let dest = FRect {
+            position: FPosition {
+                x: piece.coordinate.col() as f32 * size + size,
+                y: piece.coordinate.row() as f32 * size + size,
+            },
+            size: FSize {
+                width: size,
+                height: size,
+            },
+        };
+
+        handle.draw_composite_pro(&data.sprite_manager, &sprite, dest, 0.0, Color::WHITE);
     }
 }
 
@@ -203,24 +208,55 @@ fn draw_legal_moves(handle: &mut RaylibDrawHandle, _thread: &RaylibThread, data:
     }
 }
 
-#[repr(transparent)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
-struct IPosition(pub IVec2);
+struct Position<T> {
+    x: T,
+    y: T,
+}
+impl<T> Position<T> {
+    fn new(x: T, y: T) -> Self {
+        Self { x, y }
+    }
+}
+type IPosition = Position<i32>;
+type FPosition = Position<f32>;
 impl From<IVec2> for IPosition {
     fn from(value: IVec2) -> Self {
-        Self(value)
+        Self {
+            x: value.x,
+            y: value.y,
+        }
     }
 }
 impl From<IPosition> for IVec2 {
     fn from(value: IPosition) -> Self {
-        value.0
+        IVec2 {
+            x: value.x,
+            y: value.y,
+        }
+    }
+}
+impl From<FPosition> for raylib::ffi::Vector2 {
+    fn from(value: FPosition) -> Self {
+        raylib::ffi::Vector2 {
+            x: value.x,
+            y: value.y,
+        }
     }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
-struct ISize {
-    width: i32,
-    height: i32,
+struct Size<T> {
+    width: T,
+    height: T,
+}
+type ISize = Size<i32>;
+type FSize = Size<f32>;
+
+impl<T> Size<T> {
+    fn new(width: T, height: T) -> Self {
+        Self { width, height }
+    }
 }
 impl From<IVec2> for ISize {
     fn from(value: IVec2) -> Self {
@@ -240,9 +276,43 @@ impl From<ISize> for IVec2 {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
-struct IRect {
-    position: IPosition,
-    size: ISize,
+struct Rect<T> {
+    position: Position<T>,
+    size: Size<T>,
+}
+type IRect = Rect<i32>;
+type FRect = Rect<f32>;
+impl<T> Rect<T> {
+    fn new(x: T, y: T, width: T, height: T) -> Self {
+        Self {
+            position: Position { x, y },
+            size: Size { width, height },
+        }
+    }
+}
+impl From<FRect> for raylib::ffi::Rectangle {
+    fn from(value: FRect) -> Self {
+        raylib::ffi::Rectangle {
+            x: value.position.x,
+            y: value.position.y,
+            width: value.size.width,
+            height: value.size.height,
+        }
+    }
+}
+impl From<Rectangle> for FRect {
+    fn from(value: Rectangle) -> Self {
+        Self {
+            position: FPosition {
+                x: value.x,
+                y: value.y,
+            },
+            size: FSize {
+                width: value.width,
+                height: value.height,
+            },
+        }
+    }
 }
 
 #[repr(transparent)]

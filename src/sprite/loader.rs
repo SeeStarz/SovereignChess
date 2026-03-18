@@ -1,4 +1,4 @@
-use crate::sprite;
+use crate::{FPosition, FRect, FSize, sprite};
 use raylib::{
     RaylibHandle, RaylibThread,
     texture::{Image, Texture2D},
@@ -30,13 +30,6 @@ impl SpritePath for sprite::Prototype {
     }
 }
 
-pub struct PositionedRectangle<T> {
-    pub top: T,
-    pub left: T,
-    pub height: T,
-    pub width: T,
-}
-
 pub struct Manager {
     map: HashMap<sprite::Prototype, Texture2D>,
 }
@@ -47,9 +40,7 @@ impl Manager {
         for sprite in sprite::Prototype::iter() {
             let pathbuf = sprite.path();
             let path = pathbuf.to_str().expect("Path not a valid rust string");
-            let mut image =
-                Image::load_image(path).expect(&format!("Unable to load image {}", path));
-            image.resize_nn(image.width * 2, image.height * 2);
+            let image = Image::load_image(path).expect(&format!("Unable to load image {}", path));
 
             let texture = handle
                 .load_texture_from_image(thread, &image)
@@ -59,13 +50,14 @@ impl Manager {
         Self { map }
     }
 
-    pub fn get(&self, sprite: sprite::Prototype) -> (PositionedRectangle<f32>, &Texture2D) {
+    pub fn get(&self, sprite: sprite::Prototype) -> (FRect, &Texture2D) {
         (
-            PositionedRectangle {
-                top: 0.0,
-                left: 0.0,
-                height: 0.0,
-                width: 0.0,
+            FRect {
+                position: FPosition { x: 0.0, y: 0.0 },
+                size: FSize {
+                    width: 16.0,
+                    height: 16.0,
+                },
             },
             self.map.get(&sprite).unwrap(),
         )
