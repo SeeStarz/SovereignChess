@@ -5,8 +5,9 @@ use raylib::{
 };
 
 use crate::{
-    Data, FPosition, FRect, FSize,
     engine::export::{Coordinate, faction, tile},
+    game::Data,
+    geometry::{FPosition, FRect, FSize},
     sprite::{CompositeDraw, PieceSprite},
     ui::widget::ComputedWidget,
 };

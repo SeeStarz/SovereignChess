@@ -1,4 +1,7 @@
-use crate::{FPosition, FRect, render::ToColor};
+use crate::{
+    geometry::{FPosition, FRect},
+    render::ToColor,
+};
 use raylib::{
     color::Color,
     core::drawing::{RaylibDraw, RaylibDrawHandle},

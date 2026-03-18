@@ -1,4 +1,4 @@
-use crate::IRect;
+use crate::geometry::IRect;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Layout {

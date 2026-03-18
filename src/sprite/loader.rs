@@ -1,4 +1,7 @@
-use crate::{FPosition, FRect, FSize, sprite};
+use crate::{
+    geometry::{FPosition, FRect, FSize},
+    sprite,
+};
 use raylib::{
     RaylibHandle, RaylibThread,
     texture::{Image, Texture2D},
