@@ -13,7 +13,7 @@ fn main() {
 pub mod game {
     use crate::{
         engine::export::{Coordinate, Gamestate, Move},
-        geometry::*,
+        geometry::{IPosition, IRect, ISize},
         render::{draw, draw_game},
         sprite,
         ui::{Layout, WidgetIntent, widget},
