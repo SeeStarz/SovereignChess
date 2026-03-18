@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 mod engine;
 mod sprite;
 mod ui;
