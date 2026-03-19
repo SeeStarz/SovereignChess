@@ -14,8 +14,6 @@ use crate::{
 
 pub struct CompositeSpritePart {
     pub sprite: sprite::Prototype,
-    pub offset_x: i32,
-    pub offset_y: i32,
     pub tint: Color,
 }
 
@@ -61,8 +59,8 @@ impl<'a, T> CompositeDraw<T> for RaylibDrawHandle<'a> {
             let (_texture_rect, texture) = asset_manager.get(part.sprite);
             self.draw_texture(
                 texture,
-                x + part.offset_x,
-                y + part.offset_y,
+                x,
+                y,
                 Color {
                     r: (tint.r as u16 * part.tint.r as u16 / 255) as u8,
                     g: (tint.g as u16 * part.tint.g as u16 / 255) as u8,
@@ -129,8 +127,6 @@ impl CompositeSprite for PieceSprite {
         // Body sprite
         f(CompositeSpritePart {
             sprite: faction_mask,
-            offset_x: 0,
-            offset_y: 0,
             tint: self.faction.to_color(),
         });
 
@@ -150,8 +146,6 @@ impl CompositeSprite for PieceSprite {
         // Lower part sprite
         f(CompositeSpritePart {
             sprite: owner_mask,
-            offset_x: 0,
-            offset_y: 0,
             tint: self.owner.map_or(Color::GRAY.alpha(0.5), |c| c.to_color()),
         });
     }
