@@ -6,7 +6,7 @@ use raylib::{
 };
 
 use crate::{
-    engine::export::{Coordinate, faction, tile},
+    engine::export::{Coordinate, LegalMove, faction, tile},
     game::Data,
     geometry::{FPosition, FRect, FSize},
     sprite::{CompositeDraw, PieceSprite},
@@ -123,11 +123,17 @@ fn draw_legal_moves(
         return;
     };
 
-    for &move_ in data
-        .legal_moves
-        .iter()
-        .filter(|&&mv| mv.origin == selected_square)
-    {
+    for move_ in data.legal_moves.iter().filter_map(|&mv| {
+        if let LegalMove::NormalMove(nmv) = mv {
+            if nmv.origin == selected_square {
+                Some(nmv)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }) {
         let position = Vec2::new(
             move_.destination.col() as f32 + 0.5,
             move_.destination.row() as f32 + 0.5,

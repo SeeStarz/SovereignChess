@@ -10,6 +10,6 @@ mod tile;
 
 use coordinate::Coordinate;
 use gamestate::Gamestate;
-use legal_move::NormalMove;
+use legal_move::LegalMove;
 use piece::Piece;
 use tile::Tile;

@@ -1,6 +1,8 @@
 use crate::engine::{
-    Coordinate, Gamestate, NormalMove, coordinate::Direction, faction, faction::Allegiance,
-    legal_move::calculate::try_add_move_check_special_tile_rules,
+    Coordinate, Gamestate, LegalMove,
+    coordinate::Direction,
+    faction::{self, Allegiance},
+    legal_move::{NormalMove, calculate::try_add_move_check_special_tile_rules},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -71,7 +73,7 @@ fn calculate_pawn_directions(
 }
 
 pub fn add_pawn_moves_naive(
-    moves: &mut Vec<NormalMove>,
+    moves: &mut Vec<LegalMove>,
     gamestate: &Gamestate,
     faction: faction::Color,
     origin: Coordinate,
@@ -88,10 +90,10 @@ pub fn add_pawn_moves_naive(
         try_add_move_check_special_tile_rules(
             gamestate,
             moves,
-            NormalMove {
+            LegalMove::NormalMove(NormalMove {
                 origin,
                 destination,
-            },
+            }),
             faction,
         );
 
@@ -106,10 +108,10 @@ pub fn add_pawn_moves_naive(
             try_add_move_check_special_tile_rules(
                 gamestate,
                 moves,
-                NormalMove {
+                LegalMove::NormalMove(NormalMove {
                     origin,
                     destination,
-                },
+                }),
                 faction,
             );
         }
@@ -129,10 +131,10 @@ pub fn add_pawn_moves_naive(
         try_add_move_check_special_tile_rules(
             gamestate,
             moves,
-            NormalMove {
+            LegalMove::NormalMove(NormalMove {
                 origin,
                 destination,
-            },
+            }),
             faction,
         );
     }

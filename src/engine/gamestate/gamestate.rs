@@ -1,5 +1,5 @@
 use crate::engine::{
-    Coordinate, NormalMove, board::Board, faction, gamestate::init_pieces, legal_move,
+    Coordinate, LegalMove, board::Board, faction, gamestate::init_pieces, legal_move,
     piece::PieceExternal,
 };
 
@@ -83,12 +83,16 @@ impl Gamestate {
         Self { canonical, derived }
     }
 
-    pub fn moves(&self) -> Vec<NormalMove> {
+    pub fn moves(&self) -> Vec<LegalMove> {
         legal_move::calculate::moves(self)
     }
 
     // TODO: Proper move logic
-    pub fn apply_move(&self, move_: NormalMove) -> Self {
+    pub fn apply_move(&self, move_: LegalMove) -> Self {
+        let LegalMove::NormalMove(move_) = move_ else {
+            panic!()
+        };
+
         let canonical = {
             let mut board = self.c().board;
             if let Some(piece) = board.at(move_.origin) {

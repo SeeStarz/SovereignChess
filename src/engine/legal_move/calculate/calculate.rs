@@ -3,7 +3,7 @@ use crate::engine::{
     coordinate::Direction,
     faction,
     legal_move::{
-        NormalMove,
+        LegalMove, NormalMove,
         calculate::{add_knight_moves_naive, add_linear_moves_naive, add_pawn_moves_naive},
     },
     piece, tile,
@@ -48,7 +48,7 @@ pub fn get_knight_directions() -> &'static [Direction] {
     &DIRECTION_STORE[8..16]
 }
 
-pub fn moves(gamestate: &Gamestate) -> Vec<NormalMove> {
+pub fn moves(gamestate: &Gamestate) -> Vec<LegalMove> {
     let mut moves = Vec::new();
     gamestate
         .pieces()
@@ -74,19 +74,23 @@ pub fn moves(gamestate: &Gamestate) -> Vec<NormalMove> {
 
 pub fn try_add_move_check_special_tile_rules(
     gamestate: &Gamestate,
-    moves: &mut Vec<NormalMove>,
-    move_: NormalMove,
+    moves: &mut Vec<LegalMove>,
+    move_: LegalMove,
     faction: faction::Color,
 ) {
+    let LegalMove::NormalMove(move_) = move_ else {
+        panic!()
+    };
+
     let Some(&special_destination) = tile::Special::at(move_.destination) else {
-        moves.push(move_);
+        moves.push(LegalMove::NormalMove(move_));
         return;
     };
 
     // Means that we are not trying to occupy special tile colored the same as current faction
     // We are also not trying to occupy special tile where there currently is a piece on the other pair
     if gamestate.is_special_tile_occupiable(special_destination, faction) {
-        moves.push(move_);
+        moves.push(LegalMove::NormalMove(move_));
         return;
     }
 
@@ -94,7 +98,7 @@ pub fn try_add_move_check_special_tile_rules(
     if let Some(&special_origin) = tile::Special::at(move_.origin)
         && special_origin.other() == special_destination
     {
-        moves.push(move_);
+        moves.push(LegalMove::NormalMove(move_));
     }
 }
 

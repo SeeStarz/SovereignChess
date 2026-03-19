@@ -13,7 +13,7 @@ fn main() {
 
 pub mod game {
     use crate::{
-        engine::export::{Coordinate, Gamestate, NormalMove},
+        engine::export::{Coordinate, Gamestate, LegalMove},
         geometry::{FPosition, FRect, FSize},
         input::{self, Event},
         render::{draw, draw_game},
@@ -27,7 +27,7 @@ pub mod game {
 
     pub struct Data {
         pub gamestate: Gamestate,
-        pub legal_moves: Vec<NormalMove>,
+        pub legal_moves: Vec<LegalMove>,
         pub selected_square: Option<Coordinate>,
         pub sprite_manager: sprite::Manager,
     }

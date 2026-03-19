@@ -2,13 +2,13 @@ use crate::engine::{
     Coordinate, Gamestate,
     faction::{self, Allegiance},
     legal_move::{
-        NormalMove,
+        LegalMove, NormalMove,
         calculate::{get_knight_directions, try_add_move_check_special_tile_rules},
     },
 };
 
 pub fn add_knight_moves_naive(
-    moves: &mut Vec<NormalMove>,
+    moves: &mut Vec<LegalMove>,
     gamestate: &Gamestate,
     faction: faction::Color,
     origin: Coordinate,
@@ -26,10 +26,10 @@ pub fn add_knight_moves_naive(
         try_add_move_check_special_tile_rules(
             gamestate,
             moves,
-            NormalMove {
+            LegalMove::NormalMove(NormalMove {
                 origin,
                 destination,
-            },
+            }),
             faction,
         );
     }

@@ -1,9 +1,12 @@
 use crate::engine::{
-    Coordinate, Gamestate, NormalMove,
+    Coordinate, Gamestate, LegalMove,
     faction::Allegiance,
-    legal_move::calculate::{
-        get_bishop_directions, get_queen_directions, get_rook_directions,
-        try_add_move_check_special_tile_rules,
+    legal_move::{
+        NormalMove,
+        calculate::{
+            get_bishop_directions, get_queen_directions, get_rook_directions,
+            try_add_move_check_special_tile_rules,
+        },
     },
     piece::{self, Piece},
     tile,
@@ -11,7 +14,7 @@ use crate::engine::{
 
 /// Responsible for Queen, Rook, Bishop, and King moves
 pub fn add_linear_moves_naive(
-    moves: &mut Vec<NormalMove>,
+    moves: &mut Vec<LegalMove>,
     gamestate: &Gamestate,
     piece: Piece,
     origin: Coordinate,
@@ -37,10 +40,10 @@ pub fn add_linear_moves_naive(
                     try_add_move_check_special_tile_rules(
                         gamestate,
                         moves,
-                        NormalMove {
+                        LegalMove::NormalMove(NormalMove {
                             origin,
                             destination,
-                        },
+                        }),
                         piece.faction,
                     );
                 }
@@ -51,10 +54,10 @@ pub fn add_linear_moves_naive(
                 try_add_move_check_special_tile_rules(
                     gamestate,
                     moves,
-                    NormalMove {
+                    LegalMove::NormalMove(NormalMove {
                         origin,
                         destination,
-                    },
+                    }),
                     piece.faction,
                 );
             }
