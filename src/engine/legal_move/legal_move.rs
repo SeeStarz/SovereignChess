@@ -23,7 +23,7 @@ pub struct Castle {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Promotion {
-    pub move_: NormalMove,
+    pub normal_move: NormalMove,
     pub piece_type: piece::Type,
 }
 
@@ -31,12 +31,12 @@ pub struct Promotion {
 // Can be coup d'etat or overthrow, same thing here internally
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct RegimeChangePromotion {
-    pub move_: NormalMove,
+    pub normal_move: NormalMove,
 }
 
 // Move can be None because moving only happens if defecting on a colored square the same color as chosen faction
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Defection {
-    pub move_: Option<NormalMove>,
+    pub normal_move: Option<NormalMove>,
     pub faction: faction::Color,
 }

@@ -87,27 +87,8 @@ impl Gamestate {
         legal_move::calculate::moves(self)
     }
 
-    // TODO: Proper move logic
     pub fn apply_move(&self, move_: LegalMove) -> Self {
-        let LegalMove::NormalMove(move_) = move_ else {
-            panic!()
-        };
-
-        let canonical = {
-            let mut board = self.c().board;
-            if let Some(piece) = board.at(move_.origin) {
-                board.set_at(move_.origin, None);
-                board.set_at(move_.destination, Some(piece));
-            }
-            let player_colors = self.c().player_colors;
-            let turn_to_play = self.c().turn_to_play.other();
-            CanonicalState {
-                board,
-                player_colors,
-                turn_to_play,
-            }
-        };
-
+        let canonical = legal_move::calculate::apply_move(self, move_);
         let derived = DerivedState::new(&canonical);
 
         Self { canonical, derived }

@@ -3,7 +3,7 @@ use crate::engine::{
     faction::{self, Allegiance},
     legal_move::{
         LegalMove, NormalMove,
-        calculate::{get_knight_directions, try_add_move_check_special_tile_rules},
+        calculate::{get_knight_directions, try_add_legal_move_check_special_tile_rules},
     },
 };
 
@@ -23,9 +23,9 @@ pub fn add_knight_moves_naive(
             }
         }
 
-        try_add_move_check_special_tile_rules(
-            gamestate,
+        try_add_legal_move_check_special_tile_rules(
             moves,
+            gamestate,
             LegalMove::NormalMove(NormalMove {
                 origin,
                 destination,

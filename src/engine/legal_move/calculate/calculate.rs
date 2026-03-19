@@ -69,36 +69,40 @@ pub fn moves(gamestate: &Gamestate) -> Vec<LegalMove> {
                 }
             };
         });
+    // TODO: check for checks
     moves
 }
 
-pub fn try_add_move_check_special_tile_rules(
-    gamestate: &Gamestate,
+pub fn try_add_legal_move_check_special_tile_rules(
     moves: &mut Vec<LegalMove>,
-    move_: LegalMove,
+    gamestate: &Gamestate,
+    legal_move: LegalMove,
     faction: faction::Color,
 ) {
-    let LegalMove::NormalMove(move_) = move_ else {
-        panic!()
+    let normal_move = match legal_move {
+        LegalMove::NormalMove(normal_move) => normal_move,
+        LegalMove::Promotion(promotion_move) => promotion_move.normal_move,
+        LegalMove::RegimeChangePromotion(promotion_move) => promotion_move.normal_move,
+        _ => panic!(),
     };
 
-    let Some(&special_destination) = tile::Special::at(move_.destination) else {
-        moves.push(LegalMove::NormalMove(move_));
+    let Some(&special_destination) = tile::Special::at(normal_move.destination) else {
+        moves.push(LegalMove::NormalMove(normal_move));
         return;
     };
 
     // Means that we are not trying to occupy special tile colored the same as current faction
     // We are also not trying to occupy special tile where there currently is a piece on the other pair
     if gamestate.is_special_tile_occupiable(special_destination, faction) {
-        moves.push(LegalMove::NormalMove(move_));
+        moves.push(LegalMove::NormalMove(normal_move));
         return;
     }
 
     // If the current moved piece is the one on the other pair, it's safe to move there
-    if let Some(&special_origin) = tile::Special::at(move_.origin)
+    if let Some(&special_origin) = tile::Special::at(normal_move.origin)
         && special_origin.other() == special_destination
     {
-        moves.push(LegalMove::NormalMove(move_));
+        moves.push(LegalMove::NormalMove(normal_move));
     }
 }
 

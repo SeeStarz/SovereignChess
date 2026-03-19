@@ -2,7 +2,11 @@ use crate::engine::{
     Coordinate, Gamestate, LegalMove,
     coordinate::Direction,
     faction::{self, Allegiance},
-    legal_move::{NormalMove, calculate::try_add_move_check_special_tile_rules},
+    legal_move::{
+        NormalMove, Promotion, RegimeChangePromotion,
+        calculate::try_add_legal_move_check_special_tile_rules,
+    },
+    piece,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -72,6 +76,46 @@ fn calculate_pawn_directions(
     (move_directions, attack_directions)
 }
 
+fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
+    moves: &mut Vec<LegalMove>,
+    gamestate: &Gamestate,
+    normal_move: NormalMove,
+    faction: faction::Color,
+) {
+    if normal_move.destination.row() > 5
+        && normal_move.destination.row() < 10
+        && normal_move.destination.col() > 5
+        && normal_move.destination.col() < 10
+    {
+        [piece::Queen, piece::Rook, piece::Bishop, piece::Knight]
+            .into_iter()
+            .for_each(|piece_type| {
+                try_add_legal_move_check_special_tile_rules(
+                    moves,
+                    gamestate,
+                    LegalMove::Promotion(Promotion {
+                        normal_move,
+                        piece_type,
+                    }),
+                    faction,
+                )
+            });
+        try_add_legal_move_check_special_tile_rules(
+            moves,
+            gamestate,
+            LegalMove::RegimeChangePromotion(RegimeChangePromotion { normal_move }),
+            faction,
+        )
+    } else {
+        try_add_legal_move_check_special_tile_rules(
+            moves,
+            gamestate,
+            LegalMove::NormalMove(normal_move),
+            faction,
+        )
+    }
+}
+
 pub fn add_pawn_moves_naive(
     moves: &mut Vec<LegalMove>,
     gamestate: &Gamestate,
@@ -87,13 +131,13 @@ pub fn add_pawn_moves_naive(
             continue;
         }
 
-        try_add_move_check_special_tile_rules(
-            gamestate,
+        try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
             moves,
-            LegalMove::NormalMove(NormalMove {
+            gamestate,
+            NormalMove {
                 origin,
                 destination,
-            }),
+            },
             faction,
         );
 
@@ -105,13 +149,13 @@ pub fn add_pawn_moves_naive(
                 continue;
             }
 
-            try_add_move_check_special_tile_rules(
-                gamestate,
+            try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
                 moves,
-                LegalMove::NormalMove(NormalMove {
+                gamestate,
+                NormalMove {
                     origin,
                     destination,
-                }),
+                },
                 faction,
             );
         }
@@ -128,13 +172,13 @@ pub fn add_pawn_moves_naive(
             continue;
         }
 
-        try_add_move_check_special_tile_rules(
-            gamestate,
+        try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
             moves,
-            LegalMove::NormalMove(NormalMove {
+            gamestate,
+            NormalMove {
                 origin,
                 destination,
-            }),
+            },
             faction,
         );
     }

@@ -5,7 +5,7 @@ use crate::engine::{
         NormalMove,
         calculate::{
             get_bishop_directions, get_queen_directions, get_rook_directions,
-            try_add_move_check_special_tile_rules,
+            try_add_legal_move_check_special_tile_rules,
         },
     },
     piece::{self, Piece},
@@ -37,9 +37,9 @@ pub fn add_linear_moves_naive(
 
             if let Some(victim) = gamestate.c().board.at(destination) {
                 if gamestate.get_allegiance(victim.faction) == Allegiance::Enemy {
-                    try_add_move_check_special_tile_rules(
-                        gamestate,
+                    try_add_legal_move_check_special_tile_rules(
                         moves,
+                        gamestate,
                         LegalMove::NormalMove(NormalMove {
                             origin,
                             destination,
@@ -51,9 +51,9 @@ pub fn add_linear_moves_naive(
             } else if tile::Special::at(destination)
                 .is_none_or(|s| gamestate.c().board.at(s.coordinate).is_none())
             {
-                try_add_move_check_special_tile_rules(
-                    gamestate,
+                try_add_legal_move_check_special_tile_rules(
                     moves,
+                    gamestate,
                     LegalMove::NormalMove(NormalMove {
                         origin,
                         destination,
