@@ -2,7 +2,7 @@ use glam::Vec2;
 use raylib::math::Rectangle;
 
 use crate::{
-    engine::export::{Coordinate, Move},
+    engine::export::{Coordinate, NormalMove},
     game::Data,
     geometry::{FPosition, FRect},
 };
@@ -33,14 +33,14 @@ pub fn handle_board_input(event: Event, rect: FRect, data: &mut Data) -> bool {
     };
 
     if let Some(coordinate2) = data.selected_square {
-        let attempted_move = Move {
+        let attempted_move = NormalMove {
             origin: coordinate2,
             destination: coordinate1,
         };
 
         if data.legal_moves.iter().any(|&x| x == attempted_move) {
             data.gamestate = data.gamestate.apply_move(attempted_move);
-            data.legal_moves = data.gamestate.get_moves();
+            data.legal_moves = data.gamestate.moves();
         }
         data.selected_square = None;
     } else {

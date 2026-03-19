@@ -13,7 +13,7 @@ fn main() {
 
 pub mod game {
     use crate::{
-        engine::export::{Coordinate, Gamestate, Move},
+        engine::export::{Coordinate, Gamestate, NormalMove},
         geometry::{FPosition, FRect, FSize},
         input::{self, Event},
         render::{draw, draw_game},
@@ -27,7 +27,7 @@ pub mod game {
 
     pub struct Data {
         pub gamestate: Gamestate,
-        pub legal_moves: Vec<Move>,
+        pub legal_moves: Vec<NormalMove>,
         pub selected_square: Option<Coordinate>,
         pub sprite_manager: sprite::Manager,
     }
@@ -44,7 +44,7 @@ pub mod game {
             let gamestate = Gamestate::new();
             Data {
                 gamestate,
-                legal_moves: gamestate.get_moves(),
+                legal_moves: gamestate.moves(),
                 selected_square: None,
                 sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
             }

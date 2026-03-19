@@ -1,5 +1,5 @@
 use crate::engine::{
-    Coordinate, Move, board::Board, faction, gamestate::init_pieces, piece::PieceExternal,
+    Coordinate, NormalMove, board::Board, faction, gamestate::init_pieces, piece::PieceExternal,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -83,7 +83,7 @@ impl Gamestate {
     }
 
     // TODO: Proper move logic
-    pub fn apply_move(&self, move_: Move) -> Self {
+    pub fn apply_move(&self, move_: NormalMove) -> Self {
         let canonical = {
             let mut board = self.c().board;
             if let Some(piece) = board.at(move_.origin) {
