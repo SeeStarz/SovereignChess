@@ -1,5 +1,6 @@
 use crate::engine::{
-    Coordinate, NormalMove, board::Board, faction, gamestate::init_pieces, piece::PieceExternal,
+    Coordinate, NormalMove, board::Board, faction, gamestate::init_pieces, legal_move,
+    piece::PieceExternal,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -80,6 +81,10 @@ impl Gamestate {
         let derived = DerivedState::new(&canonical);
 
         Self { canonical, derived }
+    }
+
+    pub fn moves(&self) -> Vec<NormalMove> {
+        legal_move::calculate::moves(self)
     }
 
     // TODO: Proper move logic
