@@ -1,5 +1,5 @@
 use glam::{IVec2, Vec2};
-use raylib::ffi::Rectangle;
+use raylib::{math::Rectangle, math::Vector2};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub struct Position<T> {
@@ -39,6 +39,14 @@ impl From<FPosition> for Vec2 {
 }
 impl From<Vec2> for FPosition {
     fn from(value: Vec2) -> Self {
+        Self {
+            x: value.x,
+            y: value.y,
+        }
+    }
+}
+impl From<Vector2> for FPosition {
+    fn from(value: Vector2) -> Self {
         Self {
             x: value.x,
             y: value.y,
@@ -99,6 +107,14 @@ impl From<Vec2> for FSize {
         }
     }
 }
+impl From<Vector2> for FSize {
+    fn from(value: Vector2) -> Self {
+        Self {
+            width: value.x,
+            height: value.y,
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub struct Rect<T> {
@@ -136,6 +152,16 @@ impl From<Rectangle> for FRect {
                 width: value.width,
                 height: value.height,
             },
+        }
+    }
+}
+impl From<FRect> for Rectangle {
+    fn from(value: FRect) -> Self {
+        Self {
+            x: value.position.x,
+            y: value.position.y,
+            width: value.size.width,
+            height: value.size.height,
         }
     }
 }

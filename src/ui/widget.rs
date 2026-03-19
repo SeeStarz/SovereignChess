@@ -1,25 +1,52 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
     geometry::{FPosition, FRect},
+    input::Event,
     ui::Layout,
+    util::Observer,
 };
 use glam::Vec2;
-use raylib::{RaylibThread, color::Color, core::drawing::RaylibDrawHandle, prelude::RaylibDraw};
+use raylib::{
+    RaylibThread, color::Color, core::drawing::RaylibDrawHandle, math::Rectangle,
+    prelude::RaylibDraw,
+};
 
-type Input = (); // TODO
-type InputHandler = Box<dyn FnMut(&Input) -> bool + 'static>;
+type InputHandler = Box<dyn FnMut(Event, FRect) -> bool + 'static>;
 type RenderFunction = Box<dyn Fn(&mut RaylibDrawHandle, &RaylibThread, FRect) + 'static>;
 
-pub fn ignore_input(_input: &Input) -> bool {
+pub fn ignore_input(_input: Event, _rect: FRect) -> bool {
     false
 }
 
 pub fn no_render(_handle: &mut RaylibDrawHandle, _thread: &RaylibThread, _rect: FRect) {}
 
 pub fn debug_rect(layout: Layout) -> WidgetIntent {
+    let is_toggled = Rc::new(RefCell::new(false));
+    let is_toggled_view = Observer::from(is_toggled.clone());
+
     let children = Vec::new();
-    let input_handler = Box::new(ignore_input);
-    let render_function: RenderFunction = Box::new(|handle, _thread, rect| {
-        handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::RED);
+    let input_handler: InputHandler = Box::new(move |event, rect| match event {
+        Event::MousePressed(position)
+            if Rectangle::from(rect).check_collision_point_rec(position) =>
+        {
+            let current = *is_toggled.borrow();
+            *is_toggled.borrow_mut() = !current;
+            true
+        }
+        _ => false,
+    });
+    let render_function: RenderFunction = Box::new(move |handle, _thread, rect| {
+        handle.draw_rectangle_pro(
+            rect,
+            FPosition::default(),
+            0.0,
+            if *is_toggled_view.borrow() {
+                Color::RED
+            } else {
+                Color::LIMEGREEN
+            },
+        );
     });
 
     WidgetIntent {
@@ -67,12 +94,12 @@ pub struct ComputedWidget {
 
 impl ComputedWidget {
     /// Recursively calls handle_input on existing input_handler until a widget consumes it
-    pub fn handle_input(&mut self, input: &Input) -> bool {
+    pub fn handle_input(&mut self, event: Event) -> bool {
         self.children
             .iter_mut()
             .rev()
-            .any(|c| c.handle_input(input))
-            || (self.input_handler)(input)
+            .any(|c| c.handle_input(event))
+            || (self.input_handler)(event, self.rect)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Self> {

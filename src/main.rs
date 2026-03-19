@@ -2,6 +2,7 @@
 
 mod engine;
 mod geometry;
+pub mod input;
 pub mod render;
 mod sprite;
 mod ui;
@@ -14,9 +15,13 @@ pub mod game {
     use crate::{
         engine::export::{Coordinate, Gamestate, Move},
         geometry::{FPosition, FRect, FSize},
+        input::Event,
         render::{draw, draw_game},
         sprite,
-        ui::{Layout, WidgetIntent, widget},
+        ui::{
+            Layout, WidgetIntent,
+            widget::{self, debug_rect},
+        },
         util::Observer,
     };
     use glam::Vec2;
@@ -50,9 +55,13 @@ pub mod game {
 
         let data_observer = Observer::from(data_mutator.clone());
 
-        let widget_tree = {
+        let mut widget_tree = {
+            let debug_rect = debug_rect(Layout::Relative(FRect {
+                position: FPosition::new(900.0, 100.0),
+                size: FSize::new(100.0, 100.0),
+            }));
             let board = WidgetIntent {
-                children: Vec::new(),
+                children: vec![debug_rect],
                 layout: Layout::Relative(FRect {
                     position: FPosition::default(),
                     size: FSize::from(Vec2::new(32.0 * 16.0, 32.0 * 16.0)),
@@ -72,6 +81,19 @@ pub mod game {
         };
 
         while !raylib_handle.window_should_close() {
+            let events = {
+                let mut events = Vec::new();
+                {
+                    let mouse_pressed =
+                        raylib_handle.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT);
+                    if mouse_pressed {
+                        let position = FPosition::from(raylib_handle.get_mouse_position());
+                        events.push(Event::MousePressed(position));
+                    }
+                }
+                events
+            };
+
             if raylib_handle.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
                 let row = (raylib_handle.get_mouse_y() / 32) - 1;
                 let col = (raylib_handle.get_mouse_x() / 32) - 1;
@@ -107,6 +129,12 @@ pub mod game {
                             data_mutator.borrow_mut().selected_square = Some(coordinate1);
                         }
                     }
+                }
+            }
+
+            {
+                for event in events {
+                    widget_tree.handle_input(event);
                 }
             }
 
