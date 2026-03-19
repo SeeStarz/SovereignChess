@@ -87,14 +87,14 @@ pub fn try_add_legal_move_check_special_tile_rules(
     };
 
     let Some(&special_destination) = tile::Special::at(normal_move.destination) else {
-        moves.push(LegalMove::NormalMove(normal_move));
+        moves.push(legal_move);
         return;
     };
 
     // Means that we are not trying to occupy special tile colored the same as current faction
     // We are also not trying to occupy special tile where there currently is a piece on the other pair
     if gamestate.is_special_tile_occupiable(special_destination, faction) {
-        moves.push(LegalMove::NormalMove(normal_move));
+        moves.push(legal_move);
         return;
     }
 
@@ -102,7 +102,7 @@ pub fn try_add_legal_move_check_special_tile_rules(
     if let Some(&special_origin) = tile::Special::at(normal_move.origin)
         && special_origin.other() == special_destination
     {
-        moves.push(LegalMove::NormalMove(normal_move));
+        moves.push(legal_move);
     }
 }
 

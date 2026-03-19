@@ -105,14 +105,14 @@ fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
             gamestate,
             LegalMove::RegimeChangePromotion(RegimeChangePromotion { normal_move }),
             faction,
-        )
+        );
     } else {
         try_add_legal_move_check_special_tile_rules(
             moves,
             gamestate,
             LegalMove::NormalMove(normal_move),
             faction,
-        )
+        );
     }
 }
 
