@@ -13,10 +13,9 @@ fn main() {
 
 pub mod game {
     use crate::{
-        engine::export::{Coordinate, Gamestate, LegalMove},
+        engine::export::{Coordinate, Gamestate, LegalMove, piece},
         geometry::FPosition,
         input::Event,
-        render::draw,
         sprite, ui,
         util::Observer,
     };
@@ -27,6 +26,7 @@ pub mod game {
         pub gamestate: Gamestate,
         pub legal_moves: Vec<LegalMove>,
         pub selected_square: Option<Coordinate>,
+        pub selected_piece_type: Option<piece::Type>,
         pub sprite_manager: sprite::Manager,
     }
 
@@ -44,6 +44,7 @@ pub mod game {
                 gamestate,
                 legal_moves: gamestate.moves(),
                 selected_square: None,
+                selected_piece_type: None,
                 sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
             }
         }));
@@ -73,8 +74,8 @@ pub mod game {
             // raylib_handle.draw(&thread, |handle| ...);
             //// Working version
             {
-                let draw_handle = raylib_handle.begin_drawing(&thread);
-                draw(draw_handle, &thread, &widget_tree);
+                let mut draw_handle = raylib_handle.begin_drawing(&thread);
+                widget_tree.render(&mut draw_handle, &thread);
             }
         }
     }

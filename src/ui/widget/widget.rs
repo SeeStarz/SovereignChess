@@ -56,7 +56,8 @@ impl ComputedWidget {
             || (self.input_handler)(event, self.rect)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &Self> {
-        std::iter::once(self).chain(self.children.iter())
+    pub fn render(&self, handle: &mut RaylibDrawHandle, thread: &RaylibThread) {
+        (self.render_function)(handle, thread, self.rect);
+        self.children.iter().for_each(|c| c.render(handle, thread))
     }
 }

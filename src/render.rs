@@ -10,7 +10,6 @@ use crate::{
     game::Data,
     geometry::{FPosition, FRect, FSize},
     sprite::{CompositeDraw, PieceSprite},
-    ui::widget::ComputedWidget,
 };
 
 pub trait ToColor {
@@ -35,13 +34,6 @@ impl ToColor for faction::Color {
             Black => Color::BLACK.brightness(0.2),
         }
     }
-}
-
-pub fn draw(mut handle: RaylibDrawHandle, thread: &RaylibThread, widget_tree: &ComputedWidget) {
-    handle.clear_background(Color::BLACK);
-    widget_tree
-        .iter()
-        .for_each(|w| (w.render_function)(&mut handle, thread, w.rect));
 }
 
 pub fn draw_game(handle: &mut RaylibDrawHandle, thread: &RaylibThread, rect: FRect, data: &Data) {
