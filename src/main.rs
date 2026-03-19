@@ -18,7 +18,7 @@ pub mod game {
         input::{self, Event},
         render::{draw, draw_game},
         sprite,
-        ui::{Layout, WidgetIntent, widget::debug_rect},
+        ui::{Layout, WidgetIntent, widget::debug::debug_rect},
         util::Observer,
     };
     use glam::Vec2;

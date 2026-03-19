@@ -1,61 +1,15 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{
-    geometry::{FPosition, FRect},
-    input::Event,
-    ui::Layout,
-    util::Observer,
-};
+use crate::{geometry::FRect, input::Event, ui::Layout};
 use glam::Vec2;
-use raylib::{
-    RaylibThread, color::Color, core::drawing::RaylibDrawHandle, math::Rectangle,
-    prelude::RaylibDraw,
-};
+use raylib::{RaylibThread, core::drawing::RaylibDrawHandle};
 
-type InputHandler = Box<dyn FnMut(Event, FRect) -> bool + 'static>;
-type RenderFunction = Box<dyn Fn(&mut RaylibDrawHandle, &RaylibThread, FRect) + 'static>;
+pub type InputHandler = Box<dyn FnMut(Event, FRect) -> bool + 'static>;
+pub type RenderFunction = Box<dyn Fn(&mut RaylibDrawHandle, &RaylibThread, FRect) + 'static>;
 
 pub fn ignore_input(_input: Event, _rect: FRect) -> bool {
     false
 }
 
 pub fn no_render(_handle: &mut RaylibDrawHandle, _thread: &RaylibThread, _rect: FRect) {}
-
-pub fn debug_rect(layout: Layout) -> WidgetIntent {
-    let is_toggled = Rc::new(RefCell::new(false));
-    let is_toggled_view = Observer::from(is_toggled.clone());
-
-    let children = Vec::new();
-    let input_handler: InputHandler = Box::new(move |event, rect| match event {
-        Event::MousePressed(position)
-            if Rectangle::from(rect).check_collision_point_rec(position) =>
-        {
-            let current = *is_toggled.borrow();
-            *is_toggled.borrow_mut() = !current;
-            true
-        }
-        _ => false,
-    });
-    let render_function: RenderFunction = Box::new(move |handle, _thread, rect| {
-        handle.draw_rectangle_pro(
-            rect,
-            FPosition::default(),
-            0.0,
-            if *is_toggled_view.borrow() {
-                Color::RED
-            } else {
-                Color::LIMEGREEN
-            },
-        );
-    });
-
-    WidgetIntent {
-        children,
-        layout,
-        input_handler,
-        render_function,
-    }
-}
 
 pub struct WidgetIntent {
     pub children: Vec<WidgetIntent>,
