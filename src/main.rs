@@ -15,13 +15,10 @@ pub mod game {
     use crate::{
         engine::export::{Coordinate, Gamestate, Move},
         geometry::{FPosition, FRect, FSize},
-        input::Event,
+        input::{self, Event},
         render::{draw, draw_game},
         sprite,
-        ui::{
-            Layout, WidgetIntent,
-            widget::{self, debug_rect},
-        },
+        ui::{Layout, WidgetIntent, widget::debug_rect},
         util::Observer,
     };
     use glam::Vec2;
@@ -66,7 +63,9 @@ pub mod game {
                     position: FPosition::default(),
                     size: FSize::from(Vec2::new(32.0 * 16.0, 32.0 * 16.0)),
                 }),
-                input_handler: Box::new(widget::ignore_input),
+                input_handler: Box::new(move |event, rect| {
+                    input::handle_board_input(event, rect, &mut data_mutator.borrow_mut())
+                }),
                 render_function: Box::new({
                     let d = data_observer.clone();
                     move |handle, thread, rect| {
@@ -94,49 +93,9 @@ pub mod game {
                 events
             };
 
-            if raylib_handle.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
-                let row = (raylib_handle.get_mouse_y() / 32) - 1;
-                let col = (raylib_handle.get_mouse_x() / 32) - 1;
-                if let Some(coordinate1) = Coordinate::new(row, col) {
-                    let selected_square = data_mutator.borrow().selected_square;
-                    if let Some(coordinate2) = selected_square {
-                        let attempted_move = Move {
-                            origin: coordinate2,
-                            destination: coordinate1,
-                        };
-
-                        let is_legal = data_mutator
-                            .borrow()
-                            .legal_moves
-                            .iter()
-                            .find(|&&x| x == attempted_move)
-                            .is_some();
-                        if is_legal {
-                            let gs = data_mutator.borrow().gamestate.apply_move(attempted_move);
-                            data_mutator.borrow_mut().gamestate = gs;
-                            let moves = data_mutator.borrow().gamestate.get_moves();
-                            data_mutator.borrow_mut().legal_moves = moves;
-                        }
-                        data_mutator.borrow_mut().selected_square = None;
-                    } else {
-                        let is_piece_here = data_mutator
-                            .borrow()
-                            .gamestate
-                            .pieces()
-                            .find(|p| p.coordinate == coordinate1)
-                            .is_some();
-                        if is_piece_here {
-                            data_mutator.borrow_mut().selected_square = Some(coordinate1);
-                        }
-                    }
-                }
-            }
-
-            {
-                for event in events {
-                    widget_tree.handle_input(event);
-                }
-            }
+            events.iter().for_each(|&event| {
+                widget_tree.handle_input(event);
+            });
 
             //// Below is the preferred way of doing things, but is still broken (double END_DRAWING) as per version 5.5.1
             // raylib_handle.draw(&thread, |handle| ...);
