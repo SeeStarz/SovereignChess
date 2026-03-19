@@ -117,8 +117,16 @@ fn draw_legal_moves(
 
     for move_ in data.legal_moves.iter().filter_map(|&mv| {
         if let LegalMove::NormalMove(nmv) = mv {
-            if nmv.origin == selected_square {
+            if nmv.origin == selected_square && data.selected_piece_type.is_none() {
                 Some(nmv)
+            } else {
+                None
+            }
+        } else if let LegalMove::Promotion(promotion_move) = mv {
+            if promotion_move.normal_move.origin == selected_square
+                && data.selected_piece_type.is_some()
+            {
+                Some(promotion_move.normal_move)
             } else {
                 None
             }
