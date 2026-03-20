@@ -1,4 +1,4 @@
-pub mod debug;
+pub mod component;
 pub mod tree;
 mod widget;
 

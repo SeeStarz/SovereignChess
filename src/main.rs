@@ -2,7 +2,6 @@
 
 mod engine;
 mod geometry;
-pub mod input;
 pub mod render;
 mod sprite;
 mod ui;
@@ -15,8 +14,8 @@ pub mod game {
     use crate::{
         engine::export::{Coordinate, Gamestate, LegalMove, piece},
         geometry::FPosition,
-        input::Event,
         sprite, ui,
+        ui::input::Event,
         util::Observer,
     };
     use raylib::prelude::*;

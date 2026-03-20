@@ -2,11 +2,11 @@ use crate::{
     engine::export::{faction, piece},
     game::Data,
     geometry::{FPosition, FRect, FSize},
-    input::{self, Event},
     render::draw_game,
     sprite::{CompositeDraw, PieceSprite},
     ui::{
         Layout, WidgetIntent,
+        input::{self, Event},
         widget::{ComputedWidget, ignore_input, no_render},
     },
     util::Observer,

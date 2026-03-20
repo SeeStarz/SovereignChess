@@ -1,4 +1,7 @@
-use crate::{geometry::FRect, input::Event, ui::Layout};
+use crate::{
+    geometry::FRect,
+    ui::{Layout, input::Event},
+};
 use glam::Vec2;
 use raylib::{RaylibThread, core::drawing::RaylibDrawHandle};
 
