@@ -2,12 +2,11 @@ use crate::{
     engine::export::{faction, piece},
     game::Data,
     geometry::{FPosition, FRect, FSize},
-    render::draw_game,
     sprite::{CompositeDraw, PieceSprite},
     ui::{
         Layout, WidgetIntent,
-        input::{self, Event},
-        widget::{ComputedWidget, ignore_input, no_render},
+        input::Event,
+        widget::{ComputedWidget, component, ignore_input, no_render},
     },
     util::Observer,
 };
@@ -90,23 +89,30 @@ pub fn get(data_mutator: Rc<RefCell<Data>>, data_observer: Observer<Data>) -> Co
         render_function: Box::new(no_render),
     };
 
-    let board = WidgetIntent {
-        children: vec![offsetter],
-        layout: Layout::Relative(FRect {
+    let board = component::board::make_board(
+        Layout::Relative(FRect {
             position: FPosition::default(),
             size: FSize::from(Vec2::new(32.0 * 16.0, 32.0 * 16.0)),
         }),
-        input_handler: Box::new(move |event, rect| {
-            input::handle_board_input(event, rect, &mut data_mutator.borrow_mut())
+        data_mutator.clone(),
+    );
+
+    let debug_toggle_button = component::debug::make_toggle_button(Layout::Fixed(FRect {
+        position: FPosition::new(900.0, 50.0),
+        size: FSize::new(100.0, 100.0),
+    }));
+
+    let root = WidgetIntent {
+        children: vec![board, offsetter, debug_toggle_button],
+        layout: Layout::Relative(FRect {
+            position: FPosition::default(),
+            size: FSize::default(),
         }),
-        render_function: Box::new({
-            let d = data_observer.clone();
-            move |handle, thread, rect| {
-                draw_game(handle, thread, rect, &d.borrow());
-            }
-        }),
+        input_handler: Box::new(ignore_input),
+        render_function: Box::new(no_render),
     };
-    board.compute(FRect {
+
+    root.compute(FRect {
         position: FPosition::from(Vec2::new(32.0, 32.0)),
         size: FSize::default(),
     })

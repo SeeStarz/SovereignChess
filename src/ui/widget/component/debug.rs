@@ -10,7 +10,7 @@ use crate::{
 use raylib::{color::Color, math::Rectangle, prelude::RaylibDraw};
 use std::{cell::RefCell, rc::Rc};
 
-pub fn debug_rect(layout: Layout) -> WidgetIntent {
+pub fn make_toggle_button(layout: Layout) -> WidgetIntent {
     let is_toggled = Rc::new(RefCell::new(false));
     let is_toggled_view = Observer::from(is_toggled.clone());
 

@@ -35,6 +35,7 @@ impl WidgetIntent {
         let children = self.children.into_iter().map(|c| c.compute(rect)).collect();
         ComputedWidget {
             children,
+            layout: self.layout,
             rect,
             input_handler: self.input_handler,
             render_function: self.render_function,
@@ -44,6 +45,7 @@ impl WidgetIntent {
 
 pub struct ComputedWidget {
     pub children: Vec<ComputedWidget>,
+    pub layout: Layout,
     pub rect: FRect,
     pub input_handler: InputHandler,
     pub render_function: RenderFunction,
@@ -62,5 +64,29 @@ impl ComputedWidget {
     pub fn render(&self, handle: &mut RaylibDrawHandle, thread: &RaylibThread) {
         (self.render_function)(handle, thread, self.rect);
         self.children.iter().for_each(|c| c.render(handle, thread))
+    }
+
+    pub fn recompute(self, parent: FRect) -> ComputedWidget {
+        use Layout::*;
+        let rect = match self.layout {
+            Fixed(rect) => rect,
+            Relative(rect) => FRect {
+                position: (Vec2::from(rect.position) + Vec2::from(parent.position)).into(),
+                size: rect.size,
+            },
+        };
+
+        let children = self
+            .children
+            .into_iter()
+            .map(|c| c.recompute(rect))
+            .collect();
+        ComputedWidget {
+            children,
+            layout: self.layout,
+            rect,
+            input_handler: self.input_handler,
+            render_function: self.render_function,
+        }
     }
 }
