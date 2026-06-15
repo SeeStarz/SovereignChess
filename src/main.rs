@@ -16,7 +16,6 @@ pub mod game {
         geometry::FPosition,
         sprite, ui,
         ui::input::Event,
-        util::Observer,
     };
     use raylib::prelude::*;
     use std::{cell::RefCell, rc::Rc};
@@ -48,8 +47,7 @@ pub mod game {
             }
         }));
 
-        let data_observer = Observer::from(data_mutator.clone());
-        let mut widget_tree = ui::widget::tree::get(data_mutator, data_observer);
+        let mut widget_tree = ui::widget::tree::get(data_mutator);
 
         while !raylib_handle.window_should_close() {
             let events = {

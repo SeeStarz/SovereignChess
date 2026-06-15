@@ -20,33 +20,25 @@ use crate::{
     sprite::{CompositeDraw, PieceSprite},
     ui::{
         input::Event,
-        layout::{AxisSizingRequest, FlexDirection, Positioning::Relative},
-        widget::{WidgetSizeRequest, WidgetSpec, WidgetSpecNode},
+        widget::{InputHandler, RenderFunction, builder::WidgetBuilder},
     },
     util::Observer,
 };
 
-pub fn make_board(rect: FRect, data: Rc<RefCell<Data>>) -> WidgetSpecNode {
+pub fn make_board(size: FSize, data: Rc<RefCell<Data>>) -> WidgetBuilder {
     let observer = Observer::from(data.clone());
 
-    WidgetSpecNode {
-        children: Vec::new(),
-        core: WidgetSpec {
-            size_request: WidgetSizeRequest::new(
-                AxisSizingRequest::Fixed(rect.size.width),
-                AxisSizingRequest::Fixed(rect.size.height),
-            ),
-            positioning: Relative(rect.position, crate::ui::layout::CardinalAnchor::TopLeft),
-            flex_direction: FlexDirection::Right,
-            child_origin: crate::ui::layout::CardinalAnchor::BottomRight,
-            input_handler: Box::new(move |event, rect| {
-                handle_input(event, rect, &mut data.borrow_mut())
-            }),
-            render_function: Box::new(move |handle, thread, rect| {
-                draw_game(handle, thread, rect, &observer.borrow());
-            }),
-        },
-    }
+    let input_handler: InputHandler =
+        Box::new(move |event, rect| handle_input(event, rect, &mut data.borrow_mut()));
+
+    let render_function: RenderFunction = Box::new(move |handle, thread, rect| {
+        draw_game(handle, thread, rect, &observer.borrow());
+    });
+
+    WidgetBuilder::default()
+        .size(size)
+        .input(input_handler)
+        .render(render_function)
 }
 
 fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
