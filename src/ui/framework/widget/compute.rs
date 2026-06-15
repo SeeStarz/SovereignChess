@@ -1,77 +1,13 @@
 use crate::{
     geometry::{FPosition, FRect, FSize, Size},
-    ui::{
-        input::Event,
+    ui::framework::{
         layout::{
-            AxisIndexable, AxisSizingRequest, CardinalAnchor, FlexDirection, Positioning,
-            major_minor_to_size, size_to_major_minor,
+            AxisIndexable, AxisSizingRequest, Positioning, major_minor_to_size, size_to_major_minor,
         },
+        widget,
     },
 };
 use glam::Vec2;
-use raylib::{RaylibThread, core::drawing::RaylibDrawHandle};
-
-pub type InputHandler = Box<dyn FnMut(Event, FRect) -> bool + 'static>;
-pub type RenderFunction = Box<dyn Fn(&mut RaylibDrawHandle, &RaylibThread, FRect) + 'static>;
-
-pub fn ignore_input(_input: Event, _rect: FRect) -> bool {
-    false
-}
-
-pub fn no_render(_handle: &mut RaylibDrawHandle, _thread: &RaylibThread, _rect: FRect) {}
-
-pub type WidgetSizeRequest = Size<AxisSizingRequest>;
-
-pub struct WidgetSpecNode {
-    pub children: Vec<WidgetSpecNode>,
-    pub core: WidgetSpec,
-}
-
-pub struct WidgetSpec {
-    pub size_request: WidgetSizeRequest,
-    pub flex_direction: FlexDirection,
-    pub positioning: Positioning,
-    pub child_origin: CardinalAnchor,
-    pub input_handler: InputHandler,
-    pub render_function: RenderFunction,
-}
-
-pub struct ComputedWidgetNode {
-    pub children: Vec<ComputedWidgetNode>,
-    pub rect: FRect,
-    pub spec: WidgetSpec,
-}
-
-impl WidgetSpecNode {
-    pub fn compute(self) -> ComputedWidgetNode {
-        let mut work = self.measure_intrinsic_size();
-
-        let size = work.cache.size.unwrap_or_else(|_| panic!("Expand as root"));
-        work.allocate_remaining_size(size);
-
-        work.position_widgets(FPosition::default())
-    }
-}
-
-impl ComputedWidgetNode {
-    /// Recursively calls handle_input on existing input_handler until a widget consumes it
-    pub fn handle_input(&mut self, event: Event) -> bool {
-        self.children
-            .iter_mut()
-            .rev()
-            .any(|c| c.handle_input(event))
-            || (self.spec.input_handler)(event, self.rect)
-    }
-
-    pub fn render(&self, handle: &mut RaylibDrawHandle, thread: &RaylibThread) {
-        (self.spec.render_function)(handle, thread, self.rect);
-        self.children.iter().for_each(|c| c.render(handle, thread))
-    }
-}
-
-///////////////////////////
-// IMPLEMENTATION DETAIL //
-///////////////////////////
 
 type OptFSize = Size<Option<f32>>;
 
@@ -94,20 +30,20 @@ impl OptFSize {
     }
 }
 
-struct WidgetWorkCache {
+struct WorkCache {
     size: OptFSize,
     available_size: OptFSize,
 }
 
-struct WidgetIntermediaryNode {
-    spec: WidgetSpec,
-    children: Vec<WidgetIntermediaryNode>,
-    cache: WidgetWorkCache,
+pub struct IntermediaryNode {
+    spec: widget::Spec,
+    children: Vec<widget::IntermediaryNode>,
+    cache: WorkCache,
 }
 
-impl WidgetSpecNode {
-    fn measure_intrinsic_size(self) -> WidgetIntermediaryNode {
-        let children: Vec<WidgetIntermediaryNode> = self
+impl widget::SpecNode {
+    pub fn measure_intrinsic_size(self) -> widget::IntermediaryNode {
+        let children: Vec<IntermediaryNode> = self
             .children
             .into_iter()
             .map(|c| c.measure_intrinsic_size())
@@ -148,13 +84,13 @@ impl WidgetSpecNode {
                     || self.core.size_request.get_on_axis(minor_axis) != Shrink
             );
 
-            WidgetWorkCache {
+            WorkCache {
                 size: major_minor_to_size(major_length, minor_length, major_axis),
                 available_size: Size::new(None, None),
             }
         };
 
-        WidgetIntermediaryNode {
+        widget::IntermediaryNode {
             spec: self.core,
             children,
             cache,
@@ -162,7 +98,7 @@ impl WidgetSpecNode {
     }
 }
 
-impl WidgetIntermediaryNode {
+impl IntermediaryNode {
     fn store_given_size(&mut self, given_size: FSize) {
         use AxisSizingRequest::*;
 
@@ -182,7 +118,7 @@ impl WidgetIntermediaryNode {
         }
     }
 
-    fn allocate_remaining_size(&mut self, given_size: FSize) {
+    fn allocate_remaining_size_internal(&mut self, given_size: FSize) {
         self.store_given_size(given_size);
 
         let major_axis = self.spec.flex_direction.major_axis();
@@ -219,7 +155,7 @@ impl WidgetIntermediaryNode {
                 }
             };
 
-            c.allocate_remaining_size(major_minor_to_size(
+            c.allocate_remaining_size_internal(major_minor_to_size(
                 child_major_length,
                 minor_length,
                 major_axis,
@@ -227,7 +163,12 @@ impl WidgetIntermediaryNode {
         });
     }
 
-    fn position_widgets(self, origin: FPosition) -> ComputedWidgetNode {
+    pub fn allocate_remaining_size(&mut self) {
+        let size = self.cache.size.unwrap_or_else(|_| panic!("Expand as root"));
+        self.allocate_remaining_size_internal(size);
+    }
+
+    pub fn position_widgets(self, origin: FPosition) -> widget::ComputedNode {
         use Positioning::*;
         let rect = {
             let size = self.cache.size.unwrap();
@@ -258,7 +199,7 @@ impl WidgetIntermediaryNode {
         let major_axis = self.spec.flex_direction.major_axis();
         let mut accumulated_major_length = 0.0;
 
-        let children: Vec<ComputedWidgetNode> = {
+        let children: Vec<widget::ComputedNode> = {
             self.children
                 .into_iter()
                 .map(|c| {
@@ -286,7 +227,7 @@ impl WidgetIntermediaryNode {
                 .collect()
         };
 
-        ComputedWidgetNode {
+        widget::ComputedNode {
             children,
             rect,
             spec: self.spec,

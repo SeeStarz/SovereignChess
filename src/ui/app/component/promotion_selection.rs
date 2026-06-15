@@ -5,9 +5,9 @@ use crate::{
     game::Data,
     geometry::{FPosition, FRect, FSize},
     sprite::{CompositeDraw, PieceSprite},
-    ui::{
+    ui::framework::{
         input::Event,
-        widget::{WidgetSpecNode, builder::WidgetBuilder},
+        widget::{self, prototype::SpecNode},
     },
     util::Observer,
 };
@@ -18,11 +18,8 @@ use raylib::{
     math::Rectangle,
 };
 
-pub fn make_promotion_selection_buttons(
-    individual_size: FSize,
-    data: Rc<RefCell<Data>>,
-) -> WidgetBuilder {
-    let buttons: Vec<WidgetSpecNode> = [
+pub fn build(individual_size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder {
+    let buttons: Vec<SpecNode> = [
         piece::King,
         piece::Queen,
         piece::Rook,
@@ -34,7 +31,7 @@ pub fn make_promotion_selection_buttons(
         let mutator = data.clone();
         let observer = Observer::from(data.clone());
 
-        WidgetBuilder::default()
+        widget::Builder::default()
             .size(individual_size)
             .input(Box::new(move |event, rect| {
                 input_handler(event, rect, &mut mutator.borrow_mut(), piece_type)
@@ -46,7 +43,7 @@ pub fn make_promotion_selection_buttons(
     })
     .collect();
 
-    WidgetBuilder::new_row(true).children(buttons)
+    widget::Builder::new_row(true).children(buttons)
 }
 
 fn input_handler(event: Event, rect: FRect, data: &mut Data, piece_type: piece::Type) -> bool {

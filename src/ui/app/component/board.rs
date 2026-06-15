@@ -18,14 +18,17 @@ use crate::{
     geometry::{FPosition, FRect, FSize},
     render::ToColor,
     sprite::{CompositeDraw, PieceSprite},
-    ui::{
+    ui::framework::{
         input::Event,
-        widget::{InputHandler, RenderFunction, builder::WidgetBuilder},
+        widget::{
+            self,
+            prototype::{InputHandler, RenderFunction},
+        },
     },
     util::Observer,
 };
 
-pub fn make_board(size: FSize, data: Rc<RefCell<Data>>) -> WidgetBuilder {
+pub fn build(size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder {
     let observer = Observer::from(data.clone());
 
     let input_handler: InputHandler =
@@ -35,7 +38,7 @@ pub fn make_board(size: FSize, data: Rc<RefCell<Data>>) -> WidgetBuilder {
         draw_game(handle, thread, rect, &observer.borrow());
     });
 
-    WidgetBuilder::default()
+    widget::Builder::default()
         .size(size)
         .input(input_handler)
         .render(render_function)
@@ -57,7 +60,6 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
 
     if let Some(coordinate2) = data.selected_square {
         let attempted_move = if let Some(piece_type) = data.selected_piece_type {
-            println!("AVAIL: {:#?}", data.legal_moves);
             if piece_type == piece::King {
                 LegalMove::RegimeChangePromotion(RegimeChangePromotion {
                     normal_move: NormalMove {

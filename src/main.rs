@@ -15,7 +15,7 @@ pub mod game {
         engine::export::{Coordinate, Gamestate, LegalMove, piece},
         geometry::FPosition,
         sprite, ui,
-        ui::input::Event,
+        ui::export::input::Event,
     };
     use raylib::prelude::*;
     use std::{cell::RefCell, rc::Rc};
@@ -47,7 +47,7 @@ pub mod game {
             }
         }));
 
-        let mut widget_tree = ui::widget::tree::get(data_mutator);
+        let mut widget_tree = ui::export::screen::game::generate(data_mutator);
 
         while !raylib_handle.window_should_close() {
             let events = {

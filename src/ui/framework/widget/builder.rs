@@ -1,21 +1,20 @@
 use crate::{
     geometry::{FPosition, FSize, Size},
-    ui::{
+    ui::framework::{
         layout::{
             AxisSizingRequest::{Expand, Fixed, Shrink},
             CardinalAnchor, FlexAnchor, FlexDirection,
             Positioning::{self, Absolute, Offset, Relative},
         },
-        widget::{
-            InputHandler, RenderFunction, WidgetSizeRequest, WidgetSpec, WidgetSpecNode,
-            ignore_input, no_render,
+        widget::prototype::{
+            InputHandler, RenderFunction, SizeRequest, Spec, SpecNode, ignore_input, no_render,
         },
     },
 };
 
 pub struct InnerData {
-    pub children: Vec<WidgetSpecNode>,
-    pub size_request: WidgetSizeRequest,
+    pub children: Vec<SpecNode>,
+    pub size_request: SizeRequest,
     pub flex_direction: FlexDirection,
     pub positioning: Positioning,
     pub child_origin: CardinalAnchor,
@@ -23,15 +22,15 @@ pub struct InnerData {
     pub render_function: RenderFunction,
 }
 
-pub struct WidgetBuilder {
+pub struct Builder {
     pub inner_data: InnerData,
 }
 
-impl WidgetBuilder {
-    pub fn finalize(self) -> WidgetSpecNode {
-        WidgetSpecNode {
+impl Builder {
+    pub fn finalize(self) -> SpecNode {
+        SpecNode {
             children: self.inner_data.children,
-            core: WidgetSpec {
+            core: Spec {
                 size_request: self.inner_data.size_request,
                 flex_direction: self.inner_data.flex_direction,
                 positioning: self.inner_data.positioning,
@@ -47,9 +46,9 @@ impl WidgetBuilder {
 // INITIALIZERS //
 //////////////////
 
-impl WidgetBuilder {
+impl Builder {
     pub fn default() -> Self {
-        WidgetBuilder {
+        Builder {
             inner_data: InnerData {
                 children: Vec::new(),
                 size_request: Size::new(Fixed(0.0), Fixed(0.0)),
@@ -87,7 +86,7 @@ impl WidgetBuilder {
 // HELPFUL FUNCTIONS //
 ///////////////////////
 
-impl WidgetBuilder {
+impl Builder {
     pub fn shrink(self) -> Self {
         self.size_request(Size::new(Shrink, Shrink))
     }
@@ -143,13 +142,13 @@ impl WidgetBuilder {
 // BASIC BUILDER //
 ///////////////////
 
-impl WidgetBuilder {
-    pub fn children(mut self, children: Vec<WidgetSpecNode>) -> Self {
+impl Builder {
+    pub fn children(mut self, children: Vec<SpecNode>) -> Self {
         self.inner_data.children = children;
         self
     }
 
-    pub fn size_request(mut self, size_request: WidgetSizeRequest) -> Self {
+    pub fn size_request(mut self, size_request: SizeRequest) -> Self {
         self.inner_data.size_request = size_request;
         self
     }
