@@ -163,50 +163,32 @@ impl WidgetSpecNode {
 }
 
 impl WidgetIntermediaryNode {
-    fn verify_and_set_given_size(&mut self, given_size: FSize) {
+    fn store_given_size(&mut self, given_size: FSize) {
+        use AxisSizingRequest::*;
+
         self.cache.available_size.width = Some(given_size.width);
         self.cache.available_size.height = Some(given_size.height);
 
-        let major_axis = self.spec.flex_direction.major_axis();
-        let minor_axis = self.spec.flex_direction.minor_axis();
-
-        let (given_major_length, given_minor_length) = size_to_major_minor(given_size, major_axis);
-
-        let cache_major_length = self.cache.size.get_on_axis(major_axis);
-
-        use AxisSizingRequest::*;
-
-        match self.spec.size_request.get_on_axis(major_axis) {
-            Fixed(length) => {
-                assert_eq!(length, given_major_length);
-                assert_eq!(cache_major_length, Some(given_major_length));
-            }
-            Shrink => {
-                assert_eq!(cache_major_length, Some(given_major_length));
-            }
-            Expand(_grow_factor) => {
-                self.cache
-                    .size
-                    .set_on_axis(Some(given_major_length), major_axis);
-            }
+        match self.spec.size_request.width {
+            Fixed(_) | Shrink => {}
+            Expand(_grow_factor) => self.cache.size.width = Some(given_size.width),
         }
 
-        match self.spec.size_request.get_on_axis(minor_axis) {
+        match self.spec.size_request.height {
+            Fixed(_) | Shrink => {}
             Expand(_grow_factor) => {
-                self.cache
-                    .size
-                    .set_on_axis(Some(given_minor_length), minor_axis);
+                self.cache.size.height = Some(given_size.height);
             }
-            _ => {}
         }
     }
 
     fn allocate_remaining_size(&mut self, given_size: FSize) {
-        self.verify_and_set_given_size(given_size);
+        self.store_given_size(given_size);
 
         let major_axis = self.spec.flex_direction.major_axis();
 
-        let (major_length, minor_length) = size_to_major_minor(given_size, major_axis);
+        let (major_length, minor_length) =
+            size_to_major_minor(self.cache.size.unwrap(), major_axis);
 
         // None variant should mean the child is of type expand
         let used_major_length = self.children.iter().fold(0.0, |acc, c| {
