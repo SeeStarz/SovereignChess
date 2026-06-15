@@ -1,16 +1,16 @@
 use crate::{
-    geometry::FPosition,
+    geometry::{FPosition, FRect},
     ui::{
-        Layout, WidgetIntent,
         input::Event,
-        widget::{InputHandler, RenderFunction},
+        layout::{AxisSizingRequest, FlexDirection, Positioning::Relative},
+        widget::{InputHandler, RenderFunction, WidgetSizeRequest, WidgetSpec, WidgetSpecNode},
     },
     util::Observer,
 };
 use raylib::{color::Color, math::Rectangle, prelude::RaylibDraw};
 use std::{cell::RefCell, rc::Rc};
 
-pub fn make_toggle_button(layout: Layout) -> WidgetIntent {
+pub fn make_toggle_button(rect: FRect) -> WidgetSpecNode {
     let is_toggled = Rc::new(RefCell::new(false));
     let is_toggled_view = Observer::from(is_toggled.clone());
 
@@ -38,10 +38,18 @@ pub fn make_toggle_button(layout: Layout) -> WidgetIntent {
         );
     });
 
-    WidgetIntent {
+    WidgetSpecNode {
         children,
-        layout,
-        input_handler,
-        render_function,
+        core: WidgetSpec {
+            size_request: WidgetSizeRequest::new(
+                AxisSizingRequest::Fixed(rect.size.width),
+                AxisSizingRequest::Fixed(rect.size.height),
+            ),
+            positioning: Relative(rect.position, crate::ui::layout::CardinalAnchor::TopLeft),
+            flex_direction: FlexDirection::Right,
+            child_origin: crate::ui::layout::CardinalAnchor::BottomRight,
+            input_handler,
+            render_function,
+        },
     }
 }

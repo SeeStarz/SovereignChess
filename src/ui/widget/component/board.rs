@@ -18,21 +18,34 @@ use crate::{
     geometry::{FPosition, FRect, FSize},
     render::ToColor,
     sprite::{CompositeDraw, PieceSprite},
-    ui::{Layout, WidgetIntent, input::Event},
+    ui::{
+        input::Event,
+        layout::{AxisSizingRequest, FlexDirection, Positioning::Relative},
+        widget::{WidgetSizeRequest, WidgetSpec, WidgetSpecNode},
+    },
     util::Observer,
 };
 
-pub fn make_board(layout: Layout, data: Rc<RefCell<Data>>) -> WidgetIntent {
+pub fn make_board(rect: FRect, data: Rc<RefCell<Data>>) -> WidgetSpecNode {
     let observer = Observer::from(data.clone());
-    WidgetIntent {
+
+    WidgetSpecNode {
         children: Vec::new(),
-        layout,
-        input_handler: Box::new(move |event, rect| {
-            handle_input(event, rect, &mut data.borrow_mut())
-        }),
-        render_function: Box::new(move |handle, thread, rect| {
-            draw_game(handle, thread, rect, &observer.borrow());
-        }),
+        core: WidgetSpec {
+            size_request: WidgetSizeRequest::new(
+                AxisSizingRequest::Fixed(rect.size.width),
+                AxisSizingRequest::Fixed(rect.size.height),
+            ),
+            positioning: Relative(rect.position, crate::ui::layout::CardinalAnchor::TopLeft),
+            flex_direction: FlexDirection::Right,
+            child_origin: crate::ui::layout::CardinalAnchor::BottomRight,
+            input_handler: Box::new(move |event, rect| {
+                handle_input(event, rect, &mut data.borrow_mut())
+            }),
+            render_function: Box::new(move |handle, thread, rect| {
+                draw_game(handle, thread, rect, &observer.borrow());
+            }),
+        },
     }
 }
 
