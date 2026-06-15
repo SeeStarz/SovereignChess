@@ -1,3 +1,4 @@
+pub mod builder;
 pub mod component;
 pub mod tree;
 mod widget;

@@ -2,7 +2,7 @@ use crate::geometry::{FPosition, Size};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Positioning {
-    Fixed(FPosition, CardinalAnchor),    // Fixed to global coordinates
+    Absolute(FPosition, CardinalAnchor), // Fixed to global coordinates
     Relative(FPosition, CardinalAnchor), // Offset relative to parent's coordinates
     Offset(FPosition, FlexAnchor),       // Offset relative to natural positioning as flex children
 }

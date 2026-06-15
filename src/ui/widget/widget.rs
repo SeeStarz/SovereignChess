@@ -252,7 +252,7 @@ impl WidgetIntermediaryNode {
 
             let position = FPosition::from({
                 match self.spec.positioning {
-                    Fixed(position, anchor) => {
+                    Absolute(position, anchor) => {
                         Vec2::from(position)
                             - Vec2::from(size) * Vec2::from(anchor.fraction_offset_from_topleft())
                     }
@@ -281,7 +281,7 @@ impl WidgetIntermediaryNode {
                 .into_iter()
                 .map(|c| {
                     let origin = match c.spec.positioning {
-                        Fixed(_, _) | Relative(_, _) => {
+                        Absolute(_, _) | Relative(_, _) => {
                             Vec2::from(rect.position)
                                 + Vec2::from(rect.size)
                                     * Vec2::from(

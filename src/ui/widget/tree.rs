@@ -93,7 +93,10 @@ pub fn get(data_mutator: Rc<RefCell<Data>>, data_observer: Observer<Data>) -> Co
         children: vec![last_selected.unwrap()],
         core: WidgetSpec {
             size_request: WidgetSizeRequest::new(Sizing::Fixed(0.0), Sizing::Fixed(0.0)),
-            positioning: Positioning::Fixed(FPosition::new(600.0, 300.0), CardinalAnchor::TopLeft),
+            positioning: Positioning::Absolute(
+                FPosition::new(600.0, 300.0),
+                CardinalAnchor::TopLeft,
+            ),
             flex_direction: FlexDirection::Right,
             child_origin: CardinalAnchor::TopLeft,
             input_handler: Box::new(ignore_input),
