@@ -1,4 +1,7 @@
-use crate::engine::{Coordinate, Piece, Tile};
+use crate::engine::{
+    initializer,
+    model::{Coordinate, Piece, Tile},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Board {
@@ -10,6 +13,14 @@ impl Board {
         Board {
             tiles: [[None; 16]; 16],
         }
+    }
+
+    pub fn default() -> Board {
+        let mut board = Self::empty();
+        initializer::board::normal::generate()
+            .into_iter()
+            .for_each(|(coordinate, piece)| board.set_at(coordinate, Some(piece)));
+        board
     }
 
     pub fn at(&self, coordinate: Coordinate) -> Tile {

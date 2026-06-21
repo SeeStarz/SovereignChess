@@ -1,29 +1,29 @@
 use crate::engine::{
-    Coordinate, Gamestate, LegalMove,
-    faction::Allegiance,
-    legal_move::{
-        NormalMove,
-        calculate::{
-            get_bishop_directions, get_queen_directions, get_rook_directions,
-            try_add_legal_move_check_special_tile_rules,
-        },
+    Gamestate,
+    logic::{
+        self, move_generation::calculate::helper::try_add_legal_move_check_special_tile_rules,
     },
-    piece::{self, Piece},
-    tile,
+    model::{
+        Coordinate, Piece,
+        chess_move::{Move, NormalMove},
+        direction,
+        faction::Allegiance,
+        piece, tile,
+    },
 };
 
 /// Responsible for Queen, Rook, Bishop, and King moves
-pub fn add_linear_moves_naive(
-    moves: &mut Vec<LegalMove>,
+pub fn add_moves_naive(
+    moves: &mut Vec<Move>,
     gamestate: &Gamestate,
     piece: Piece,
     origin: Coordinate,
 ) {
     let (directions, distance) = match piece.piece_type {
-        piece::King => (get_queen_directions(), 1),
-        piece::Queen => (get_queen_directions(), 8),
-        piece::Rook => (get_rook_directions(), 8),
-        piece::Bishop => (get_bishop_directions(), 8),
+        piece::King => (direction::queen(), 1),
+        piece::Queen => (direction::queen(), 8),
+        piece::Rook => (direction::rook(), 8),
+        piece::Bishop => (direction::bishop(), 8),
         incorrect_type => {
             panic!("Incorrect type passed: {:?}", incorrect_type)
         }
@@ -36,11 +36,11 @@ pub fn add_linear_moves_naive(
             };
 
             if let Some(victim) = gamestate.c().board.at(destination) {
-                if gamestate.get_allegiance(victim.faction) == Allegiance::Enemy {
+                if logic::faction::get_allegiance(gamestate, victim.faction) == Allegiance::Enemy {
                     try_add_legal_move_check_special_tile_rules(
                         moves,
                         gamestate,
-                        LegalMove::NormalMove(NormalMove {
+                        Move::NormalMove(NormalMove {
                             origin,
                             destination,
                         }),
@@ -54,7 +54,7 @@ pub fn add_linear_moves_naive(
                 try_add_legal_move_check_special_tile_rules(
                     moves,
                     gamestate,
-                    LegalMove::NormalMove(NormalMove {
+                    Move::NormalMove(NormalMove {
                         origin,
                         destination,
                     }),

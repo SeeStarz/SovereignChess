@@ -1,12 +1,14 @@
 use crate::engine::{
-    Coordinate, Gamestate, LegalMove,
-    coordinate::Direction,
-    faction::{self, Allegiance},
-    legal_move::{
-        NormalMove, Promotion, RegimeChangePromotion,
-        calculate::try_add_legal_move_check_special_tile_rules,
+    Gamestate,
+    logic::{
+        self, move_generation::calculate::helper::try_add_legal_move_check_special_tile_rules,
     },
-    piece,
+    model::{
+        Coordinate, Direction,
+        chess_move::{Move, NormalMove, Promotion, RegimeChangePromotion},
+        faction::{self, Allegiance},
+        piece,
+    },
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -15,6 +17,74 @@ struct PawnMoveDirection {
     double_move: bool,
 }
 type PawnAttackDirection = Direction;
+
+pub fn add_moves_naive(
+    moves: &mut Vec<Move>,
+    gamestate: &Gamestate,
+    faction: faction::Color,
+    origin: Coordinate,
+) {
+    let (move_directions, attack_directions) = calculate_pawn_directions(origin);
+    for direction in move_directions {
+        let Some(destination) = origin.offset(direction.direction) else {
+            continue;
+        };
+        if gamestate.c().board.at(destination).is_some() {
+            continue;
+        }
+
+        try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
+            moves,
+            gamestate,
+            NormalMove {
+                origin,
+                destination,
+            },
+            faction,
+        );
+
+        if direction.double_move {
+            let Some(destination) = origin.offset(direction.direction * 2) else {
+                continue;
+            };
+            if gamestate.c().board.at(destination).is_some() {
+                continue;
+            }
+
+            try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
+                moves,
+                gamestate,
+                NormalMove {
+                    origin,
+                    destination,
+                },
+                faction,
+            );
+        }
+    }
+
+    for direction in attack_directions {
+        let Some(destination) = origin.offset(direction) else {
+            continue;
+        };
+        let Some(victim) = gamestate.c().board.at(destination) else {
+            continue;
+        };
+        if logic::faction::get_allegiance(gamestate, victim.faction) != Allegiance::Enemy {
+            continue;
+        }
+
+        try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
+            moves,
+            gamestate,
+            NormalMove {
+                origin,
+                destination,
+            },
+            faction,
+        );
+    }
+}
 
 fn calculate_pawn_directions(
     origin: Coordinate,
@@ -77,7 +147,7 @@ fn calculate_pawn_directions(
 }
 
 fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
-    moves: &mut Vec<LegalMove>,
+    moves: &mut Vec<Move>,
     gamestate: &Gamestate,
     normal_move: NormalMove,
     faction: faction::Color,
@@ -93,7 +163,7 @@ fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
                 try_add_legal_move_check_special_tile_rules(
                     moves,
                     gamestate,
-                    LegalMove::Promotion(Promotion {
+                    Move::Promotion(Promotion {
                         normal_move,
                         piece_type,
                     }),
@@ -103,82 +173,14 @@ fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
         try_add_legal_move_check_special_tile_rules(
             moves,
             gamestate,
-            LegalMove::RegimeChangePromotion(RegimeChangePromotion { normal_move }),
+            Move::RegimeChangePromotion(RegimeChangePromotion { normal_move }),
             faction,
         );
     } else {
         try_add_legal_move_check_special_tile_rules(
             moves,
             gamestate,
-            LegalMove::NormalMove(normal_move),
-            faction,
-        );
-    }
-}
-
-pub fn add_pawn_moves_naive(
-    moves: &mut Vec<LegalMove>,
-    gamestate: &Gamestate,
-    faction: faction::Color,
-    origin: Coordinate,
-) {
-    let (move_directions, attack_directions) = calculate_pawn_directions(origin);
-    for direction in move_directions {
-        let Some(destination) = origin.offset(direction.direction) else {
-            continue;
-        };
-        if gamestate.c().board.at(destination).is_some() {
-            continue;
-        }
-
-        try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
-            moves,
-            gamestate,
-            NormalMove {
-                origin,
-                destination,
-            },
-            faction,
-        );
-
-        if direction.double_move {
-            let Some(destination) = origin.offset(direction.direction * 2) else {
-                continue;
-            };
-            if gamestate.c().board.at(destination).is_some() {
-                continue;
-            }
-
-            try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
-                moves,
-                gamestate,
-                NormalMove {
-                    origin,
-                    destination,
-                },
-                faction,
-            );
-        }
-    }
-
-    for direction in attack_directions {
-        let Some(destination) = origin.offset(direction) else {
-            continue;
-        };
-        let Some(victim) = gamestate.c().board.at(destination) else {
-            continue;
-        };
-        if gamestate.get_allegiance(victim.faction) != Allegiance::Enemy {
-            continue;
-        }
-
-        try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
-            moves,
-            gamestate,
-            NormalMove {
-                origin,
-                destination,
-            },
+            Move::NormalMove(normal_move),
             faction,
         );
     }

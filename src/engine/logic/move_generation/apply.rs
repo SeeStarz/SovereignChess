@@ -1,10 +1,14 @@
-use crate::engine::{Gamestate, LegalMove, gamestate::CanonicalState, piece};
+use crate::engine::{
+    Gamestate,
+    gamestate::CanonicalState,
+    model::{Move, piece},
+};
 
-pub fn apply_move(gamestate: &Gamestate, legal_move: LegalMove) -> CanonicalState {
+pub fn apply_move(gamestate: &Gamestate, legal_move: Move) -> CanonicalState {
     let mut board = gamestate.c().board;
 
     match legal_move {
-        LegalMove::NormalMove(normal_move) => {
+        Move::NormalMove(normal_move) => {
             let Some(piece) = board.at(normal_move.origin) else {
                 panic!(
                     "Attempted to move nothing at position: {:?}",
@@ -14,7 +18,7 @@ pub fn apply_move(gamestate: &Gamestate, legal_move: LegalMove) -> CanonicalStat
             board.set_at(normal_move.origin, None);
             board.set_at(normal_move.destination, Some(piece));
         }
-        LegalMove::Promotion(promotion_move) => {
+        Move::Promotion(promotion_move) => {
             let normal_move = promotion_move.normal_move;
             let Some(mut piece) = board.at(normal_move.origin) else {
                 panic!(
@@ -27,7 +31,7 @@ pub fn apply_move(gamestate: &Gamestate, legal_move: LegalMove) -> CanonicalStat
             board.set_at(normal_move.origin, None);
             board.set_at(normal_move.destination, Some(piece));
         }
-        LegalMove::RegimeChangePromotion(promotion_move) => {
+        Move::RegimeChangePromotion(promotion_move) => {
             let normal_move = promotion_move.normal_move;
             let Some(mut piece) = board.at(normal_move.origin) else {
                 panic!(

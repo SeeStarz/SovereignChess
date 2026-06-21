@@ -1,6 +1,6 @@
 use crate::engine::{
-    Coordinate, LegalMove, board::Board, faction, gamestate::init_pieces, legal_move,
-    piece::PieceExternal,
+    logic,
+    model::{Move, board::Board, faction, piece::PieceExternal},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -43,32 +43,12 @@ impl Gamestate {
     }
 
     pub fn pieces(&self) -> impl Iterator<Item = PieceExternal> {
-        self.c()
-            .board
-            .tiles
-            .iter()
-            .enumerate()
-            .flat_map(move |(row, line)| {
-                line.iter().enumerate().filter_map(move |(col, tile)| {
-                    tile.map(|piece| {
-                        PieceExternal::from_piece(
-                            piece,
-                            self.derived.faction_owners[piece.faction as usize],
-                            // None,
-                            Coordinate::new_unchecked(row as i32, col as i32),
-                        )
-                    })
-                })
-            })
+        logic::board::piece_externals(self)
     }
 
     pub fn new() -> Self {
         let canonical = {
-            let mut board = Board::empty();
-            for (coordinate, piece) in init_pieces::normal() {
-                assert!(board.at(coordinate).is_none());
-                board.set_at(coordinate, Some(piece));
-            }
+            let board = Board::default();
             let player_colors = [faction::White, faction::Black];
             let turn_to_play = TurnToPlay::Player1;
             CanonicalState {
@@ -83,15 +63,21 @@ impl Gamestate {
         Self { canonical, derived }
     }
 
-    pub fn moves(&self) -> Vec<LegalMove> {
-        legal_move::calculate::moves(self)
+    pub fn moves(&self) -> Vec<Move> {
+        logic::move_generation::calculate(self)
     }
 
-    pub fn apply_move(&self, move_: LegalMove) -> Self {
-        let canonical = legal_move::calculate::apply_move(self, move_);
+    pub fn apply_move(&self, move_: Move) -> Self {
+        let canonical = logic::move_generation::apply_move(self, move_);
         let derived = DerivedState::new(&canonical);
 
         Self { canonical, derived }
+    }
+}
+
+impl CanonicalState {
+    fn get_faction_owners(&self) -> [Option<faction::Color>; 12] {
+        logic::faction::get_faction_owners(self)
     }
 }
 

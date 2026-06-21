@@ -10,7 +10,7 @@ use raylib::{
 
 use crate::{
     engine::export::{
-        Coordinate, LegalMove,
+        Coordinate, Move,
         legal_move::{NormalMove, Promotion, RegimeChangePromotion},
         piece, tile,
     },
@@ -61,14 +61,14 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
     if let Some(coordinate2) = data.selected_square {
         let attempted_move = if let Some(piece_type) = data.selected_piece_type {
             if piece_type == piece::King {
-                LegalMove::RegimeChangePromotion(RegimeChangePromotion {
+                Move::RegimeChangePromotion(RegimeChangePromotion {
                     normal_move: NormalMove {
                         origin: coordinate2,
                         destination: coordinate1,
                     },
                 })
             } else {
-                LegalMove::Promotion(Promotion {
+                Move::Promotion(Promotion {
                     normal_move: NormalMove {
                         origin: coordinate2,
                         destination: coordinate1,
@@ -77,7 +77,7 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
                 })
             }
         } else {
-            LegalMove::NormalMove(NormalMove {
+            Move::NormalMove(NormalMove {
                 origin: coordinate2,
                 destination: coordinate1,
             })
@@ -182,13 +182,13 @@ fn draw_legal_moves(
     };
 
     for move_ in data.legal_moves.iter().filter_map(|&mv| {
-        if let LegalMove::NormalMove(nmv) = mv {
+        if let Move::NormalMove(nmv) = mv {
             if nmv.origin == selected_square && data.selected_piece_type.is_none() {
                 Some(nmv)
             } else {
                 None
             }
-        } else if let LegalMove::Promotion(promotion_move) = mv {
+        } else if let Move::Promotion(promotion_move) = mv {
             if promotion_move.normal_move.origin == selected_square
                 && data.selected_piece_type.is_some()
             {

@@ -1,46 +1,4 @@
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Coordinate {
-    row: usize,
-    col: usize,
-}
-
-impl Coordinate {
-    pub const fn row(&self) -> usize {
-        self.row
-    }
-
-    pub const fn col(&self) -> usize {
-        self.col
-    }
-
-    pub const fn new(row: i32, col: i32) -> Option<Self> {
-        if row < 0 || row > 15 || col < 0 || col > 15 {
-            return None;
-        }
-
-        Some(Self {
-            row: row as usize,
-            col: col as usize,
-        })
-    }
-
-    pub const fn new_unchecked(row: i32, col: i32) -> Self {
-        assert!(!(row < 0 || row > 15 || col < 0 || col > 15));
-        Self {
-            row: row as usize,
-            col: col as usize,
-        }
-    }
-
-    pub const fn offset(&self, direction: Direction) -> Option<Self> {
-        Self::new(
-            self.row as i32 + direction.row,
-            self.col as i32 + direction.col,
-        )
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Direction {
     pub row: i32,
     pub col: i32,
@@ -51,6 +9,49 @@ impl Direction {
         Self { row, col }
     }
 }
+
+// BE CAREFUL ABOUT THE ORDER
+const DIRECTION_STORE: [Direction; 16] = [
+    // Rook
+    Direction::new(1, 0),
+    Direction::new(0, 1),
+    Direction::new(0, -1),
+    Direction::new(-1, 0),
+    // Bishop
+    Direction::new(1, 1),
+    Direction::new(1, -1),
+    Direction::new(-1, 1),
+    Direction::new(-1, -1),
+    // Knight
+    Direction::new(2, 1),
+    Direction::new(2, -1),
+    Direction::new(1, 2),
+    Direction::new(1, -2),
+    Direction::new(-1, 2),
+    Direction::new(-1, -2),
+    Direction::new(-2, 1),
+    Direction::new(-2, -1),
+];
+
+pub fn queen() -> &'static [Direction] {
+    &DIRECTION_STORE[0..8]
+}
+
+pub fn rook() -> &'static [Direction] {
+    &DIRECTION_STORE[0..4]
+}
+
+pub fn bishop() -> &'static [Direction] {
+    &DIRECTION_STORE[4..8]
+}
+
+pub fn knight() -> &'static [Direction] {
+    &DIRECTION_STORE[8..16]
+}
+
+////////////////////
+// std::ops impls //
+////////////////////
 
 impl std::ops::Add for Direction {
     type Output = Self;

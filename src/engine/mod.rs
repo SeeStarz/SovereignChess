@@ -1,15 +1,8 @@
 pub mod export;
 
-mod board;
-mod coordinate;
-mod faction;
 mod gamestate;
-mod legal_move;
-mod piece;
-mod tile;
+mod initializer;
+mod logic;
+mod model;
 
-use coordinate::Coordinate;
 use gamestate::Gamestate;
-use legal_move::LegalMove;
-use piece::Piece;
-use tile::Tile;

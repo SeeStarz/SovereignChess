@@ -1,7 +1,7 @@
-use crate::engine::{Coordinate, faction, piece};
+use crate::engine::model::{Coordinate, faction, piece};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum LegalMove {
+pub enum Move {
     NormalMove(NormalMove),
     Castle(Castle),
     Promotion(Promotion),
