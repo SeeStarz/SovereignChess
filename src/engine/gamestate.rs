@@ -1,6 +1,6 @@
 use crate::engine::{
     logic,
-    model::{Move, board::Board, faction, piece::PieceExternal},
+    model::{Coordinate, Move, board::Board, faction, piece::PieceExternal},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -20,10 +20,17 @@ impl TurnToPlay {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Castle {
+    pub king_coordinate: Coordinate,
+    pub rook_coordinate: Coordinate,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CanonicalState {
     pub board: Board,
     pub player_colors: [faction::Color; 2],
     pub turn_to_play: TurnToPlay,
+    pub remaining_castles: Vec<Castle>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -31,7 +38,7 @@ pub struct DerivedState {
     pub real_faction_owners: [Option<faction::Color>; 12],
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Gamestate {
     pub canonical: CanonicalState,
     pub derived: DerivedState,
@@ -51,10 +58,12 @@ impl Gamestate {
             let board = Board::default();
             let player_colors = [faction::White, faction::Black];
             let turn_to_play = TurnToPlay::Player1;
+            let remaining_castles = logic::castle_generation::generate(&board);
             CanonicalState {
                 board,
                 player_colors,
                 turn_to_play,
+                remaining_castles,
             }
         };
 

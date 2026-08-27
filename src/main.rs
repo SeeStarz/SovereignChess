@@ -39,8 +39,8 @@ pub mod game {
         let data_mutator = Rc::new(RefCell::new({
             let gamestate = Gamestate::new();
             Data {
-                gamestate,
                 legal_moves: gamestate.moves(),
+                gamestate,
                 selected_square: None,
                 selected_piece_type: None,
                 sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
