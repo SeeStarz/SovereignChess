@@ -1,3 +1,5 @@
+use crate::engine::model::Coordinate;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Direction {
     pub row: i32,
@@ -7,6 +9,17 @@ pub struct Direction {
 impl Direction {
     pub const fn new(row: i32, col: i32) -> Self {
         Self { row, col }
+    }
+
+    pub fn from_coordinate_pair(origin: Coordinate, destination: Coordinate) -> Self {
+        Self {
+            row: destination.row() as i32 - origin.row() as i32,
+            col: destination.col() as i32 - origin.col() as i32,
+        }
+    }
+
+    pub fn manhattan_distance(&self) -> u32 {
+        self.row.abs() as u32 + self.col.abs() as u32
     }
 }
 
