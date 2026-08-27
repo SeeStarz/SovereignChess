@@ -1,6 +1,6 @@
 use crate::engine::{
     logic,
-    model::{Coordinate, Move, board::Board, faction, piece::PieceExternal},
+    model::{Move, board::Board, chess_move::Castle, faction, piece::PieceExternal},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -17,12 +17,6 @@ impl TurnToPlay {
             Player2 => Player1,
         }
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Castle {
-    pub king_coordinate: Coordinate,
-    pub rook_coordinate: Coordinate,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

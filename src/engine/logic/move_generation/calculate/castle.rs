@@ -1,25 +1,14 @@
 use crate::engine::{
     Gamestate, logic,
     model::{
-        Coordinate, Direction,
-        chess_move::{Castle, Move, NormalMove},
+        Direction,
+        chess_move::{Castle, Move},
         faction, tile,
     },
 };
 
 pub fn add_moves_naive(moves: &mut Vec<Move>, gamestate: &Gamestate) {
-    for _castle_move in gamestate.canonical.remaining_castles.iter() {
-        let castle_move = Castle {
-            king_move: NormalMove {
-                origin: Coordinate::new_unchecked(0, 0),
-                destination: Coordinate::new_unchecked(0, 0),
-            },
-            rook_move: NormalMove {
-                origin: Coordinate::new_unchecked(0, 0),
-                destination: Coordinate::new_unchecked(0, 0),
-            },
-        };
-
+    for &castle_move in gamestate.canonical.remaining_castles.iter() {
         if !check_pieces_allied(gamestate, castle_move) {
             continue;
         }
@@ -29,7 +18,7 @@ pub fn add_moves_naive(moves: &mut Vec<Move>, gamestate: &Gamestate) {
         }
 
         // Because this isn't even supposed to happen and
-        // the helper faction checkfunction is unable to proces this
+        // the helper faction check function is unable to proces this
         if !check_no_special_tile(castle_move) {
             continue;
         }

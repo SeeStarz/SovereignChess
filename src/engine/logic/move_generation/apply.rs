@@ -1,7 +1,7 @@
 use crate::engine::{
     Gamestate,
-    gamestate::{CanonicalState, Castle},
-    model::{Board, Move, piece},
+    gamestate::CanonicalState,
+    model::{Board, Move, chess_move::Castle, piece},
 };
 
 pub fn apply_move(gamestate: &Gamestate, legal_move: Move) -> CanonicalState {
@@ -69,7 +69,7 @@ fn filter_remaining_castles(
     remaining_castles.retain(|castle| {
         !affected_coordinates
             .iter()
-            .any(|&c| castle.king_coordinate == c || castle.rook_coordinate == c)
+            .any(|&c| castle.king_move.origin == c || castle.rook_move.origin == c)
     });
 }
 
