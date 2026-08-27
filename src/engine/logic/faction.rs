@@ -8,7 +8,7 @@ use crate::engine::{
 };
 use strum::IntoEnumIterator;
 
-pub fn get_faction_owners(state: &CanonicalState) -> [Option<faction::Color>; 12] {
+pub fn get_real_faction_owners(state: &CanonicalState) -> [Option<faction::Color>; 12] {
     let direct_owners = {
         let mut direct_owners = [None; 12];
         for special in tile::Special::all() {
@@ -43,7 +43,7 @@ pub fn get_faction_owners(state: &CanonicalState) -> [Option<faction::Color>; 12
 }
 
 pub fn get_allegiance(gamestate: &Gamestate, faction: faction::Color) -> Allegiance {
-    match gamestate.derived.faction_owners[faction as usize] {
+    match gamestate.derived.real_faction_owners[faction as usize] {
         None => Allegiance::Neutral,
         Some(faction)
             if faction == gamestate.c().player_colors[gamestate.c().turn_to_play as usize] =>

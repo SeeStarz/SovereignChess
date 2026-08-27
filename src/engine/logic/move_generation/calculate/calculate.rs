@@ -9,7 +9,7 @@ pub fn moves(gamestate: &Gamestate) -> Vec<Move> {
     gamestate
         .pieces()
         .filter(|p| {
-            gamestate.derived.faction_owners[p.faction as usize]
+            gamestate.derived.real_faction_owners[p.faction as usize]
                 == Some(gamestate.c().player_colors[gamestate.c().turn_to_play as usize])
         })
         .for_each(|p| {

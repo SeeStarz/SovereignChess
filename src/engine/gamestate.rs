@@ -21,20 +21,20 @@ impl TurnToPlay {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct CanonicalState {
-    pub(in crate::engine) board: Board,
-    pub(in crate::engine) player_colors: [faction::Color; 2],
-    pub(in crate::engine) turn_to_play: TurnToPlay,
+    pub board: Board,
+    pub player_colors: [faction::Color; 2],
+    pub turn_to_play: TurnToPlay,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct DerivedState {
-    pub(in crate::engine) faction_owners: [Option<faction::Color>; 12],
+    pub real_faction_owners: [Option<faction::Color>; 12],
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Gamestate {
-    pub(in crate::engine) canonical: CanonicalState,
-    pub(in crate::engine) derived: DerivedState,
+    pub canonical: CanonicalState,
+    pub derived: DerivedState,
 }
 
 impl Gamestate {
@@ -76,14 +76,16 @@ impl Gamestate {
 }
 
 impl CanonicalState {
-    fn get_faction_owners(&self) -> [Option<faction::Color>; 12] {
-        logic::faction::get_faction_owners(self)
+    fn get_real_faction_owners(&self) -> [Option<faction::Color>; 12] {
+        logic::faction::get_real_faction_owners(self)
     }
 }
 
 impl DerivedState {
     fn new(state: &CanonicalState) -> Self {
-        let faction_owners = state.get_faction_owners();
-        Self { faction_owners }
+        let real_faction_owners = state.get_real_faction_owners();
+        Self {
+            real_faction_owners,
+        }
     }
 }
