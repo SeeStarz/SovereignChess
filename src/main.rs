@@ -41,7 +41,7 @@ pub mod game {
         let data_mutator = Rc::new(RefCell::new({
             let gamestate = Gamestate::new();
             Data {
-                adapter: Adapter::new(gamestate),
+                adapter: Adapter::new(gamestate.clone()),
                 gamestate,
                 selected_square: None,
                 selected_piece_type: None,

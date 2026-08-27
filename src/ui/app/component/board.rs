@@ -84,7 +84,7 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
     }
 
     if let Some(gamestate_change) = data.adapter.data().gamestate_change {
-        data.gamestate = gamestate_change.gamestate;
+        data.gamestate = gamestate_change.gamestate.clone();
         data.adapter = Adapter::new(gamestate_change.gamestate);
         data.selected_square = None;
         true
