@@ -61,6 +61,14 @@ fn filter_remaining_castles(
                 king_coordinate,
             ]
         }
+        Move::Castle(castle_move) => {
+            vec![
+                castle_move.rook_move.origin,
+                castle_move.rook_move.destination,
+                castle_move.king_move.origin,
+                castle_move.king_move.destination,
+            ]
+        }
         _ => {
             panic!() // TODO: implement
         }
@@ -128,6 +136,29 @@ fn move_pieces(gamestate: &Gamestate, board: &mut Board, legal_move: Move) {
             board.set_at(normal_move.origin, None);
             board.set_at(king_coordinate, None);
             board.set_at(normal_move.destination, Some(piece));
+        }
+        Move::Castle(castle_move) => {
+            let rook_move = castle_move.rook_move;
+            let Some(rook) = board.at(rook_move.origin) else {
+                panic!(
+                    "Attempted to move nothing at position: {:?}",
+                    rook_move.origin
+                );
+            };
+            assert!(rook.piece_type == piece::Rook);
+            let king_move = castle_move.king_move;
+            let Some(king) = board.at(king_move.origin) else {
+                panic!(
+                    "Attempted to move nothing at position: {:?}",
+                    king_move.origin
+                );
+            };
+            assert!(king.piece_type == piece::King);
+
+            board.set_at(rook_move.origin, None);
+            board.set_at(king_move.origin, None);
+            board.set_at(rook_move.destination, Some(rook));
+            board.set_at(king_move.destination, Some(king));
         }
         _ => {
             panic!() // TODO: implement

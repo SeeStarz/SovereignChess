@@ -1,6 +1,6 @@
 use crate::engine::{
     Gamestate,
-    logic::move_generation::calculate::{knight, linear, pawn},
+    logic::move_generation::calculate::{castle, knight, linear, pawn},
     model::{Move, piece},
 };
 
@@ -27,6 +27,7 @@ pub fn moves(gamestate: &Gamestate) -> Vec<Move> {
                 }
             };
         });
+    castle::add_moves_naive(&mut moves, gamestate);
     // TODO: check for checks
     moves
 }
