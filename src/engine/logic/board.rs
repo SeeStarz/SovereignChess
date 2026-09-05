@@ -1,8 +1,8 @@
 use crate::engine::{
-    Gamestate,
+    Gamestate, logic,
     model::{
         Board, Coordinate,
-        piece::{PieceExternal, PieceWithCoordinate},
+        piece::{self, PieceExternal, PieceWithCoordinate},
     },
 };
 
@@ -37,4 +37,26 @@ pub fn piece_externals(gamestate: &Gamestate) -> impl Iterator<Item = PieceExter
                 })
             })
         })
+}
+
+pub fn at_external(gamestate: &Gamestate, coordinate: Coordinate) -> Option<PieceExternal> {
+    let Some(piece) = gamestate.c().board.at(coordinate) else {
+        return None;
+    };
+    Some(PieceExternal::from_piece(
+        piece,
+        gamestate.derived.real_faction_owners[piece.faction as usize],
+        coordinate,
+    ))
+}
+
+pub fn find_current_player_king(gamestate: &Gamestate) -> PieceExternal {
+    let current_faction = logic::faction::current_player_faction(gamestate);
+    gamestate
+        .pieces()
+        .find(|p| p.faction == current_faction && p.piece_type == piece::King)
+        .expect(&format!(
+            "King not found for player {:?}",
+            gamestate.c().turn_to_play
+        ))
 }

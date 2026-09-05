@@ -9,11 +9,8 @@ use raylib::{
 };
 
 use crate::{
-    engine::export::{
-        Coordinate, Move,
-        legal_move::{NormalMove, Promotion, RegimeChangePromotion},
-        piece, tile,
-    },
+    adapter::{Adapter, Click},
+    engine::export::{Coordinate, tile},
     game::Data,
     geometry::{FPosition, FRect, FSize},
     render::ToColor,
@@ -54,52 +51,47 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
 
     let tile_size = Vec2::from(rect.size) / 16.0;
     let position = (Vec2::from(click_position) - Vec2::from(rect.position)) / tile_size;
-    let Some(coordinate1) = Coordinate::new(position.y as i32, position.x as i32) else {
+    let Some(click_coordinate) = Coordinate::new(position.y as i32, position.x as i32) else {
         return false;
     };
 
-    if let Some(coordinate2) = data.selected_square {
-        let attempted_move = if let Some(piece_type) = data.selected_piece_type {
-            if piece_type == piece::King {
-                Move::RegimeChangePromotion(RegimeChangePromotion {
-                    normal_move: NormalMove {
-                        origin: coordinate2,
-                        destination: coordinate1,
-                    },
-                })
-            } else {
-                Move::Promotion(Promotion {
-                    normal_move: NormalMove {
-                        origin: coordinate2,
-                        destination: coordinate1,
-                    },
-                    piece_type,
-                })
-            }
-        } else {
-            Move::NormalMove(NormalMove {
-                origin: coordinate2,
-                destination: coordinate1,
-            })
-        };
+    data.adapter.reset();
 
-        if data.legal_moves.iter().any(|&x| x == attempted_move) {
-            data.gamestate = data.gamestate.apply_move(attempted_move);
-            data.legal_moves = data.gamestate.moves();
+    let has_origin = if let Some(first_coordinate) = data.selected_square {
+        if !data.adapter.click(Click::BoardClick(first_coordinate)) {
+            data.selected_square = None;
+            return true;
         }
-        data.selected_square = None;
+        true
     } else {
-        if data
-            .gamestate
-            .pieces()
-            .find(|p| p.coordinate == coordinate1)
-            .is_some()
-        {
-            data.selected_square = Some(coordinate1);
+        false
+    };
+
+    if !data.adapter.click(Click::BoardClick(click_coordinate)) {
+        data.selected_square = None;
+        return true;
+    } else if !has_origin {
+        data.selected_square = Some(click_coordinate);
+        assert!(data.adapter.data().gamestate_change.is_none());
+        return true;
+    }
+
+    if let Some(piece_type) = data.selected_piece_type {
+        if !data.adapter.click(Click::PromotionClick(piece_type)) {
+            data.selected_square = None;
+            return true;
         }
     }
 
-    true
+    if let Some(gamestate_change) = data.adapter.data().gamestate_change {
+        data.gamestate = gamestate_change.gamestate;
+        data.adapter = Adapter::new(gamestate_change.gamestate);
+        true
+    } else {
+        // TODO: this is likely when it should be a promotion but no piece is selected and vice versa
+        data.selected_square = None;
+        true
+    }
 }
 
 pub fn draw_game(handle: &mut RaylibDrawHandle, thread: &RaylibThread, rect: FRect, data: &Data) {
@@ -177,34 +169,21 @@ fn draw_legal_moves(
     tile_rect: FRect,
     data: &Data,
 ) {
-    let Some(selected_square) = data.selected_square else {
-        return;
-    };
-
-    for move_ in data.legal_moves.iter().filter_map(|&mv| {
-        if let Move::NormalMove(nmv) = mv {
-            if nmv.origin == selected_square && data.selected_piece_type.is_none() {
-                Some(nmv)
-            } else {
-                None
-            }
-        } else if let Move::Promotion(promotion_move) = mv {
-            if promotion_move.normal_move.origin == selected_square
-                && data.selected_piece_type.is_some()
-            {
-                Some(promotion_move.normal_move)
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }) {
-        let position = Vec2::new(
-            move_.destination.col() as f32 + 0.5,
-            move_.destination.row() as f32 + 0.5,
-        ) * Vec2::from(tile_rect.size)
-            + Vec2::from(tile_rect.position);
+    for click in data.adapter.data().valid_clicks {
+        let position = match click {
+            Click::BoardClick(destination) => Some(
+                Vec2::new(
+                    destination.col() as f32 + 0.5,
+                    destination.row() as f32 + 0.5,
+                ) * Vec2::from(tile_rect.size)
+                    + Vec2::from(tile_rect.position),
+            ),
+            // TODO:
+            _ => None,
+        };
+        let Some(position) = position else {
+            continue;
+        };
 
         handle.draw_ellipse(
             position.x as i32,

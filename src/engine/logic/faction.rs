@@ -59,3 +59,7 @@ pub fn get_allegiance(gamestate: &Gamestate, faction: faction::Color) -> Allegia
         _ => panic!("Faction {:?} is neither neutral, ally, nor enemy", faction),
     }
 }
+
+pub fn current_player_faction(gamestate: &Gamestate) -> faction::Color {
+    gamestate.c().player_colors[gamestate.c().turn_to_play as usize]
+}

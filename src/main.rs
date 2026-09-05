@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+mod adapter;
 mod engine;
 mod geometry;
 pub mod render;
@@ -12,17 +13,18 @@ fn main() {
 
 pub mod game {
     use crate::{
-        engine::export::{Coordinate, Gamestate, Move, piece},
+        adapter::Adapter,
+        engine::export::{Coordinate, Gamestate, piece},
         geometry::FPosition,
-        sprite, ui,
-        ui::export::input::Event,
+        sprite,
+        ui::{self, export::input::Event},
     };
     use raylib::prelude::*;
     use std::{cell::RefCell, rc::Rc};
 
     pub struct Data {
         pub gamestate: Gamestate,
-        pub legal_moves: Vec<Move>,
+        pub adapter: Adapter,
         pub selected_square: Option<Coordinate>,
         pub selected_piece_type: Option<piece::Type>,
         pub sprite_manager: sprite::Manager,
@@ -39,8 +41,8 @@ pub mod game {
         let data_mutator = Rc::new(RefCell::new({
             let gamestate = Gamestate::new();
             Data {
+                adapter: Adapter::new(gamestate),
                 gamestate,
-                legal_moves: gamestate.moves(),
                 selected_square: None,
                 selected_piece_type: None,
                 sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
