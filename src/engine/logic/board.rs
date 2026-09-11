@@ -1,9 +1,6 @@
 use crate::engine::{
     Gamestate, logic,
-    model::{
-        Board, Coordinate,
-        piece::{self, PieceExternal, PieceWithCoordinate},
-    },
+    model::{Board, Coordinate, PieceExternal, PieceWithCoordinate, piece},
 };
 
 pub fn pieces(board: &Board) -> impl Iterator<Item = PieceWithCoordinate> {

@@ -11,4 +11,6 @@ pub use chess_move::Move;
 pub use coordinate::Coordinate;
 pub use direction::Direction;
 pub use piece::Piece;
+pub use piece::PieceExternal;
+pub use piece::PieceWithCoordinate;
 pub use tile::Tile;
