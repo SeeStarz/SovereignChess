@@ -86,6 +86,7 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
     if let Some(gamestate_change) = data.adapter.data().gamestate_change {
         data.gamestate = gamestate_change.gamestate;
         data.adapter = Adapter::new(gamestate_change.gamestate);
+        data.selected_square = None;
         true
     } else {
         // TODO: this is likely when it should be a promotion but no piece is selected and vice versa
@@ -169,15 +170,26 @@ fn draw_legal_moves(
     tile_rect: FRect,
     data: &Data,
 ) {
+    let Some(origin) = data.selected_square else {
+        return;
+    };
+
+    {
+        let position = coordinate_to_centered_position(origin, tile_rect);
+        handle.draw_ellipse(
+            position.x as i32,
+            position.y as i32,
+            tile_rect.size.width / 3.0,
+            tile_rect.size.height / 3.0,
+            Color::GREEN.alpha(0.25),
+        );
+    }
+
     for click in data.adapter.data().valid_clicks {
         let position = match click {
-            Click::BoardClick(destination) => Some(
-                Vec2::new(
-                    destination.col() as f32 + 0.5,
-                    destination.row() as f32 + 0.5,
-                ) * Vec2::from(tile_rect.size)
-                    + Vec2::from(tile_rect.position),
-            ),
+            Click::BoardClick(destination) => {
+                Some(coordinate_to_centered_position(destination, tile_rect))
+            }
             // TODO:
             _ => None,
         };
@@ -193,4 +205,10 @@ fn draw_legal_moves(
             Color::BLUE.alpha(0.25),
         );
     }
+}
+
+fn coordinate_to_centered_position(coordinate: Coordinate, tile_rect: FRect) -> Vec2 {
+    Vec2::new(coordinate.col() as f32 + 0.5, coordinate.row() as f32 + 0.5)
+        * Vec2::from(tile_rect.size)
+        + Vec2::from(tile_rect.position)
 }
