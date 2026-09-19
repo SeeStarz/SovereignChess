@@ -9,7 +9,7 @@ use raylib::{
 };
 
 use crate::{
-    adapter::{Adapter, Click},
+    adapter::{Adapter, BoardGesture, Gesture},
     engine::export::{Coordinate, tile},
     game::Data,
     geometry::{FPosition, FRect, FSize},
@@ -55,43 +55,14 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
         return false;
     };
 
-    data.adapter.reset();
+    handle_chess_gesture(Gesture::Board(BoardGesture::Click(click_coordinate)), data);
+    true
+}
 
-    let has_origin = if let Some(first_coordinate) = data.selected_square {
-        if !data.adapter.click(Click::BoardClick(first_coordinate)) {
-            data.selected_square = None;
-            return true;
-        }
-        true
-    } else {
-        false
-    };
-
-    if !data.adapter.click(Click::BoardClick(click_coordinate)) {
-        data.selected_square = None;
-        return true;
-    } else if !has_origin {
-        data.selected_square = Some(click_coordinate);
-        assert!(data.adapter.data().gamestate_change.is_none());
-        return true;
-    }
-
-    if let Some(piece_type) = data.selected_piece_type {
-        if !data.adapter.click(Click::PromotionClick(piece_type)) {
-            data.selected_square = None;
-            return true;
-        }
-    }
-
-    if let Some(gamestate_change) = data.adapter.data().gamestate_change {
-        data.gamestate = gamestate_change.gamestate.clone();
-        data.adapter = Adapter::new(gamestate_change.gamestate);
-        data.selected_square = None;
-        true
-    } else {
-        // TODO: this is likely when it should be a promotion but no piece is selected and vice versa
-        data.selected_square = None;
-        true
+pub fn handle_chess_gesture(gesture: Gesture, data: &mut Data) {
+    data.adapter.apply(gesture);
+    if let Some(gamestate_change) = data.adapter.hint().gamestate_change {
+        data.adapter = Adapter::new(gamestate_change.updated_gamestate);
     }
 }
 
@@ -145,7 +116,7 @@ fn draw_pieces(
     tile_rect: FRect,
     data: &Data,
 ) {
-    for piece in data.gamestate.pieces() {
+    for piece in data.adapter.gamestate().pieces() {
         let sprite = PieceSprite {
             piece_type: piece.piece_type,
             faction: piece.faction,
@@ -170,12 +141,10 @@ fn draw_legal_moves(
     tile_rect: FRect,
     data: &Data,
 ) {
-    let Some(origin) = data.selected_square else {
-        return;
-    };
+    let hint = data.adapter.hint();
 
-    {
-        let position = coordinate_to_centered_position(origin, tile_rect);
+    if let Some(piece) = hint.grabbed_piece {
+        let position = coordinate_to_centered_position(piece.coordinate, tile_rect);
         handle.draw_ellipse(
             position.x as i32,
             position.y as i32,
@@ -185,18 +154,8 @@ fn draw_legal_moves(
         );
     }
 
-    for click in data.adapter.data().valid_clicks {
-        let position = match click {
-            Click::BoardClick(destination) => {
-                Some(coordinate_to_centered_position(destination, tile_rect))
-            }
-            // TODO:
-            _ => None,
-        };
-        let Some(position) = position else {
-            continue;
-        };
-
+    for destination in hint.valid_destinations {
+        let position = coordinate_to_centered_position(destination, tile_rect);
         handle.draw_ellipse(
             position.x as i32,
             position.y as i32,

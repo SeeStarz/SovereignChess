@@ -14,7 +14,7 @@ fn main() {
 pub mod game {
     use crate::{
         adapter::Adapter,
-        engine::export::{Coordinate, Gamestate, piece},
+        engine::export::Gamestate,
         geometry::FPosition,
         sprite,
         ui::{self, export::input::Event},
@@ -23,10 +23,7 @@ pub mod game {
     use std::{cell::RefCell, rc::Rc};
 
     pub struct Data {
-        pub gamestate: Gamestate,
         pub adapter: Adapter,
-        pub selected_square: Option<Coordinate>,
-        pub selected_piece_type: Option<piece::Type>,
         pub sprite_manager: sprite::Manager,
     }
 
@@ -39,12 +36,8 @@ pub mod game {
             .build();
 
         let data_mutator = Rc::new(RefCell::new({
-            let gamestate = Gamestate::new();
             Data {
-                adapter: Adapter::new(gamestate.clone()),
-                gamestate,
-                selected_square: None,
-                selected_piece_type: None,
+                adapter: Adapter::new(Gamestate::new()),
                 sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
             }
         }));

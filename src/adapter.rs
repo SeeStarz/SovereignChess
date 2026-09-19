@@ -1,280 +1,478 @@
 use std::collections::HashSet;
 
-use crate::engine::export::{Coordinate, Gamestate, Move, PieceExternal, faction, logic, piece};
+use crate::engine::export::{
+    Coordinate, Gamestate, Move, PieceExternal, faction,
+    logic::{self, board_at_external},
+    piece,
+};
+use strum::IntoEnumIterator;
 
-pub use Click::*;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Click {
-    BoardClick(Coordinate),
-    PromotionClick(piece::Type),
-    DefectionClick(faction::Color),
+pub enum Gesture {
+    Board(BoardGesture),
+    MenuClick(MenuClick),
+    Cancel,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum MenuClick {
+    Promotion(piece::Type),
+    Defection(faction::Color),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BoardGesture {
+    Click(Coordinate),
+    Drop(Option<Coordinate>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GamestateChange {
-    pub gamestate: Gamestate,
+    pub updated_gamestate: Gamestate,
     pub applied_move: Move,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct AdapterData {
-    pub grabbed_piece: Option<PieceExternal>,
-    pub promotion_at: Option<Coordinate>,
-    pub gamestate_change: Option<GamestateChange>,
-    pub valid_clicks: Vec<Click>,
+pub enum AdapterState {
+    Idle,
+    Selected(SelectedStage),
+    Promotion(PromotionStage),
+    Done(GamestateChange),
 }
 
-impl AdapterData {
-    pub fn new(valid_clicks: Vec<Click>) -> Self {
-        Self {
-            grabbed_piece: None,
-            promotion_at: None,
-            gamestate_change: None,
-            valid_clicks,
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SelectedStage {
+    BoardSelection(PieceExternal),
+    DefectionSelection(faction::Color),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct PromotionStage {
+    pub origin: Coordinate,
+    pub destination: Coordinate,
+}
+
+pub enum SelectedStageResult {
+    Done(GamestateChange),
+    Promotion(PromotionStage),
+}
+
+impl From<SelectedStageResult> for AdapterState {
+    fn from(selected_data: SelectedStageResult) -> Self {
+        match selected_data {
+            SelectedStageResult::Done(gamestate_change) => Self::Done(gamestate_change),
+            SelectedStageResult::Promotion(promotion_stage_data) => {
+                Self::Promotion(promotion_stage_data)
+            }
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum UIState {
+    Idle,
+    Selected,
+    Promotion,
+    Done,
+}
+
+impl From<AdapterState> for UIState {
+    fn from(state: AdapterState) -> Self {
+        match state {
+            AdapterState::Idle => UIState::Idle,
+            AdapterState::Selected(_) => UIState::Selected,
+            AdapterState::Promotion(_) => UIState::Promotion,
+            AdapterState::Done(_) => UIState::Done,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct UIHint {
+    pub grabbable_pieces: Vec<PieceExternal>,
+    pub valid_defections: Vec<faction::Color>,
+    pub grabbed_piece: Option<PieceExternal>,
+    pub selected_defection: Option<faction::Color>,
+    pub valid_destinations: Vec<Coordinate>,
+    pub promotion_options: Vec<piece::Type>,
+    pub gamestate_change: Option<GamestateChange>,
+    pub state: UIState,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Adapter {
     gamestate: Gamestate,
-    valid_moves: Vec<Move>,
-    clicks: Vec<Click>,
-    data: AdapterData,
+    state: AdapterState,
 }
 
 impl Adapter {
     pub fn new(gamestate: Gamestate) -> Self {
-        let valid_moves = gamestate.moves();
         Self {
-            clicks: Vec::new(),
-            data: AdapterData::new(get_valid_first_clicks(&gamestate, &valid_moves)),
-            valid_moves: valid_moves,
+            state: AdapterState::Idle,
             gamestate,
         }
     }
 
-    pub fn data(&self) -> AdapterData {
-        self.data.clone()
+    pub fn gamestate(&self) -> Gamestate {
+        self.gamestate.clone()
     }
 
-    pub fn clicks(&self) -> Vec<Click> {
-        self.clicks.clone()
-    }
+    pub fn apply(&mut self, gesture: Gesture) {
+        self.state = match (self.state.clone(), gesture) {
+            // Freeze the state on Done
+            (AdapterState::Done(gamestate_change), _) => AdapterState::Done(gamestate_change),
 
-    pub fn reset(&mut self) {
-        self.clicks = Vec::new();
-        self.data = AdapterData::new(get_valid_first_clicks(&self.gamestate, &self.valid_moves));
-    }
+            // This is not really needed, but just so you get the intention
+            (_, Gesture::Cancel) => AdapterState::Idle,
 
-    pub fn click(&mut self, click: Click) -> bool {
-        if !self.data.valid_clicks.iter().any(|&c| c == click) {
-            return false;
-        }
+            // Try advancing with board click
+            // If failed, try re-selecting
+            // Else go back to Idle
+            (
+                AdapterState::Selected(selected_data),
+                Gesture::Board(BoardGesture::Click(coordinate)),
+            ) => self.try_advance_from_selected_do_board_click(selected_data, coordinate),
 
-        match self.clicks.len() {
-            0 => self.first_click(click),
-            1 => self.second_click(click),
-            2 => self.third_click(click),
-            3 => return false,
-            _ => panic!("Click count should be 3 or less"),
-        };
+            // Try advancing with board drop
+            // If failed immediately go back to Idle (no reselecting)
+            (
+                AdapterState::Selected(selected_data),
+                Gesture::Board(BoardGesture::Drop(coordinate)),
+            ) => self.try_advance_from_selected_do_board_drop(selected_data, coordinate),
 
-        true
-    }
+            // Try advancing
+            // If failed, try re-selecting
+            // Else go back to idle
+            (
+                AdapterState::Promotion(promotion_stage_data),
+                Gesture::MenuClick(MenuClick::Promotion(piece_type)),
+            ) => self.try_advance_from_promotion_do_board_click(promotion_stage_data, piece_type),
 
-    fn first_click(&mut self, click: Click) {
-        match click {
-            BoardClick(coordinate) => {
-                self.set_grabbed_piece_from_coordinate(coordinate);
+            // From any non-done state re-selecting is allowed
+            (_, Gesture::Board(BoardGesture::Click(coordinate))) => {
+                self.try_selected_do_board_click(coordinate)
             }
-            DefectionClick(_faction) => {
-                self.set_grabbed_piece_from_coordinate(
-                    logic::find_current_player_king(&self.gamestate).coordinate,
-                );
+            (_, Gesture::MenuClick(MenuClick::Defection(faction))) => {
+                self.try_selected_do_defection_click(faction)
             }
-            PromotionClick(_piece_type) => panic!("Promotion cannot be the first click"),
-        };
 
-        self.clicks.push(click);
-        self.data.valid_clicks = get_valid_second_clicks(&self.gamestate, &self.valid_moves, click);
-    }
-
-    fn second_click(&mut self, click: Click) {
-        assert!(self.clicks.len() == 1);
-
-        let origin = match self.clicks[0] {
-            Click::BoardClick(coordinate) => coordinate,
-            Click::DefectionClick(_faction) => {
-                logic::find_current_player_king(&self.gamestate).coordinate
-            }
-            Click::PromotionClick(_piece_type) => panic!("Promotion cannot be the first click"),
-        };
-
-        let Click::BoardClick(destination) = click else {
-            panic!("Second click must be a board click");
-        };
-
-        let filtered_moves: Vec<Move> = self
-            .valid_moves
-            .iter()
-            .filter(|&&m| {
-                get_move_origin(&self.gamestate, m) == origin
-                    && get_move_destination(&self.gamestate, m) == destination
-            })
-            .cloned()
-            .collect();
-
-        self.clicks.push(click);
-        self.data.valid_clicks =
-            get_valid_third_clicks(&self.valid_moves, [self.clicks[0], self.clicks[1]]);
-
-        if filtered_moves.len() > 1 {
-            // Promotion
-            assert!(filtered_moves.iter().all(|&m| match m {
-                Move::Promotion(_) => true,
-                Move::RegimeChangePromotion(_) => true,
-                _ => false,
-            }));
-            self.data.promotion_at = Some(destination);
-        } else if filtered_moves.len() == 1 {
-            // A move is made
-            let applied_move = filtered_moves[0];
-            let updated_gamestate = self.gamestate.apply_move(applied_move);
-            self.data.gamestate_change = Some(GamestateChange {
-                gamestate: updated_gamestate,
-                applied_move,
-            })
+            // Invalid pairings (e.g. Drop on PromotionStage)
+            _ => AdapterState::Idle,
         }
     }
 
-    fn third_click(&mut self, click: Click) {
-        assert!(self.clicks.len() == 2);
+    pub fn hint(&self) -> UIHint {
+        let grabbable_pieces: Vec<PieceExternal> = valid_select_pieces(&self.gamestate).collect();
+        let valid_defections: Vec<faction::Color> = valid_defections(&self.gamestate).collect();
 
-        let Click::BoardClick(origin) = self.clicks[0] else {
-            panic!("First click must be a board click for promotion");
+        let grabbed_piece: Option<PieceExternal> = match self.state.clone() {
+            AdapterState::Selected(SelectedStage::BoardSelection(piece)) => Some(piece),
+            AdapterState::Promotion(promotion_data) => {
+                board_at_external(&self.gamestate, promotion_data.origin)
+            }
+            AdapterState::Done(gamestate_change) => get_move_origin(gamestate_change.applied_move)
+                .and_then(|c| board_at_external(&self.gamestate, c)),
+            _ => None,
         };
 
-        let Click::BoardClick(destination) = self.clicks[1] else {
-            panic!("Second click must be a board click");
-        };
-
-        let Click::PromotionClick(piece_type) = click else {
-            panic!("Third click must be a promotion click");
-        };
-
-        self.clicks.push(click);
-
-        let promotion_move = self
-            .valid_moves
-            .iter()
-            .find(|&&m| {
-                get_move_origin(&self.gamestate, m) == origin
-                    && get_move_destination(&self.gamestate, m) == destination
-                    && match m {
-                        Move::Promotion(promotion_move) => promotion_move.piece_type == piece_type,
-                        Move::RegimeChangePromotion(_promotion_move) => piece_type == piece::King,
-                        _ => false,
-                    }
-            })
-            .cloned()
-            .expect("Cannot find promotion move");
-
-        let updated_gamestate = self.gamestate.apply_move(promotion_move);
-        self.data.gamestate_change = Some(GamestateChange {
-            gamestate: updated_gamestate,
-            applied_move: promotion_move,
-        })
-    }
-
-    fn set_grabbed_piece_from_coordinate(&mut self, coordinate: Coordinate) {
-        let grabbed_piece = logic::board_at_external(&self.gamestate, coordinate)
-            .expect(&format!("Piece not found at {:?}", coordinate));
-        self.data.grabbed_piece = Some(grabbed_piece);
-    }
-}
-
-fn get_valid_first_clicks(gamestate: &Gamestate, valid_moves: &Vec<Move>) -> Vec<Click> {
-    let mut valid_clicks = HashSet::new();
-
-    for &chess_move in valid_moves {
-        let move_origin = get_move_origin(gamestate, chess_move);
-        valid_clicks.insert(Click::BoardClick(move_origin));
-
-        if let Move::Defection(defection_move) = chess_move {
-            valid_clicks.insert(Click::DefectionClick(defection_move.faction));
-        }
-    }
-
-    valid_clicks.into_iter().collect()
-}
-
-fn get_valid_second_clicks(
-    gamestate: &Gamestate,
-    valid_moves: &Vec<Move>,
-    click: Click,
-) -> Vec<Click> {
-    let mut valid_clicks = HashSet::new();
-
-    let filtered_valid_moves: Vec<&Move> = match click {
-        Click::PromotionClick(_piece_type) => panic!("Promotion click cannot be the first click"),
-        Click::BoardClick(coordinate) => valid_moves
-            .iter()
-            .filter(|&&m| get_move_origin(gamestate, m) == coordinate)
-            .collect(),
-        Click::DefectionClick(faction) => valid_moves
-            .iter()
-            .filter(|&&m| {
-                if let Move::Defection(defection_move) = m {
-                    defection_move.faction == faction
+        let selected_defection: Option<faction::Color> = match self.state.clone() {
+            AdapterState::Selected(SelectedStage::DefectionSelection(faction)) => Some(faction),
+            AdapterState::Done(gamestate_change) => {
+                if let Move::Defection(defection_move) = gamestate_change.applied_move {
+                    Some(defection_move.faction)
                 } else {
-                    false
+                    None
+                }
+            }
+            _ => None,
+        };
+
+        let valid_destinations: HashSet<Coordinate> = if let Some(piece) = grabbed_piece {
+            valid_advance_from_selected_do_board_click(&self.gamestate, piece.coordinate)
+                .map(|r| match r {
+                    SelectedStageResult::Done(gamestate_change) => {
+                        get_move_destination(&self.gamestate, gamestate_change.applied_move)
+                    }
+                    SelectedStageResult::Promotion(promotion_data) => promotion_data.destination,
+                })
+                .collect()
+        } else if let Some(faction) = selected_defection {
+            valid_advance_from_selected_do_defection_click(&self.gamestate, faction)
+                .map(|c| get_move_destination(&self.gamestate, c.applied_move))
+                .collect()
+        } else {
+            HashSet::new()
+        };
+
+        let valid_destinations: Vec<Coordinate> = valid_destinations.into_iter().collect();
+
+        let promotion_options: Vec<piece::Type> = {
+            let promotion_data = match self.state.clone() {
+                AdapterState::Promotion(promotion_data) => Some(promotion_data),
+                AdapterState::Done(gamestate_change) => (match gamestate_change.applied_move {
+                    Move::Promotion(promotion_move) => Some(promotion_move.normal_move),
+                    Move::RegimeChangePromotion(promotion_move) => Some(promotion_move.normal_move),
+                    _ => None,
+                })
+                .and_then(|m| {
+                    Some(PromotionStage {
+                        origin: m.origin,
+                        destination: m.destination,
+                    })
+                }),
+                _ => None,
+            };
+            if let Some(promotion_data) = promotion_data {
+                valid_promotions(&self.gamestate, promotion_data)
+                    .map(|c| match c.applied_move {
+                        Move::Promotion(promotion_move) => promotion_move.piece_type,
+                        Move::RegimeChangePromotion(_promotion_move) => piece::King,
+                        _ => panic!("Got non-promotion move from valid_promotions"),
+                    })
+                    .collect()
+            } else {
+                Vec::new()
+            }
+        };
+
+        let gamestate_change = if let AdapterState::Done(gamestate_change) = self.state.clone() {
+            Some(gamestate_change)
+        } else {
+            None
+        };
+
+        let state = UIState::from(self.state.clone());
+
+        UIHint {
+            grabbable_pieces,
+            valid_defections,
+            grabbed_piece,
+            selected_defection,
+            valid_destinations,
+            promotion_options,
+            gamestate_change,
+            state,
+        }
+    }
+
+    fn try_advance_from_selected_do_board_click(
+        &self,
+        selected_data: SelectedStage,
+        coordinate: Coordinate,
+    ) -> AdapterState {
+        if let Some(selected_stage_result) =
+            is_valid_selected_do_board_click(&self.gamestate, selected_data, coordinate)
+        {
+            AdapterState::from(selected_stage_result)
+        } else {
+            self.try_selected_do_board_click(coordinate)
+        }
+    }
+
+    fn try_advance_from_selected_do_board_drop(
+        &self,
+        selected_data: SelectedStage,
+        coordinate: Option<Coordinate>,
+    ) -> AdapterState {
+        if let Some(coordinate) = coordinate
+            && let Some(selected_stage_result) =
+                is_valid_selected_do_board_click(&self.gamestate, selected_data, coordinate)
+        {
+            AdapterState::from(selected_stage_result)
+        } else {
+            AdapterState::Idle
+        }
+    }
+
+    fn try_advance_from_promotion_do_board_click(
+        &self,
+        waiting_promotion_data: PromotionStage,
+        piece_type: piece::Type,
+    ) -> AdapterState {
+        if let Some(gamestate_change) =
+            is_valid_promotion_do_board_click(&self.gamestate, waiting_promotion_data, piece_type)
+        {
+            AdapterState::Done(gamestate_change)
+        } else {
+            AdapterState::Idle
+        }
+    }
+
+    fn try_selected_do_board_click(&self, coordinate: Coordinate) -> AdapterState {
+        if let Some(piece) = is_valid_idle_do_board_click(&self.gamestate, coordinate) {
+            AdapterState::Selected(SelectedStage::BoardSelection(piece))
+        } else {
+            AdapterState::Idle
+        }
+    }
+
+    fn try_selected_do_defection_click(&self, faction: faction::Color) -> AdapterState {
+        if let Some(faction) = is_valid_idle_do_defection_click(&self.gamestate, faction) {
+            AdapterState::Selected(SelectedStage::DefectionSelection(faction))
+        } else {
+            AdapterState::Idle
+        }
+    }
+}
+
+fn valid_select_pieces(gamestate: &Gamestate) -> impl Iterator<Item = PieceExternal> {
+    gamestate.pieces().filter(|p| {
+        gamestate.derived.real_faction_owners[p.faction as usize]
+            == Some(logic::current_player_faction(gamestate))
+    })
+}
+
+fn valid_defections(gamestate: &Gamestate) -> impl Iterator<Item = faction::Color> {
+    faction::Color::iter().filter(|&f| {
+        gamestate.derived.real_faction_owners[f as usize]
+            == Some(logic::current_player_faction(gamestate))
+            && f != logic::current_player_faction(gamestate)
+    })
+}
+
+fn valid_advance_from_selected_do_board_click(
+    gamestate: &Gamestate,
+    origin: Coordinate,
+) -> impl Iterator<Item = SelectedStageResult> {
+    gamestate.moves().into_iter().filter_map(move |m| {
+        let Some(move_origin) = get_move_origin(m) else {
+            return None;
+        };
+
+        if move_origin == origin {
+            match m {
+                Move::Promotion(_) | Move::RegimeChangePromotion(_) => {
+                    Some(SelectedStageResult::Promotion(PromotionStage {
+                        origin,
+                        destination: get_move_destination(gamestate, m),
+                    }))
+                }
+                _ => Some(SelectedStageResult::Done(GamestateChange {
+                    updated_gamestate: gamestate.apply_move(m),
+                    applied_move: m,
+                })),
+            }
+        } else {
+            None
+        }
+    })
+}
+
+fn valid_advance_from_selected_do_defection_click(
+    gamestate: &Gamestate,
+    faction: faction::Color,
+) -> impl Iterator<Item = GamestateChange> {
+    gamestate.moves().into_iter().filter_map(move |m| {
+        if let Move::Defection(defection_move) = m
+            && defection_move.faction == faction
+        {
+            Some(GamestateChange {
+                updated_gamestate: gamestate.apply_move(m),
+                applied_move: m,
+            })
+        } else {
+            None
+        }
+    })
+}
+
+fn valid_promotions(
+    gamestate: &Gamestate,
+    promotion_stage_data: PromotionStage,
+) -> impl Iterator<Item = GamestateChange> {
+    gamestate
+        .moves()
+        .into_iter()
+        .filter(move |m| match m {
+            Move::Promotion(m) => {
+                m.normal_move.origin == promotion_stage_data.origin
+                    && m.normal_move.destination == promotion_stage_data.destination
+            }
+            Move::RegimeChangePromotion(m) => {
+                m.normal_move.origin == promotion_stage_data.origin
+                    && m.normal_move.destination == promotion_stage_data.destination
+            }
+            _ => false,
+        })
+        .map(|m| GamestateChange {
+            updated_gamestate: gamestate.apply_move(m),
+            applied_move: m,
+        })
+}
+
+fn is_valid_idle_do_board_click(
+    gamestate: &Gamestate,
+    coordinate: Coordinate,
+) -> Option<PieceExternal> {
+    valid_select_pieces(gamestate).find(|p| p.coordinate == coordinate)
+}
+
+fn is_valid_idle_do_defection_click(
+    gamestate: &Gamestate,
+    faction: faction::Color,
+) -> Option<faction::Color> {
+    valid_defections(gamestate).find(|&f| f == faction)
+}
+
+fn is_valid_selected_do_board_click(
+    gamestate: &Gamestate,
+    selected_data: SelectedStage,
+    destination: Coordinate,
+) -> Option<SelectedStageResult> {
+    match selected_data {
+        SelectedStage::BoardSelection(piece) => valid_advance_from_selected_do_board_click(
+            gamestate,
+            piece.coordinate,
+        )
+        .find(|r| match r {
+            SelectedStageResult::Promotion(promotion_stage_data) => {
+                promotion_stage_data.origin == piece.coordinate
+                    && promotion_stage_data.destination == destination
+            }
+            SelectedStageResult::Done(gamestate_change) => {
+                get_move_origin(gamestate_change.applied_move) == Some(piece.coordinate)
+                    && get_move_destination(gamestate, gamestate_change.applied_move) == destination
+            }
+        }),
+
+        SelectedStage::DefectionSelection(faction) => {
+            valid_advance_from_selected_do_defection_click(gamestate, faction).find_map(|c| {
+                if let Move::Defection(defection_move) = c.applied_move
+                    && defection_move.faction == faction
+                    && get_move_destination(gamestate, c.applied_move) == destination
+                {
+                    Some(SelectedStageResult::Done(c))
+                } else {
+                    panic!(
+                        "Got non-defection move from valid_advance_from_selected_defection_click"
+                    )
                 }
             })
-            .collect(),
-    };
-
-    for &chess_move in filtered_valid_moves {
-        let move_destination = get_move_destination(gamestate, chess_move);
-        valid_clicks.insert(Click::BoardClick(move_destination));
+        }
     }
-
-    valid_clicks.into_iter().collect()
 }
 
-fn get_valid_third_clicks(valid_moves: &Vec<Move>, clicks: [Click; 2]) -> Vec<Click> {
-    // Promotion must have board click as both earlier moves
-    let Click::BoardClick(origin) = clicks[0] else {
-        return Vec::new();
-    };
-    let Click::BoardClick(destination) = clicks[1] else {
-        return Vec::new();
-    };
-
-    valid_moves
-        .iter()
-        .filter_map(|&m| {
-            let Move::Promotion(promotion_move) = m else {
-                return None;
-            };
-            if promotion_move.normal_move.origin == origin
-                && promotion_move.normal_move.destination == destination
-            {
-                Some(Click::PromotionClick(promotion_move.piece_type))
-            } else {
-                None
-            }
-        })
-        .collect()
+fn is_valid_promotion_do_board_click(
+    gamestate: &Gamestate,
+    promotion_stage_data: PromotionStage,
+    piece_type: piece::Type,
+) -> Option<GamestateChange> {
+    valid_promotions(gamestate, promotion_stage_data).find(|c| {
+        (match c.applied_move {
+            Move::Promotion(promotion_move) => promotion_move.piece_type,
+            Move::RegimeChangePromotion(_promotion_move) => piece::King,
+            _ => panic!("Got non-promotion move from valid_promotions"),
+        }) == piece_type
+    })
 }
 
-fn get_move_origin(gamestate: &Gamestate, chess_move: Move) -> Coordinate {
+fn get_move_origin(chess_move: Move) -> Option<Coordinate> {
     match chess_move {
-        Move::NormalMove(normal_move) => normal_move.origin,
-        Move::Castle(castle_move) => castle_move.king_move.origin,
-        Move::Defection(_defection_move) => logic::find_current_player_king(gamestate).coordinate,
-        Move::RegimeChangePromotion(promotion_move) => promotion_move.normal_move.origin,
-        Move::Promotion(promotion_move) => promotion_move.normal_move.origin,
+        Move::NormalMove(normal_move) => Some(normal_move.origin),
+        Move::Castle(castle_move) => Some(castle_move.king_move.origin),
+        Move::Defection(_defection_move) => None,
+        Move::RegimeChangePromotion(promotion_move) => Some(promotion_move.normal_move.origin),
+        Move::Promotion(promotion_move) => Some(promotion_move.normal_move.origin),
     }
 }
 
@@ -284,7 +482,7 @@ fn get_move_destination(gamestate: &Gamestate, chess_move: Move) -> Coordinate {
         Move::Castle(castle_move) => castle_move.king_move.destination,
         Move::Defection(defection_move) => defection_move
             .normal_move
-            .and_then(|m| Some(m.destination))
+            .map(|m| m.destination)
             .unwrap_or_else(|| logic::find_current_player_king(gamestate).coordinate),
         Move::RegimeChangePromotion(promotion_move) => promotion_move.normal_move.destination,
         Move::Promotion(promotion_move) => promotion_move.normal_move.destination,

@@ -1,4 +1,4 @@
-mod board;
+pub mod board;
 pub mod debug;
 mod promotion_selection;
 

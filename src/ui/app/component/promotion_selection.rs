@@ -1,13 +1,17 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
+    adapter::{Gesture, MenuClick},
     engine::export::{faction, piece},
     game::Data,
     geometry::{FPosition, FRect, FSize},
     sprite::{CompositeDraw, PieceSprite},
-    ui::framework::{
-        input::Event,
-        widget::{self, prototype::SpecNode},
+    ui::{
+        app::component::board,
+        framework::{
+            input::Event,
+            widget::{self, prototype::SpecNode},
+        },
     },
     util::Observer,
 };
@@ -51,15 +55,7 @@ fn input_handler(event: Event, rect: FRect, data: &mut Data, piece_type: piece::
         Event::MousePressed(position)
             if Rectangle::from(rect).check_collision_point_rec(position) =>
         {
-            if let Some(selected_piece_type) = data.selected_piece_type {
-                if selected_piece_type == piece_type {
-                    data.selected_piece_type = None;
-                } else {
-                    data.selected_piece_type = Some(piece_type);
-                }
-            } else {
-                data.selected_piece_type = Some(piece_type);
-            }
+            board::handle_chess_gesture(Gesture::MenuClick(MenuClick::Promotion(piece_type)), data);
             true
         }
         _ => false,
@@ -73,11 +69,13 @@ pub fn render_function(
     data: &Data,
     piece_type: piece::Type,
 ) {
-    if data.selected_piece_type.is_none_or(|s| s != piece_type) {
-        handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::GRAY);
-    } else {
+    let hint = data.adapter.hint();
+    if hint.promotion_options.contains(&piece_type) {
         handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::BLUE);
+    } else {
+        handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::GRAY);
     }
+
     handle.draw_composite_pro(
         &data.sprite_manager,
         &PieceSprite {
