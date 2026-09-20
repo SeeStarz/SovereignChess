@@ -27,7 +27,8 @@ pub fn generate(data: Rc<RefCell<Data>>) -> ComputedNode {
         .size(FSize::new(0.0, 32.0))
         .finalize();
 
-    let debug_toggle_button = component::debug::toggle_button(FSize::new(100.0, 100.0)).finalize();
+    let defection_selection_button =
+        component::defection_selection(FSize::new(32.0, 32.0), data.clone()).finalize();
 
     let root = widget::Builder::new_col(true)
         .children(vec![
@@ -35,7 +36,7 @@ pub fn generate(data: Rc<RefCell<Data>>) -> ComputedNode {
             spacer1,
             promotion_selection_buttons,
             spacer2,
-            debug_toggle_button,
+            defection_selection_button,
         ])
         .finalize();
 

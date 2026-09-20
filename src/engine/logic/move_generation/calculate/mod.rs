@@ -1,5 +1,6 @@
 mod calculate;
 pub mod castle;
+pub mod defection;
 pub mod helper;
 pub mod knight;
 pub mod linear;

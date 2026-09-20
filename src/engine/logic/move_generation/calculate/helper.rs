@@ -13,6 +13,7 @@ pub fn try_add_legal_move_check_special_tile_rules(
         Move::NormalMove(normal_move) => normal_move,
         Move::Promotion(promotion_move) => promotion_move.normal_move,
         Move::RegimeChangePromotion(promotion_move) => promotion_move.normal_move,
+        Move::Defection(defection_move) => defection_move.normal_move.unwrap(),
         _ => panic!(),
     };
 

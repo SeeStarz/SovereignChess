@@ -1,7 +1,8 @@
-use strum::EnumIter;
+use strum::{EnumIter, FromRepr};
 
 pub use Color::*;
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, FromRepr)]
+#[repr(usize)]
 pub enum Color {
     White,
     Pink,

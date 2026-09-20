@@ -18,7 +18,7 @@ pub fn add_moves_naive(moves: &mut Vec<Move>, gamestate: &Gamestate) {
         }
 
         // Because this isn't even supposed to happen and
-        // the helper faction check function is unable to proces this
+        // the helper faction check function is unable to process this
         if !check_no_special_tile(castle_move) {
             continue;
         }

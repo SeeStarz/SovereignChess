@@ -1,6 +1,9 @@
 use crate::engine::{
     Gamestate,
-    logic::move_generation::calculate::{castle, knight, linear, pawn},
+    logic::{
+        board::find_current_player_king,
+        move_generation::calculate::{castle, defection, knight, linear, pawn},
+    },
     model::{Move, piece},
 };
 
@@ -15,7 +18,6 @@ pub fn moves(gamestate: &Gamestate) -> Vec<Move> {
         .for_each(|p| {
             match p.piece_type {
                 // None of these check for checks, it does however check for faction rules
-                // TODO: castling and defection
                 piece::King | piece::Queen | piece::Rook | piece::Bishop => {
                     linear::add_moves_naive(&mut moves, gamestate, p.into(), p.coordinate);
                 }
@@ -28,6 +30,13 @@ pub fn moves(gamestate: &Gamestate) -> Vec<Move> {
             };
         });
     castle::add_moves_naive(&mut moves, gamestate);
+    defection::add_moves_naive(
+        &mut moves,
+        gamestate,
+        gamestate.c().player_colors[gamestate.c().turn_to_play as usize],
+        find_current_player_king(gamestate).coordinate,
+    );
+
     // TODO: check for checks
     moves
 }

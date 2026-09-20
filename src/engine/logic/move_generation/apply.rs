@@ -1,7 +1,8 @@
 use crate::engine::{
     Gamestate,
     gamestate::CanonicalState,
-    model::{Board, Move, chess_move::Castle, piece},
+    logic,
+    model::{Board, Move, Piece, chess_move::Castle, faction, piece, tile::Special},
 };
 
 pub fn apply_move(gamestate: &Gamestate, legal_move: Move) -> CanonicalState {
@@ -9,11 +10,14 @@ pub fn apply_move(gamestate: &Gamestate, legal_move: Move) -> CanonicalState {
 
     move_pieces(gamestate, &mut board, legal_move);
 
+    let mut player_colors = gamestate.c().player_colors;
+
+    change_player_colors(gamestate, &mut player_colors, legal_move);
+
     let mut remaining_castles = gamestate.c().remaining_castles.clone();
 
     filter_remaining_castles(gamestate, &mut remaining_castles, legal_move);
 
-    let player_colors = gamestate.c().player_colors;
     let turn_to_play = gamestate.c().turn_to_play.other();
 
     CanonicalState {
@@ -67,8 +71,12 @@ fn filter_remaining_castles(
                 castle_move.king_move.destination,
             ]
         }
-        _ => {
-            panic!() // TODO: implement
+        Move::Defection(defection_move) => {
+            if let Some(normal_move) = defection_move.normal_move {
+                vec![normal_move.origin, normal_move.destination]
+            } else {
+                Vec::new()
+            }
         }
     };
 
@@ -114,21 +122,7 @@ fn move_pieces(gamestate: &Gamestate, board: &mut Board, legal_move: Move) {
             };
             assert!(piece.piece_type == piece::Pawn);
 
-            let player_main_faction =
-                gamestate.c().player_colors[gamestate.c().turn_to_play as usize];
-            let king_coordinate = gamestate
-                .pieces()
-                .find_map(|p| {
-                    if p.faction == player_main_faction && p.piece_type == piece::King {
-                        Some(p.coordinate)
-                    } else {
-                        None
-                    }
-                })
-                .expect(&format!(
-                    "King is not found for faction {:?}",
-                    player_main_faction
-                ));
+            let king_coordinate = logic::board::find_current_player_king(gamestate).coordinate;
 
             piece.piece_type = piece::King;
             board.set_at(normal_move.origin, None);
@@ -158,8 +152,64 @@ fn move_pieces(gamestate: &Gamestate, board: &mut Board, legal_move: Move) {
             board.set_at(rook_move.destination, Some(rook));
             board.set_at(king_move.destination, Some(king));
         }
-        _ => {
-            panic!() // TODO: implement
+        Move::Defection(defection_move) => {
+            if let Some(normal_move) = defection_move.normal_move {
+                assert!(
+                    normal_move.origin
+                        == logic::board::find_current_player_king(gamestate).coordinate
+                );
+                assert!(
+                    Special::at(normal_move.origin).map(|s| s.faction)
+                        == Some(logic::faction::current_player_faction(gamestate))
+                );
+
+                board.set_at(normal_move.origin, None);
+                board.set_at(
+                    normal_move.destination,
+                    Some(Piece {
+                        faction: defection_move.faction,
+                        piece_type: piece::King,
+                    }),
+                );
+            } else {
+                let king_coordinate = logic::board::find_current_player_king(gamestate).coordinate;
+
+                assert!(
+                    Special::at(king_coordinate).map(|s| s.faction)
+                        != Some(logic::faction::current_player_faction(gamestate))
+                );
+
+                board.set_at(
+                    king_coordinate,
+                    Some(Piece {
+                        faction: defection_move.faction,
+                        piece_type: piece::King,
+                    }),
+                )
+            }
         }
     };
+}
+
+fn change_player_colors(
+    gamestate: &Gamestate,
+    player_colors: &mut [faction::Color; 2],
+    legal_move: Move,
+) {
+    match legal_move {
+        Move::RegimeChangePromotion(promotion_move) => {
+            let faction = logic::board::at_external(gamestate, promotion_move.normal_move.origin)
+                .expect(&format!(
+                    "Attempted to move nothing at position {:?}",
+                    promotion_move.normal_move.origin
+                ))
+                .faction;
+
+            player_colors[gamestate.c().turn_to_play as usize] = faction;
+        }
+        Move::Defection(defection_move) => {
+            player_colors[gamestate.c().turn_to_play as usize] = defection_move.faction;
+        }
+        _ => {}
+    }
 }

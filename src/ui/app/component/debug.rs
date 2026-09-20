@@ -12,6 +12,7 @@ use crate::{
 use raylib::{color::Color, math::Rectangle, prelude::RaylibDraw};
 use std::{cell::RefCell, rc::Rc};
 
+#[allow(unused_imports)]
 pub use toggle_button::build as toggle_button;
 
 mod toggle_button {
