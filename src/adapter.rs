@@ -483,7 +483,7 @@ fn get_move_destination(gamestate: &Gamestate, chess_move: Move) -> Coordinate {
         Move::Defection(defection_move) => defection_move
             .normal_move
             .map(|m| m.destination)
-            .unwrap_or_else(|| logic::find_current_player_king(gamestate).coordinate),
+            .unwrap_or_else(|| logic::find_current_player_king_assert(gamestate).coordinate),
         Move::RegimeChangePromotion(promotion_move) => promotion_move.normal_move.destination,
         Move::Promotion(promotion_move) => promotion_move.normal_move.destination,
     }

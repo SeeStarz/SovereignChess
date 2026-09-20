@@ -47,13 +47,16 @@ pub fn at_external(gamestate: &Gamestate, coordinate: Coordinate) -> Option<Piec
     ))
 }
 
-pub fn find_current_player_king(gamestate: &Gamestate) -> PieceExternal {
+pub fn find_current_player_king(gamestate: &Gamestate) -> Option<PieceExternal> {
     let current_faction = logic::faction::current_player_faction(gamestate);
     gamestate
         .pieces()
         .find(|p| p.faction == current_faction && p.piece_type == piece::King)
-        .expect(&format!(
-            "King not found for player {:?}",
-            gamestate.c().turn_to_play
-        ))
+}
+
+pub fn find_current_player_king_assert(gamestate: &Gamestate) -> PieceExternal {
+    find_current_player_king(gamestate).expect(&format!(
+        "King not found for player {:?}",
+        gamestate.c().turn_to_play
+    ))
 }

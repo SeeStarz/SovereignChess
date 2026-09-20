@@ -122,7 +122,8 @@ fn move_pieces(gamestate: &Gamestate, board: &mut Board, legal_move: Move) {
             };
             assert!(piece.piece_type == piece::Pawn);
 
-            let king_coordinate = logic::board::find_current_player_king(gamestate).coordinate;
+            let king_coordinate =
+                logic::board::find_current_player_king_assert(gamestate).coordinate;
 
             piece.piece_type = piece::King;
             board.set_at(normal_move.origin, None);
@@ -156,7 +157,7 @@ fn move_pieces(gamestate: &Gamestate, board: &mut Board, legal_move: Move) {
             if let Some(normal_move) = defection_move.normal_move {
                 assert!(
                     normal_move.origin
-                        == logic::board::find_current_player_king(gamestate).coordinate
+                        == logic::board::find_current_player_king_assert(gamestate).coordinate
                 );
                 assert!(
                     Special::at(normal_move.origin).map(|s| s.faction)
@@ -172,7 +173,8 @@ fn move_pieces(gamestate: &Gamestate, board: &mut Board, legal_move: Move) {
                     }),
                 );
             } else {
-                let king_coordinate = logic::board::find_current_player_king(gamestate).coordinate;
+                let king_coordinate =
+                    logic::board::find_current_player_king_assert(gamestate).coordinate;
 
                 assert!(
                     Special::at(king_coordinate).map(|s| s.faction)

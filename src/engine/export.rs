@@ -7,7 +7,7 @@ pub use crate::engine::model::{
 
 pub mod logic {
     pub use crate::engine::logic::board::{
-        at_external as board_at_external, find_current_player_king,
+        at_external as board_at_external, find_current_player_king_assert,
         piece_externals as board_piece_externals, pieces as board_pieces,
     };
     pub use crate::engine::logic::faction::{

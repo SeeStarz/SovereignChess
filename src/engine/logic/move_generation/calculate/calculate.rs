@@ -1,13 +1,14 @@
 use crate::engine::{
     Gamestate,
     logic::{
-        board::find_current_player_king,
+        self,
+        board::find_current_player_king_assert,
         move_generation::calculate::{castle, defection, knight, linear, pawn},
     },
     model::{Move, piece},
 };
 
-pub fn moves(gamestate: &Gamestate) -> Vec<Move> {
+pub fn naive_moves(gamestate: &Gamestate) -> Vec<Move> {
     let mut moves = Vec::new();
     gamestate
         .pieces()
@@ -34,9 +35,15 @@ pub fn moves(gamestate: &Gamestate) -> Vec<Move> {
         &mut moves,
         gamestate,
         gamestate.c().player_colors[gamestate.c().turn_to_play as usize],
-        find_current_player_king(gamestate).coordinate,
+        find_current_player_king_assert(gamestate).coordinate,
     );
 
     // TODO: check for checks
+    moves
+}
+
+pub fn moves(gamestate: &Gamestate) -> Vec<Move> {
+    let mut moves = naive_moves(gamestate);
+    logic::move_generation::calculate::check::filter_checks(gamestate, &mut moves);
     moves
 }
