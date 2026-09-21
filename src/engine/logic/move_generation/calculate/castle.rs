@@ -1,13 +1,9 @@
 use crate::engine::{
     GameState, logic,
-    model::{
-        Direction,
-        chess_move::{Castle, Move},
-        faction, tile,
-    },
+    model::{Direction, MoveRich, chess_move::CastleRich, faction, tile},
 };
 
-pub fn add_moves_naive(moves: &mut Vec<Move>, game_state: &GameState) {
+pub fn add_moves_naive(moves: &mut Vec<MoveRich>, game_state: &GameState) {
     for &castle_move in game_state.canonical.remaining_castles.iter() {
         if !check_pieces_allied(game_state, castle_move) {
             continue;
@@ -23,11 +19,11 @@ pub fn add_moves_naive(moves: &mut Vec<Move>, game_state: &GameState) {
             continue;
         }
 
-        moves.push(Move::Castle(castle_move));
+        moves.push(MoveRich::Castle(castle_move));
     }
 }
 
-fn check_pieces_allied(game_state: &GameState, castle_move: Castle) -> bool {
+fn check_pieces_allied(game_state: &GameState, castle_move: CastleRich) -> bool {
     let Some(king_piece) = game_state.c().board.at(castle_move.king_move.origin) else {
         panic!(
             "Desync with remaining castles. Expected to find king with castle {:#?}",
@@ -49,7 +45,7 @@ fn check_pieces_allied(game_state: &GameState, castle_move: Castle) -> bool {
     true
 }
 
-fn check_path_clear(game_state: &GameState, castle_move: Castle) -> bool {
+fn check_path_clear(game_state: &GameState, castle_move: CastleRich) -> bool {
     let rook_offset = Direction::from_coordinate_pair(
         castle_move.rook_move.origin,
         castle_move.rook_move.destination,
@@ -77,7 +73,7 @@ fn check_path_clear(game_state: &GameState, castle_move: Castle) -> bool {
     true
 }
 
-fn check_no_special_tile(castle_move: Castle) -> bool {
+fn check_no_special_tile(castle_move: CastleRich) -> bool {
     for coordinate in [
         castle_move.rook_move.destination,
         castle_move.rook_move.origin,

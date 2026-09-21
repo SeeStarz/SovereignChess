@@ -1,6 +1,8 @@
 use crate::engine::{
     logic,
-    model::{Move, board::Board, chess_move::Castle, faction, piece::PieceExternal},
+    model::{
+        MoveRich, MoveSimple, board::Board, chess_move::CastleRich, faction, piece::PieceExternal,
+    },
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -24,7 +26,7 @@ pub struct CanonicalState {
     pub board: Board,
     pub player_colors: [faction::Color; 2],
     pub turn_to_play: TurnToPlay,
-    pub remaining_castles: Vec<Castle>,
+    pub remaining_castles: Vec<CastleRich>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -66,11 +68,11 @@ impl GameState {
         Self { canonical, derived }
     }
 
-    pub fn moves(&self) -> Vec<Move> {
+    pub fn moves(&self) -> Vec<MoveRich> {
         logic::move_generation::calculate(self)
     }
 
-    pub fn apply_move(&self, chess_move: Move) -> Self {
+    pub fn apply_move(&self, chess_move: MoveSimple) -> Self {
         let canonical = logic::move_generation::apply_move(self, chess_move);
         let derived = DerivedState::new(&canonical);
 

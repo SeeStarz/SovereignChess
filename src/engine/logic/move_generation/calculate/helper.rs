@@ -1,19 +1,26 @@
 use crate::engine::{
     GameState, logic,
-    model::{Move, faction, tile},
+    model::{MoveRich, chess_move::NormalMove, faction, tile},
 };
 
 pub fn try_add_move_check_special_tile_rules(
-    moves: &mut Vec<Move>,
+    moves: &mut Vec<MoveRich>,
     game_state: &GameState,
-    chess_move: Move,
+    chess_move: MoveRich,
     faction: faction::Color,
 ) {
     let normal_move = match chess_move {
-        Move::NormalMove(normal_move) => normal_move,
-        Move::Promotion(promotion_move) => promotion_move.normal_move,
-        Move::RegimeChangePromotion(promotion_move) => promotion_move.normal_move,
-        Move::Defection(defection_move) => defection_move.normal_move.unwrap(),
+        MoveRich::NormalMove(normal_move) => normal_move,
+        MoveRich::Promotion(promotion_move) => promotion_move.normal_move,
+        MoveRich::RegimeChangePromotion(promotion_move) => promotion_move.pawn_move,
+        MoveRich::Defection(defection_move) => {
+            let origin = defection_move.origin;
+            let destination = defection_move.destination.unwrap_or(origin);
+            NormalMove {
+                origin,
+                destination,
+            }
+        }
         _ => panic!(),
     };
 

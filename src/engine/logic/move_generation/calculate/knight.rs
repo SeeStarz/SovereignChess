@@ -2,15 +2,15 @@ use crate::engine::{
     GameState, logic,
     logic::move_generation::calculate::helper::try_add_move_check_special_tile_rules,
     model::{
-        Coordinate,
-        chess_move::{Move, NormalMove},
+        Coordinate, MoveRich,
+        chess_move::NormalMove,
         direction,
         faction::{self, Allegiance},
     },
 };
 
 pub fn add_moves_naive(
-    moves: &mut Vec<Move>,
+    moves: &mut Vec<MoveRich>,
     game_state: &GameState,
     faction: faction::Color,
     origin: Coordinate,
@@ -28,7 +28,7 @@ pub fn add_moves_naive(
         try_add_move_check_special_tile_rules(
             moves,
             game_state,
-            Move::NormalMove(NormalMove {
+            MoveRich::NormalMove(NormalMove {
                 origin,
                 destination,
             }),

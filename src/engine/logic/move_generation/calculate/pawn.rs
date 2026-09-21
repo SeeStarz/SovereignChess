@@ -2,8 +2,8 @@ use crate::engine::{
     GameState,
     logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
     model::{
-        Coordinate, Direction,
-        chess_move::{Move, NormalMove, Promotion, RegimeChangePromotion},
+        Coordinate, Direction, MoveRich,
+        chess_move::{NormalMove, Promotion, RegimeChangePromotionRich},
         faction::{self, Allegiance},
         piece,
     },
@@ -17,7 +17,7 @@ struct PawnMoveDirection {
 type PawnAttackDirection = Direction;
 
 pub fn add_moves_naive(
-    moves: &mut Vec<Move>,
+    moves: &mut Vec<MoveRich>,
     game_state: &GameState,
     faction: faction::Color,
     origin: Coordinate,
@@ -145,7 +145,7 @@ fn calculate_pawn_directions(
 }
 
 fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
-    moves: &mut Vec<Move>,
+    moves: &mut Vec<MoveRich>,
     game_state: &GameState,
     normal_move: NormalMove,
     faction: faction::Color,
@@ -161,7 +161,7 @@ fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
                 try_add_move_check_special_tile_rules(
                     moves,
                     game_state,
-                    Move::Promotion(Promotion {
+                    MoveRich::Promotion(Promotion {
                         normal_move,
                         piece_type,
                     }),
@@ -171,14 +171,18 @@ fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
         try_add_move_check_special_tile_rules(
             moves,
             game_state,
-            Move::RegimeChangePromotion(RegimeChangePromotion { normal_move }),
+            MoveRich::RegimeChangePromotion(RegimeChangePromotionRich {
+                pawn_move: normal_move,
+                king_origin: logic::board::find_current_player_king(game_state)
+                    .map(|p| p.coordinate),
+            }),
             faction,
         );
     } else {
         try_add_move_check_special_tile_rules(
             moves,
             game_state,
-            Move::NormalMove(normal_move),
+            MoveRich::NormalMove(normal_move),
             faction,
         );
     }

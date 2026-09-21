@@ -1,9 +1,9 @@
 use crate::engine::{
     logic,
-    model::{Board, chess_move::Castle, chess_move::NormalMove, direction, piece},
+    model::{Board, chess_move::CastleRich, chess_move::NormalMove, direction, piece},
 };
 
-pub fn generate(board: &Board) -> Vec<Castle> {
+pub fn generate(board: &Board) -> Vec<CastleRich> {
     let mut castles = Vec::new();
     for king in logic::board::pieces(board).filter(|p| p.piece_type == piece::King) {
         for &direction in direction::rook() {
@@ -40,7 +40,7 @@ pub fn generate(board: &Board) -> Vec<Castle> {
                     destination: rook_end_coordinate,
                 };
 
-                castles.push(Castle {
+                castles.push(CastleRich {
                     king_move,
                     rook_move,
                 });

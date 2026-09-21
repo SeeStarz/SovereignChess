@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::engine::export::{
-    Coordinate, GameState, Move, PieceExternal, faction,
+    Coordinate, GameState, MoveRich, MoveSimple, PieceExternal, faction,
     logic::{self, board_at_external},
     piece,
 };
@@ -29,7 +29,7 @@ pub enum BoardGesture {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GamestateChange {
     pub updated_game_state: GameState,
-    pub applied_move: Move,
+    pub applied_move: MoveRich,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -180,7 +180,7 @@ impl Adapter {
         let selected_defection: Option<faction::Color> = match self.state.clone() {
             AdapterState::Selected(SelectedStage::DefectionSelection(faction)) => Some(faction),
             AdapterState::Done(game_state_change) => {
-                if let Move::Defection(defection_move) = game_state_change.applied_move {
+                if let MoveRich::Defection(defection_move) = game_state_change.applied_move {
                     Some(defection_move.faction)
                 } else {
                     None
@@ -212,8 +212,10 @@ impl Adapter {
             let promotion_data = match self.state.clone() {
                 AdapterState::Promotion(promotion_data) => Some(promotion_data),
                 AdapterState::Done(game_state_change) => (match game_state_change.applied_move {
-                    Move::Promotion(promotion_move) => Some(promotion_move.normal_move),
-                    Move::RegimeChangePromotion(promotion_move) => Some(promotion_move.normal_move),
+                    MoveRich::Promotion(promotion_move) => Some(promotion_move.normal_move),
+                    MoveRich::RegimeChangePromotion(promotion_move) => {
+                        Some(promotion_move.pawn_move)
+                    }
                     _ => None,
                 })
                 .and_then(|m| {
@@ -227,8 +229,8 @@ impl Adapter {
             if let Some(promotion_data) = promotion_data {
                 valid_promotions(&self.game_state, promotion_data)
                     .map(|c| match c.applied_move {
-                        Move::Promotion(promotion_move) => promotion_move.piece_type,
-                        Move::RegimeChangePromotion(_promotion_move) => piece::King,
+                        MoveRich::Promotion(promotion_move) => promotion_move.piece_type,
+                        MoveRich::RegimeChangePromotion(_promotion_move) => piece::King,
                         _ => panic!("Got non-promotion move from valid_promotions"),
                     })
                     .collect()
@@ -343,14 +345,14 @@ fn valid_advance_from_selected_do_board_click(
 
         if move_origin == origin {
             match m {
-                Move::Promotion(_) | Move::RegimeChangePromotion(_) => {
+                MoveRich::Promotion(_) | MoveRich::RegimeChangePromotion(_) => {
                     Some(SelectedStageResult::Promotion(PromotionStage {
                         origin,
                         destination: get_move_destination(game_state, m),
                     }))
                 }
                 _ => Some(SelectedStageResult::Done(GamestateChange {
-                    updated_game_state: game_state.apply_move(m),
+                    updated_game_state: game_state.apply_move(MoveSimple::from(m)),
                     applied_move: m,
                 })),
             }
@@ -365,11 +367,11 @@ fn valid_advance_from_selected_do_defection_click(
     faction: faction::Color,
 ) -> impl Iterator<Item = GamestateChange> {
     game_state.moves().into_iter().filter_map(move |m| {
-        if let Move::Defection(defection_move) = m
+        if let MoveRich::Defection(defection_move) = m
             && defection_move.faction == faction
         {
             Some(GamestateChange {
-                updated_game_state: game_state.apply_move(m),
+                updated_game_state: game_state.apply_move(MoveSimple::from(m)),
                 applied_move: m,
             })
         } else {
@@ -386,18 +388,18 @@ fn valid_promotions(
         .moves()
         .into_iter()
         .filter(move |m| match m {
-            Move::Promotion(m) => {
+            MoveRich::Promotion(m) => {
                 m.normal_move.origin == promotion_stage_data.origin
                     && m.normal_move.destination == promotion_stage_data.destination
             }
-            Move::RegimeChangePromotion(m) => {
-                m.normal_move.origin == promotion_stage_data.origin
-                    && m.normal_move.destination == promotion_stage_data.destination
+            MoveRich::RegimeChangePromotion(m) => {
+                m.pawn_move.origin == promotion_stage_data.origin
+                    && m.pawn_move.destination == promotion_stage_data.destination
             }
             _ => false,
         })
         .map(|m| GamestateChange {
-            updated_game_state: game_state.apply_move(m),
+            updated_game_state: game_state.apply_move(MoveSimple::from(m)),
             applied_move: m,
         })
 }
@@ -440,7 +442,7 @@ fn is_valid_selected_do_board_click(
 
         SelectedStage::DefectionSelection(faction) => {
             valid_advance_from_selected_do_defection_click(game_state, faction).find_map(|c| {
-                if let Move::Defection(defection_move) = c.applied_move
+                if let MoveRich::Defection(defection_move) = c.applied_move
                     && defection_move.faction == faction
                     && get_move_destination(game_state, c.applied_move) == destination
                 {
@@ -462,32 +464,31 @@ fn is_valid_promotion_do_board_click(
 ) -> Option<GamestateChange> {
     valid_promotions(game_state, promotion_stage_data).find(|c| {
         (match c.applied_move {
-            Move::Promotion(promotion_move) => promotion_move.piece_type,
-            Move::RegimeChangePromotion(_promotion_move) => piece::King,
+            MoveRich::Promotion(promotion_move) => promotion_move.piece_type,
+            MoveRich::RegimeChangePromotion(_promotion_move) => piece::King,
             _ => panic!("Got non-promotion move from valid_promotions"),
         }) == piece_type
     })
 }
 
-fn get_move_origin(chess_move: Move) -> Option<Coordinate> {
+fn get_move_origin(chess_move: MoveRich) -> Option<Coordinate> {
     match chess_move {
-        Move::NormalMove(normal_move) => Some(normal_move.origin),
-        Move::Castle(castle_move) => Some(castle_move.king_move.origin),
-        Move::Defection(_defection_move) => None,
-        Move::RegimeChangePromotion(promotion_move) => Some(promotion_move.normal_move.origin),
-        Move::Promotion(promotion_move) => Some(promotion_move.normal_move.origin),
+        MoveRich::NormalMove(normal_move) => Some(normal_move.origin),
+        MoveRich::Castle(castle_move) => Some(castle_move.king_move.origin),
+        MoveRich::Defection(_defection_move) => None,
+        MoveRich::RegimeChangePromotion(promotion_move) => Some(promotion_move.pawn_move.origin),
+        MoveRich::Promotion(promotion_move) => Some(promotion_move.normal_move.origin),
     }
 }
 
-fn get_move_destination(game_state: &GameState, chess_move: Move) -> Coordinate {
+fn get_move_destination(game_state: &GameState, chess_move: MoveRich) -> Coordinate {
     match chess_move {
-        Move::NormalMove(normal_move) => normal_move.destination,
-        Move::Castle(castle_move) => castle_move.king_move.destination,
-        Move::Defection(defection_move) => defection_move
-            .normal_move
-            .map(|m| m.destination)
+        MoveRich::NormalMove(normal_move) => normal_move.destination,
+        MoveRich::Castle(castle_move) => castle_move.king_move.destination,
+        MoveRich::Defection(defection_move) => defection_move
+            .destination
             .unwrap_or_else(|| logic::find_current_player_king_assert(game_state).coordinate),
-        Move::RegimeChangePromotion(promotion_move) => promotion_move.normal_move.destination,
-        Move::Promotion(promotion_move) => promotion_move.normal_move.destination,
+        MoveRich::RegimeChangePromotion(promotion_move) => promotion_move.pawn_move.destination,
+        MoveRich::Promotion(promotion_move) => promotion_move.normal_move.destination,
     }
 }

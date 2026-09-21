@@ -1,20 +1,23 @@
 use crate::engine::{
     GameState, logic,
-    model::{Direction, Move, chess_move::Castle},
+    model::{
+        Direction, MoveRich, MoveSimple,
+        chess_move::{CastleRich, CastleSimple},
+    },
 };
 
-pub fn filter_checks(game_state: &GameState, moves: &mut Vec<Move>) {
+pub fn filter_checks(game_state: &GameState, moves: &mut Vec<MoveRich>) {
     moves.retain_mut(|&mut m| {
-        if let Move::Castle(castle_move) = m {
+        if let MoveRich::Castle(castle_move) = m {
             is_castle_safe(game_state, castle_move)
         } else {
-            let do_move_game_state = game_state.apply_move(m);
+            let do_move_game_state = game_state.apply_move(MoveSimple::from(m));
             is_enemy_king_safe(&do_move_game_state)
         }
     });
 }
 
-fn is_castle_safe(game_state: &GameState, castle_move: Castle) -> bool {
+fn is_castle_safe(game_state: &GameState, castle_move: CastleRich) -> bool {
     let king_offset = Direction::from_coordinate_pair(
         castle_move.king_move.origin,
         castle_move.king_move.destination,
@@ -54,14 +57,14 @@ fn is_castle_safe(game_state: &GameState, castle_move: Castle) -> bool {
         }
     }
 
-    is_enemy_king_safe(&game_state.apply_move(Move::Castle(castle_move)))
+    is_enemy_king_safe(&game_state.apply_move(MoveSimple::Castle(CastleSimple::from(castle_move))))
 }
 
 fn is_enemy_king_safe(game_state: &GameState) -> bool {
     logic::move_generation::calculate::naive_moves(game_state)
         .iter()
         .all(|&m| {
-            let response_game_state = game_state.apply_move(m);
+            let response_game_state = game_state.apply_move(MoveSimple::from(m));
             logic::board::find_current_player_king(&response_game_state).is_some()
         })
 }

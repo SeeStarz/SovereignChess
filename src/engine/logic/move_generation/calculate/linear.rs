@@ -2,17 +2,14 @@ use crate::engine::{
     GameState,
     logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
     model::{
-        Coordinate, Piece,
-        chess_move::{Move, NormalMove},
-        direction,
-        faction::Allegiance,
+        Coordinate, MoveRich, Piece, chess_move::NormalMove, direction, faction::Allegiance,
         piece, tile,
     },
 };
 
 /// Responsible for Queen, Rook, Bishop, and King moves
 pub fn add_moves_naive(
-    moves: &mut Vec<Move>,
+    moves: &mut Vec<MoveRich>,
     game_state: &GameState,
     piece: Piece,
     origin: Coordinate,
@@ -38,7 +35,7 @@ pub fn add_moves_naive(
                     try_add_move_check_special_tile_rules(
                         moves,
                         game_state,
-                        Move::NormalMove(NormalMove {
+                        MoveRich::NormalMove(NormalMove {
                             origin,
                             destination,
                         }),
@@ -52,7 +49,7 @@ pub fn add_moves_naive(
                 try_add_move_check_special_tile_rules(
                     moves,
                     game_state,
-                    Move::NormalMove(NormalMove {
+                    MoveRich::NormalMove(NormalMove {
                         origin,
                         destination,
                     }),

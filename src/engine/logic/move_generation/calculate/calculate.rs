@@ -5,10 +5,10 @@ use crate::engine::{
         board::find_current_player_king_assert,
         move_generation::calculate::{castle, defection, knight, linear, pawn},
     },
-    model::{Move, piece},
+    model::{MoveRich, piece},
 };
 
-pub fn naive_moves(game_state: &GameState) -> Vec<Move> {
+pub fn naive_moves(game_state: &GameState) -> Vec<MoveRich> {
     let mut moves = Vec::new();
     game_state
         .pieces()
@@ -42,7 +42,7 @@ pub fn naive_moves(game_state: &GameState) -> Vec<Move> {
     moves
 }
 
-pub fn moves(game_state: &GameState) -> Vec<Move> {
+pub fn moves(game_state: &GameState) -> Vec<MoveRich> {
     let mut moves = naive_moves(game_state);
     logic::move_generation::calculate::check::filter_checks(game_state, &mut moves);
     moves

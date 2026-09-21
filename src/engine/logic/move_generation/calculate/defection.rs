@@ -2,8 +2,8 @@ use crate::engine::{
     GameState,
     logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
     model::{
-        Coordinate,
-        chess_move::{Defection, Move, NormalMove},
+        Coordinate, MoveRich,
+        chess_move::DefectionRich,
         direction,
         faction::{self, Allegiance},
         tile,
@@ -11,7 +11,7 @@ use crate::engine::{
 };
 
 pub fn add_moves_naive(
-    moves: &mut Vec<Move>,
+    moves: &mut Vec<MoveRich>,
     game_state: &GameState,
     original_faction: faction::Color,
     origin: Coordinate,
@@ -52,20 +52,19 @@ pub fn add_moves_naive(
                 try_add_move_check_special_tile_rules(
                     moves,
                     game_state,
-                    Move::Defection(Defection {
+                    MoveRich::Defection(DefectionRich {
                         faction: controlled_faction,
-                        normal_move: Some(NormalMove {
-                            origin,
-                            destination,
-                        }),
+                        origin,
+                        destination: Some(destination),
                     }),
                     controlled_faction,
                 );
             }
         } else {
-            moves.push(Move::Defection(Defection {
+            moves.push(MoveRich::Defection(DefectionRich {
                 faction: controlled_faction,
-                normal_move: None,
+                origin,
+                destination: None,
             }));
         }
     }

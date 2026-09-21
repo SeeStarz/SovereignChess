@@ -7,7 +7,8 @@ pub mod piece;
 pub mod tile;
 
 pub use board::Board;
-pub use chess_move::Move;
+pub use chess_move::MoveRich;
+pub use chess_move::MoveSimple;
 pub use coordinate::Coordinate;
 pub use direction::Direction;
 pub use piece::Piece;
