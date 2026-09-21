@@ -33,12 +33,12 @@ pub struct DerivedState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Gamestate {
+pub struct GameState {
     pub canonical: CanonicalState,
     pub derived: DerivedState,
 }
 
-impl Gamestate {
+impl GameState {
     pub fn c(&self) -> &CanonicalState {
         &self.canonical
     }
@@ -70,8 +70,8 @@ impl Gamestate {
         logic::move_generation::calculate(self)
     }
 
-    pub fn apply_move(&self, move_: Move) -> Self {
-        let canonical = logic::move_generation::apply_move(self, move_);
+    pub fn apply_move(&self, chess_move: Move) -> Self {
+        let canonical = logic::move_generation::apply_move(self, chess_move);
         let derived = DerivedState::new(&canonical);
 
         Self { canonical, derived }

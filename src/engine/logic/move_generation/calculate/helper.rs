@@ -1,15 +1,15 @@
 use crate::engine::{
-    Gamestate, logic,
+    GameState, logic,
     model::{Move, faction, tile},
 };
 
-pub fn try_add_legal_move_check_special_tile_rules(
+pub fn try_add_move_check_special_tile_rules(
     moves: &mut Vec<Move>,
-    gamestate: &Gamestate,
-    legal_move: Move,
+    game_state: &GameState,
+    chess_move: Move,
     faction: faction::Color,
 ) {
-    let normal_move = match legal_move {
+    let normal_move = match chess_move {
         Move::NormalMove(normal_move) => normal_move,
         Move::Promotion(promotion_move) => promotion_move.normal_move,
         Move::RegimeChangePromotion(promotion_move) => promotion_move.normal_move,
@@ -18,18 +18,18 @@ pub fn try_add_legal_move_check_special_tile_rules(
     };
 
     let Some(&special_destination) = tile::Special::at(normal_move.destination) else {
-        moves.push(legal_move);
+        moves.push(chess_move);
         return;
     };
 
     // Means that we are not trying to occupy special tile colored the same as current faction
     // We are also not trying to occupy special tile where there currently is a piece on the other pair
     if logic::special::is_special_tile_occupiable(
-        &gamestate.c().board,
+        &game_state.c().board,
         special_destination,
         faction,
     ) {
-        moves.push(legal_move);
+        moves.push(chess_move);
         return;
     }
 
@@ -37,6 +37,6 @@ pub fn try_add_legal_move_check_special_tile_rules(
     if let Some(&special_origin) = tile::Special::at(normal_move.origin)
         && special_origin.other() == special_destination
     {
-        moves.push(legal_move);
+        moves.push(chess_move);
     }
 }

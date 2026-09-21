@@ -1,6 +1,6 @@
 use crate::engine::{
-    Gamestate, logic,
-    logic::move_generation::calculate::helper::try_add_legal_move_check_special_tile_rules,
+    GameState, logic,
+    logic::move_generation::calculate::helper::try_add_move_check_special_tile_rules,
     model::{
         Coordinate,
         chess_move::{Move, NormalMove},
@@ -11,7 +11,7 @@ use crate::engine::{
 
 pub fn add_moves_naive(
     moves: &mut Vec<Move>,
-    gamestate: &Gamestate,
+    game_state: &GameState,
     faction: faction::Color,
     origin: Coordinate,
 ) {
@@ -19,15 +19,15 @@ pub fn add_moves_naive(
         let Some(destination) = origin.offset(direction) else {
             continue;
         };
-        if let Some(victim) = gamestate.c().board.at(destination) {
-            if logic::faction::get_allegiance(gamestate, victim.faction) != Allegiance::Enemy {
+        if let Some(victim) = game_state.c().board.at(destination) {
+            if logic::faction::get_allegiance(game_state, victim.faction) != Allegiance::Enemy {
                 continue;
             }
         }
 
-        try_add_legal_move_check_special_tile_rules(
+        try_add_move_check_special_tile_rules(
             moves,
-            gamestate,
+            game_state,
             Move::NormalMove(NormalMove {
                 origin,
                 destination,

@@ -1,6 +1,6 @@
 use crate::engine::{
-    Gamestate,
-    gamestate::CanonicalState,
+    GameState,
+    game_state::CanonicalState,
     model::{
         faction::{self, Allegiance, Color},
         tile,
@@ -42,17 +42,17 @@ pub fn get_real_faction_owners(state: &CanonicalState) -> [Option<faction::Color
     real_owners
 }
 
-pub fn get_allegiance(gamestate: &Gamestate, faction: faction::Color) -> Allegiance {
-    match gamestate.derived.real_faction_owners[faction as usize] {
+pub fn get_allegiance(game_state: &GameState, faction: faction::Color) -> Allegiance {
+    match game_state.derived.real_faction_owners[faction as usize] {
         None => Allegiance::Neutral,
         Some(faction)
-            if faction == gamestate.c().player_colors[gamestate.c().turn_to_play as usize] =>
+            if faction == game_state.c().player_colors[game_state.c().turn_to_play as usize] =>
         {
             Allegiance::Ally
         }
         Some(faction)
             if faction
-                == gamestate.c().player_colors[gamestate.c().turn_to_play.other() as usize] =>
+                == game_state.c().player_colors[game_state.c().turn_to_play.other() as usize] =>
         {
             Allegiance::Enemy
         }
@@ -60,6 +60,6 @@ pub fn get_allegiance(gamestate: &Gamestate, faction: faction::Color) -> Allegia
     }
 }
 
-pub fn current_player_faction(gamestate: &Gamestate) -> faction::Color {
-    gamestate.c().player_colors[gamestate.c().turn_to_play as usize]
+pub fn current_player_faction(game_state: &GameState) -> faction::Color {
+    game_state.c().player_colors[game_state.c().turn_to_play as usize]
 }

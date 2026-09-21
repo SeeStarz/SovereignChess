@@ -1,24 +1,24 @@
 use crate::engine::{
-    Gamestate,
-    gamestate::CanonicalState,
+    GameState,
+    game_state::CanonicalState,
     logic,
     model::{Board, Move, Piece, chess_move::Castle, faction, piece, tile::Special},
 };
 
-pub fn apply_move(gamestate: &Gamestate, legal_move: Move) -> CanonicalState {
-    let mut board = gamestate.c().board;
+pub fn apply_move(game_state: &GameState, chess_move: Move) -> CanonicalState {
+    let mut board = game_state.c().board;
 
-    move_pieces(gamestate, &mut board, legal_move);
+    move_pieces(game_state, &mut board, chess_move);
 
-    let mut player_colors = gamestate.c().player_colors;
+    let mut player_colors = game_state.c().player_colors;
 
-    change_player_colors(gamestate, &mut player_colors, legal_move);
+    change_player_colors(game_state, &mut player_colors, chess_move);
 
-    let mut remaining_castles = gamestate.c().remaining_castles.clone();
+    let mut remaining_castles = game_state.c().remaining_castles.clone();
 
-    filter_remaining_castles(gamestate, &mut remaining_castles, legal_move);
+    filter_remaining_castles(game_state, &mut remaining_castles, chess_move);
 
-    let turn_to_play = gamestate.c().turn_to_play.other();
+    let turn_to_play = game_state.c().turn_to_play.other();
 
     CanonicalState {
         board,
@@ -29,11 +29,11 @@ pub fn apply_move(gamestate: &Gamestate, legal_move: Move) -> CanonicalState {
 }
 
 fn filter_remaining_castles(
-    gamestate: &Gamestate,
+    game_state: &GameState,
     remaining_castles: &mut Vec<Castle>,
-    legal_move: Move,
+    chess_move: Move,
 ) {
-    let affected_coordinates = match legal_move {
+    let affected_coordinates = match chess_move {
         Move::NormalMove(normal_move) => vec![normal_move.origin, normal_move.destination],
         Move::Promotion(promotion_move) => vec![
             promotion_move.normal_move.origin,
@@ -41,9 +41,9 @@ fn filter_remaining_castles(
         ],
         Move::RegimeChangePromotion(promotion_move) => {
             let player_main_faction =
-                gamestate.c().player_colors[gamestate.c().turn_to_play as usize];
+                game_state.c().player_colors[game_state.c().turn_to_play as usize];
 
-            let king_coordinate = gamestate
+            let king_coordinate = game_state
                 .pieces()
                 .find_map(|p| {
                     if p.faction == player_main_faction && p.piece_type == piece::King {
@@ -87,8 +87,8 @@ fn filter_remaining_castles(
     });
 }
 
-fn move_pieces(gamestate: &Gamestate, board: &mut Board, legal_move: Move) {
-    match legal_move {
+fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: Move) {
+    match chess_move {
         Move::NormalMove(normal_move) => {
             let Some(piece) = board.at(normal_move.origin) else {
                 panic!(
@@ -123,7 +123,7 @@ fn move_pieces(gamestate: &Gamestate, board: &mut Board, legal_move: Move) {
             assert!(piece.piece_type == piece::Pawn);
 
             let king_coordinate =
-                logic::board::find_current_player_king_assert(gamestate).coordinate;
+                logic::board::find_current_player_king_assert(game_state).coordinate;
 
             piece.piece_type = piece::King;
             board.set_at(normal_move.origin, None);
@@ -157,11 +157,11 @@ fn move_pieces(gamestate: &Gamestate, board: &mut Board, legal_move: Move) {
             if let Some(normal_move) = defection_move.normal_move {
                 assert!(
                     normal_move.origin
-                        == logic::board::find_current_player_king_assert(gamestate).coordinate
+                        == logic::board::find_current_player_king_assert(game_state).coordinate
                 );
                 assert!(
                     Special::at(normal_move.origin).map(|s| s.faction)
-                        == Some(logic::faction::current_player_faction(gamestate))
+                        == Some(logic::faction::current_player_faction(game_state))
                 );
 
                 board.set_at(normal_move.origin, None);
@@ -174,11 +174,11 @@ fn move_pieces(gamestate: &Gamestate, board: &mut Board, legal_move: Move) {
                 );
             } else {
                 let king_coordinate =
-                    logic::board::find_current_player_king_assert(gamestate).coordinate;
+                    logic::board::find_current_player_king_assert(game_state).coordinate;
 
                 assert!(
                     Special::at(king_coordinate).map(|s| s.faction)
-                        != Some(logic::faction::current_player_faction(gamestate))
+                        != Some(logic::faction::current_player_faction(game_state))
                 );
 
                 board.set_at(
@@ -194,23 +194,23 @@ fn move_pieces(gamestate: &Gamestate, board: &mut Board, legal_move: Move) {
 }
 
 fn change_player_colors(
-    gamestate: &Gamestate,
+    game_state: &GameState,
     player_colors: &mut [faction::Color; 2],
-    legal_move: Move,
+    chess_move: Move,
 ) {
-    match legal_move {
+    match chess_move {
         Move::RegimeChangePromotion(promotion_move) => {
-            let faction = logic::board::at_external(gamestate, promotion_move.normal_move.origin)
+            let faction = logic::board::at_external(game_state, promotion_move.normal_move.origin)
                 .expect(&format!(
                     "Attempted to move nothing at position {:?}",
                     promotion_move.normal_move.origin
                 ))
                 .faction;
 
-            player_colors[gamestate.c().turn_to_play as usize] = faction;
+            player_colors[game_state.c().turn_to_play as usize] = faction;
         }
         Move::Defection(defection_move) => {
-            player_colors[gamestate.c().turn_to_play as usize] = defection_move.faction;
+            player_colors[game_state.c().turn_to_play as usize] = defection_move.faction;
         }
         _ => {}
     }

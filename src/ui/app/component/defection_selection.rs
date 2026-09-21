@@ -74,7 +74,7 @@ pub fn render_function(
         &PieceSprite {
             piece_type: piece::King,
             faction,
-            owner: data.adapter.gamestate().derived.real_faction_owners[faction as usize]
+            owner: data.adapter.game_state().derived.real_faction_owners[faction as usize]
                 .map(|_| faction),
         },
         rect,

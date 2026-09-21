@@ -14,7 +14,7 @@ fn main() {
 pub mod game {
     use crate::{
         adapter::Adapter,
-        engine::export::Gamestate,
+        engine::export::GameState,
         geometry::FPosition,
         sprite,
         ui::{self, export::input::Event},
@@ -37,7 +37,7 @@ pub mod game {
 
         let data_mutator = Rc::new(RefCell::new({
             Data {
-                adapter: Adapter::new(Gamestate::new()),
+                adapter: Adapter::new(GameState::new()),
                 sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
             }
         }));

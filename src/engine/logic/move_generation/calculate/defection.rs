@@ -1,8 +1,6 @@
 use crate::engine::{
-    Gamestate,
-    logic::{
-        self, move_generation::calculate::helper::try_add_legal_move_check_special_tile_rules,
-    },
+    GameState,
+    logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
     model::{
         Coordinate,
         chess_move::{Defection, Move, NormalMove},
@@ -14,18 +12,18 @@ use crate::engine::{
 
 pub fn add_moves_naive(
     moves: &mut Vec<Move>,
-    gamestate: &Gamestate,
+    game_state: &GameState,
     original_faction: faction::Color,
     origin: Coordinate,
 ) {
-    let controlled_factions = gamestate
+    let controlled_factions = game_state
         .derived
         .real_faction_owners
         .iter()
         .enumerate()
         .filter_map(|(faction, &owner)| {
             if owner.is_some_and(|owner| {
-                owner == gamestate.c().player_colors[gamestate.c().turn_to_play as usize]
+                owner == game_state.c().player_colors[game_state.c().turn_to_play as usize]
                     && faction != original_faction as usize
             }) {
                 Some(
@@ -43,17 +41,17 @@ pub fn add_moves_naive(
                 let Some(destination) = origin.offset(direction) else {
                     continue;
                 };
-                if let Some(victim) = gamestate.c().board.at(destination) {
-                    if logic::faction::get_allegiance(gamestate, victim.faction)
+                if let Some(victim) = game_state.c().board.at(destination) {
+                    if logic::faction::get_allegiance(game_state, victim.faction)
                         != Allegiance::Enemy
                     {
                         continue;
                     }
                 }
 
-                try_add_legal_move_check_special_tile_rules(
+                try_add_move_check_special_tile_rules(
                     moves,
-                    gamestate,
+                    game_state,
                     Move::Defection(Defection {
                         faction: controlled_faction,
                         normal_move: Some(NormalMove {

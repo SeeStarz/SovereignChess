@@ -1,8 +1,6 @@
 use crate::engine::{
-    Gamestate,
-    logic::{
-        self, move_generation::calculate::helper::try_add_legal_move_check_special_tile_rules,
-    },
+    GameState,
+    logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
     model::{
         Coordinate, Piece,
         chess_move::{Move, NormalMove},
@@ -15,7 +13,7 @@ use crate::engine::{
 /// Responsible for Queen, Rook, Bishop, and King moves
 pub fn add_moves_naive(
     moves: &mut Vec<Move>,
-    gamestate: &Gamestate,
+    game_state: &GameState,
     piece: Piece,
     origin: Coordinate,
 ) {
@@ -35,11 +33,11 @@ pub fn add_moves_naive(
                 break;
             };
 
-            if let Some(victim) = gamestate.c().board.at(destination) {
-                if logic::faction::get_allegiance(gamestate, victim.faction) == Allegiance::Enemy {
-                    try_add_legal_move_check_special_tile_rules(
+            if let Some(victim) = game_state.c().board.at(destination) {
+                if logic::faction::get_allegiance(game_state, victim.faction) == Allegiance::Enemy {
+                    try_add_move_check_special_tile_rules(
                         moves,
-                        gamestate,
+                        game_state,
                         Move::NormalMove(NormalMove {
                             origin,
                             destination,
@@ -49,11 +47,11 @@ pub fn add_moves_naive(
                 }
                 break;
             } else if tile::Special::at(destination)
-                .is_none_or(|s| gamestate.c().board.at(s.coordinate).is_none())
+                .is_none_or(|s| game_state.c().board.at(s.coordinate).is_none())
             {
-                try_add_legal_move_check_special_tile_rules(
+                try_add_move_check_special_tile_rules(
                     moves,
-                    gamestate,
+                    game_state,
                     Move::NormalMove(NormalMove {
                         origin,
                         destination,

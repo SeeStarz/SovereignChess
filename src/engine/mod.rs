@@ -1,8 +1,8 @@
 pub mod export;
 
-mod gamestate;
+mod game_state;
 mod initializer;
 mod logic;
 mod model;
 
-use gamestate::Gamestate;
+use game_state::GameState;

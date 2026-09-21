@@ -1,5 +1,5 @@
 use crate::engine::{
-    Gamestate, logic,
+    GameState, logic,
     model::{
         Direction,
         chess_move::{Castle, Move},
@@ -7,13 +7,13 @@ use crate::engine::{
     },
 };
 
-pub fn add_moves_naive(moves: &mut Vec<Move>, gamestate: &Gamestate) {
-    for &castle_move in gamestate.canonical.remaining_castles.iter() {
-        if !check_pieces_allied(gamestate, castle_move) {
+pub fn add_moves_naive(moves: &mut Vec<Move>, game_state: &GameState) {
+    for &castle_move in game_state.canonical.remaining_castles.iter() {
+        if !check_pieces_allied(game_state, castle_move) {
             continue;
         }
 
-        if !check_path_clear(gamestate, castle_move) {
+        if !check_path_clear(game_state, castle_move) {
             continue;
         }
 
@@ -27,29 +27,29 @@ pub fn add_moves_naive(moves: &mut Vec<Move>, gamestate: &Gamestate) {
     }
 }
 
-fn check_pieces_allied(gamestate: &Gamestate, castle_move: Castle) -> bool {
-    let Some(king_piece) = gamestate.c().board.at(castle_move.king_move.origin) else {
+fn check_pieces_allied(game_state: &GameState, castle_move: Castle) -> bool {
+    let Some(king_piece) = game_state.c().board.at(castle_move.king_move.origin) else {
         panic!(
             "Desync with remaining castles. Expected to find king with castle {:#?}",
             castle_move
         )
     };
-    let Some(rook_piece) = gamestate.c().board.at(castle_move.rook_move.origin) else {
+    let Some(rook_piece) = game_state.c().board.at(castle_move.rook_move.origin) else {
         panic!(
             "Desync with remaining castles. Expected to find king with castle {:#?}",
             castle_move
         )
     };
-    if logic::faction::get_allegiance(gamestate, king_piece.faction) != faction::Allegiance::Ally {
+    if logic::faction::get_allegiance(game_state, king_piece.faction) != faction::Allegiance::Ally {
         return false;
     }
-    if logic::faction::get_allegiance(gamestate, rook_piece.faction) != faction::Allegiance::Ally {
+    if logic::faction::get_allegiance(game_state, rook_piece.faction) != faction::Allegiance::Ally {
         return false;
     }
     true
 }
 
-fn check_path_clear(gamestate: &Gamestate, castle_move: Castle) -> bool {
+fn check_path_clear(game_state: &GameState, castle_move: Castle) -> bool {
     let rook_offset = Direction::from_coordinate_pair(
         castle_move.rook_move.origin,
         castle_move.rook_move.destination,
@@ -70,7 +70,7 @@ fn check_path_clear(gamestate: &Gamestate, castle_move: Castle) -> bool {
             panic!("Castling out of bounds")
         };
 
-        if let Some(_piece) = gamestate.c().board.at(coordinate) {
+        if let Some(_piece) = game_state.c().board.at(coordinate) {
             return false;
         }
     }

@@ -61,8 +61,8 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
 
 pub fn handle_chess_gesture(gesture: Gesture, data: &mut Data) {
     data.adapter.apply(gesture);
-    if let Some(gamestate_change) = data.adapter.hint().gamestate_change {
-        data.adapter = Adapter::new(gamestate_change.updated_gamestate);
+    if let Some(game_state_change) = data.adapter.hint().game_state_change {
+        data.adapter = Adapter::new(game_state_change.updated_game_state);
     }
 }
 
@@ -116,7 +116,7 @@ fn draw_pieces(
     tile_rect: FRect,
     data: &Data,
 ) {
-    for piece in data.adapter.gamestate().pieces() {
+    for piece in data.adapter.game_state().pieces() {
         let sprite = PieceSprite {
             piece_type: piece.piece_type,
             faction: piece.faction,
