@@ -1,7 +1,7 @@
 #![allow(unused_imports)]
 pub use crate::engine::game_state::GameState;
 pub use crate::engine::model::{
-    Board, Coordinate, Direction, MoveRich, MoveSimple, Piece, PieceExternal, PieceWithCoordinate,
+    Board, Coordinate, Direction, MoveRich, MoveSimple, PieceSimple, PieceRich, PieceWithCoordinate,
     Tile, board, chess_move, coordinate, direction, faction, piece, tile,
 };
 

@@ -1,7 +1,7 @@
 use crate::engine::{
     logic,
     model::{
-        MoveRich, MoveSimple, board::Board, chess_move::CastleRich, faction, piece::PieceExternal,
+        MoveRich, MoveSimple, board::Board, chess_move::CastleRich, faction, piece::PieceRich,
     },
 };
 
@@ -45,7 +45,7 @@ impl GameState {
         &self.canonical
     }
 
-    pub fn pieces(&self) -> impl Iterator<Item = PieceExternal> {
+    pub fn pieces(&self) -> impl Iterator<Item = PieceRich> {
         logic::board::piece_externals(self)
     }
 

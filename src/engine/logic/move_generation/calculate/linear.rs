@@ -2,7 +2,7 @@ use crate::engine::{
     GameState,
     logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
     model::{
-        Coordinate, MoveRich, Piece, chess_move::NormalMove, direction, faction::Allegiance,
+        Coordinate, MoveRich, PieceSimple, chess_move::NormalMove, direction, faction::Allegiance,
         piece, tile,
     },
 };
@@ -11,7 +11,7 @@ use crate::engine::{
 pub fn add_moves_naive(
     moves: &mut Vec<MoveRich>,
     game_state: &GameState,
-    piece: Piece,
+    piece: PieceSimple,
     origin: Coordinate,
 ) {
     let (directions, distance) = match piece.piece_type {

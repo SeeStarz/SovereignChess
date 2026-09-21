@@ -1,6 +1,6 @@
 use crate::engine::{
     initializer,
-    model::{Coordinate, Piece, Tile},
+    model::{Coordinate, PieceSimple, Tile},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -27,7 +27,7 @@ impl Board {
         self.tiles[coordinate.row()][coordinate.col()]
     }
 
-    pub fn set_at(&mut self, coordinate: Coordinate, piece: Option<Piece>) {
+    pub fn set_at(&mut self, coordinate: Coordinate, piece: Option<PieceSimple>) {
         self.tiles[coordinate.row()][coordinate.col()] = piece;
     }
 }

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::engine::export::{
-    Coordinate, GameState, MoveRich, MoveSimple, PieceExternal, faction,
+    Coordinate, GameState, MoveRich, MoveSimple, PieceRich, faction,
     logic::{self, board_at_external},
     piece,
 };
@@ -42,7 +42,7 @@ pub enum AdapterState {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SelectedStage {
-    BoardSelection(PieceExternal),
+    BoardSelection(PieceRich),
     DefectionSelection(faction::Color),
 }
 
@@ -89,9 +89,9 @@ impl From<AdapterState> for UIState {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct UIHint {
-    pub grabbable_pieces: Vec<PieceExternal>,
+    pub grabbable_pieces: Vec<PieceRich>,
     pub valid_defections: Vec<faction::Color>,
-    pub grabbed_piece: Option<PieceExternal>,
+    pub grabbed_piece: Option<PieceRich>,
     pub selected_defection: Option<faction::Color>,
     pub valid_destinations: Vec<Coordinate>,
     pub promotion_options: Vec<piece::Type>,
@@ -162,10 +162,10 @@ impl Adapter {
     }
 
     pub fn hint(&self) -> UIHint {
-        let grabbable_pieces: Vec<PieceExternal> = valid_select_pieces(&self.game_state).collect();
+        let grabbable_pieces: Vec<PieceRich> = valid_select_pieces(&self.game_state).collect();
         let valid_defections: Vec<faction::Color> = valid_defections(&self.game_state).collect();
 
-        let grabbed_piece: Option<PieceExternal> = match self.state.clone() {
+        let grabbed_piece: Option<PieceRich> = match self.state.clone() {
             AdapterState::Selected(SelectedStage::BoardSelection(piece)) => Some(piece),
             AdapterState::Promotion(promotion_data) => {
                 board_at_external(&self.game_state, promotion_data.origin)
@@ -319,7 +319,7 @@ impl Adapter {
     }
 }
 
-fn valid_select_pieces(game_state: &GameState) -> impl Iterator<Item = PieceExternal> {
+fn valid_select_pieces(game_state: &GameState) -> impl Iterator<Item = PieceRich> {
     game_state.pieces().filter(|p| {
         game_state.derived.real_faction_owners[p.faction as usize]
             == Some(logic::current_player_faction(game_state))
@@ -407,7 +407,7 @@ fn valid_promotions(
 fn is_valid_idle_do_board_click(
     game_state: &GameState,
     coordinate: Coordinate,
-) -> Option<PieceExternal> {
+) -> Option<PieceRich> {
     valid_select_pieces(game_state).find(|p| p.coordinate == coordinate)
 }
 

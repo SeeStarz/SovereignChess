@@ -1,8 +1,8 @@
-use crate::engine::model::{Coordinate, Piece, faction};
+use crate::engine::model::{Coordinate, PieceSimple, faction};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 
-pub type Tile = Option<Piece>;
+pub type Tile = Option<PieceSimple>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Special {

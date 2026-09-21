@@ -2,7 +2,9 @@ use crate::engine::{
     GameState,
     game_state::CanonicalState,
     logic,
-    model::{Board, MoveSimple, Piece, chess_move::CastleRich, faction, piece, tile::Special},
+    model::{
+        Board, MoveSimple, PieceSimple, chess_move::CastleRich, faction, piece, tile::Special,
+    },
 };
 
 pub fn apply_move(game_state: &GameState, chess_move: MoveSimple) -> CanonicalState {
@@ -148,7 +150,7 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
             board.set_at(rook_move.origin, None);
             board.set_at(rook_move.destination, Some(rook));
             board.set_at(king_piece.coordinate, None);
-            board.set_at(king_destination, Some(Piece::from(king_piece)));
+            board.set_at(king_destination, Some(PieceSimple::from(king_piece)));
         }
         MoveSimple::Defection(defection_move) => {
             let king_origin = logic::board::find_current_player_king_assert(game_state).coordinate;
@@ -162,7 +164,7 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
                 board.set_at(king_origin, None);
                 board.set_at(
                     destination,
-                    Some(Piece {
+                    Some(PieceSimple {
                         faction: defection_move.faction,
                         piece_type: piece::King,
                     }),
@@ -178,7 +180,7 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
 
                 board.set_at(
                     king_coordinate,
-                    Some(Piece {
+                    Some(PieceSimple {
                         faction: defection_move.faction,
                         piece_type: piece::King,
                     }),

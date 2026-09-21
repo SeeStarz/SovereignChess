@@ -12,7 +12,7 @@ pub enum Type {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Piece {
+pub struct PieceSimple {
     pub faction: faction::Color,
     pub piece_type: self::Type,
 }
@@ -23,9 +23,9 @@ pub struct PieceWithCoordinate {
     pub coordinate: Coordinate,
 }
 
-impl From<PieceWithCoordinate> for Piece {
-    fn from(piece: PieceWithCoordinate) -> Piece {
-        Piece {
+impl From<PieceWithCoordinate> for PieceSimple {
+    fn from(piece: PieceWithCoordinate) -> PieceSimple {
+        PieceSimple {
             faction: piece.faction,
             piece_type: piece.piece_type,
         }
@@ -33,7 +33,7 @@ impl From<PieceWithCoordinate> for Piece {
 }
 
 impl PieceWithCoordinate {
-    pub fn from_piece(piece: Piece, coordinate: Coordinate) -> Self {
+    pub fn from_piece(piece: PieceSimple, coordinate: Coordinate) -> Self {
         Self {
             faction: piece.faction,
             piece_type: piece.piece_type,
@@ -43,24 +43,24 @@ impl PieceWithCoordinate {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct PieceExternal {
+pub struct PieceRich {
     pub faction: faction::Color,
     pub owner: Option<faction::Color>,
     pub piece_type: self::Type,
     pub coordinate: Coordinate,
 }
 
-impl From<PieceExternal> for Piece {
-    fn from(piece: PieceExternal) -> Piece {
-        Piece {
+impl From<PieceRich> for PieceSimple {
+    fn from(piece: PieceRich) -> PieceSimple {
+        PieceSimple {
             faction: piece.faction,
             piece_type: piece.piece_type,
         }
     }
 }
 
-impl PieceExternal {
-    pub fn from_piece(piece: Piece, owner: Option<faction::Color>, coordinate: Coordinate) -> Self {
+impl PieceRich {
+    pub fn from_piece(piece: PieceSimple, owner: Option<faction::Color>, coordinate: Coordinate) -> Self {
         Self {
             faction: piece.faction,
             owner,
