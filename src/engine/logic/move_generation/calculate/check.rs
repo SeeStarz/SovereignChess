@@ -1,6 +1,6 @@
 use crate::engine::{
     GameState, logic,
-    model::{
+    {
         Direction, MoveRich, MoveSimple,
         chess_move::{CastleRich, CastleSimple},
     },
@@ -65,6 +65,6 @@ fn is_enemy_king_safe(game_state: &GameState) -> bool {
         .iter()
         .all(|&m| {
             let response_game_state = game_state.apply_move(MoveSimple::from(m));
-            logic::board::find_current_player_king(&response_game_state).is_some()
+            logic::find_current_player_king(&response_game_state).is_some()
         })
 }

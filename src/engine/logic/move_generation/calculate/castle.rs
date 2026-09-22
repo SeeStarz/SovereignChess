@@ -1,6 +1,6 @@
 use crate::engine::{
     GameState, logic,
-    model::{Direction, MoveRich, chess_move::CastleRich, faction, tile},
+    {Direction, MoveRich, chess_move::CastleRich, faction, tile},
 };
 
 pub fn add_moves_naive(moves: &mut Vec<MoveRich>, game_state: &GameState) {
@@ -36,10 +36,10 @@ fn check_pieces_allied(game_state: &GameState, castle_move: CastleRich) -> bool 
             castle_move
         )
     };
-    if logic::faction::get_allegiance(game_state, king_piece.faction) != faction::Allegiance::Ally {
+    if logic::get_allegiance(game_state, king_piece.faction) != faction::Allegiance::Ally {
         return false;
     }
-    if logic::faction::get_allegiance(game_state, rook_piece.faction) != faction::Allegiance::Ally {
+    if logic::get_allegiance(game_state, rook_piece.faction) != faction::Allegiance::Ally {
         return false;
     }
     true

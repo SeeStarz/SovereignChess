@@ -1,4 +1,4 @@
-use crate::engine::model::{Coordinate, faction, piece};
+use crate::engine::{Coordinate, faction, piece};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MoveSimple {

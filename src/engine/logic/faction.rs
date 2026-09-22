@@ -1,7 +1,7 @@
 use crate::engine::{
     GameState,
     game_state::CanonicalState,
-    model::{
+    {
         faction::{self, Allegiance, Color},
         tile,
     },

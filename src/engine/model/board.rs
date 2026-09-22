@@ -1,6 +1,6 @@
 use crate::engine::{
     initializer,
-    model::{Coordinate, PieceSimple, Tile},
+    {Coordinate, PieceSimple, Tile},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

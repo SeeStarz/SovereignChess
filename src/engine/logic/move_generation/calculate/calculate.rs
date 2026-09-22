@@ -3,9 +3,9 @@ use crate::engine::{
     logic::{
         self,
         board::find_current_player_king_assert,
-        move_generation::calculate::{castle, defection, knight, linear, pawn},
+        move_generation::calculate::{castle, check, defection, knight, linear, pawn},
     },
-    model::{MoveRich, piece},
+    {MoveRich, piece},
 };
 
 pub fn naive_moves(game_state: &GameState) -> Vec<MoveRich> {
@@ -44,6 +44,6 @@ pub fn naive_moves(game_state: &GameState) -> Vec<MoveRich> {
 
 pub fn moves(game_state: &GameState) -> Vec<MoveRich> {
     let mut moves = naive_moves(game_state);
-    logic::move_generation::calculate::check::filter_checks(game_state, &mut moves);
+    check::filter_checks(game_state, &mut moves);
     moves
 }

@@ -14,7 +14,7 @@ fn main() {
 pub mod game {
     use crate::{
         adapter::Adapter,
-        engine::export::GameState,
+        engine::GameState,
         geometry::FPosition,
         sprite,
         ui::{self, export::input::Event},

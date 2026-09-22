@@ -1,4 +1,4 @@
-use crate::engine::export::faction;
+use crate::engine::faction;
 use raylib::color::Color;
 
 pub trait ToColor {

@@ -1,4 +1,4 @@
-use crate::engine::model::{Board, faction, tile::Special};
+use crate::engine::{Board, faction, tile::Special};
 
 pub fn is_special_tile_occupiable(
     board: &Board,

@@ -10,7 +10,7 @@ use raylib::{
 
 use crate::{
     adapter::{Adapter, BoardGesture, Gesture},
-    engine::export::{Coordinate, tile},
+    engine::{Coordinate, tile},
     game::Data,
     geometry::{FPosition, FRect, FSize},
     render::ToColor,

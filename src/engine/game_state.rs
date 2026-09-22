@@ -1,8 +1,6 @@
 use crate::engine::{
     logic,
-    model::{
-        MoveRich, MoveSimple, board::Board, chess_move::CastleRich, faction, piece::PieceRich,
-    },
+    {MoveRich, MoveSimple, board::Board, chess_move::CastleRich, faction, piece::PieceRich},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -46,7 +44,7 @@ impl GameState {
     }
 
     pub fn pieces(&self) -> impl Iterator<Item = PieceRich> {
-        logic::board::piece_externals(self)
+        logic::board_piece_externals(self)
     }
 
     pub fn new() -> Self {
@@ -54,7 +52,7 @@ impl GameState {
             let board = Board::default();
             let player_colors = [faction::White, faction::Black];
             let turn_to_play = TurnToPlay::Player1;
-            let remaining_castles = logic::castle_generation::generate(&board);
+            let remaining_castles = logic::generate_castle(&board);
             CanonicalState {
                 board,
                 player_colors,
@@ -69,11 +67,11 @@ impl GameState {
     }
 
     pub fn moves(&self) -> Vec<MoveRich> {
-        logic::move_generation::calculate(self)
+        logic::calculate_move(self)
     }
 
     pub fn apply_move(&self, chess_move: MoveSimple) -> Self {
-        let canonical = logic::move_generation::apply_move(self, chess_move);
+        let canonical = logic::apply_move(self, chess_move);
         let derived = DerivedState::new(&canonical);
 
         Self { canonical, derived }
@@ -82,7 +80,7 @@ impl GameState {
 
 impl CanonicalState {
     fn get_real_faction_owners(&self) -> [Option<faction::Color>; 12] {
-        logic::faction::get_real_faction_owners(self)
+        logic::get_real_faction_owners(self)
     }
 }
 

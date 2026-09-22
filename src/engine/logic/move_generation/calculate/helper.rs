@@ -1,6 +1,6 @@
 use crate::engine::{
     GameState, logic,
-    model::{MoveRich, chess_move::NormalMove, faction, tile},
+    {MoveRich, chess_move::NormalMove, faction, tile},
 };
 
 pub fn try_add_move_check_special_tile_rules(
@@ -31,11 +31,7 @@ pub fn try_add_move_check_special_tile_rules(
 
     // Means that we are not trying to occupy special tile colored the same as current faction
     // We are also not trying to occupy special tile where there currently is a piece on the other pair
-    if logic::special::is_special_tile_occupiable(
-        &game_state.c().board,
-        special_destination,
-        faction,
-    ) {
+    if logic::is_special_tile_occupiable(&game_state.c().board, special_destination, faction) {
         moves.push(chess_move);
         return;
     }

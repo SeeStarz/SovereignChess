@@ -1,11 +1,11 @@
 use crate::engine::{
     logic,
-    model::{Board, chess_move::CastleRich, chess_move::NormalMove, direction, piece},
+    {Board, chess_move::CastleRich, chess_move::NormalMove, direction, piece},
 };
 
 pub fn generate(board: &Board) -> Vec<CastleRich> {
     let mut castles = Vec::new();
-    for king in logic::board::pieces(board).filter(|p| p.piece_type == piece::King) {
+    for king in logic::board_pieces(board).filter(|p| p.piece_type == piece::King) {
         for &direction in direction::rook() {
             for distance in 2..board.tiles.len() {
                 let Some(coordinate) = king.coordinate.offset(direction * distance as i32) else {

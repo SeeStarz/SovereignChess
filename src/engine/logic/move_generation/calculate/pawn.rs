@@ -1,7 +1,7 @@
 use crate::engine::{
     GameState,
     logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
-    model::{
+    {
         Coordinate, Direction, MoveRich,
         chess_move::{NormalMove, Promotion, RegimeChangePromotionRich},
         faction::{self, Allegiance},
@@ -68,7 +68,7 @@ pub fn add_moves_naive(
         let Some(victim) = game_state.c().board.at(destination) else {
             continue;
         };
-        if logic::faction::get_allegiance(game_state, victim.faction) != Allegiance::Enemy {
+        if logic::get_allegiance(game_state, victim.faction) != Allegiance::Enemy {
             continue;
         }
 
@@ -173,8 +173,7 @@ fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
             game_state,
             MoveRich::RegimeChangePromotion(RegimeChangePromotionRich {
                 pawn_move: normal_move,
-                king_origin: logic::board::find_current_player_king(game_state)
-                    .map(|p| p.coordinate),
+                king_origin: logic::find_current_player_king(game_state).map(|p| p.coordinate),
             }),
             faction,
         );

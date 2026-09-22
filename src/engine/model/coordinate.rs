@@ -1,4 +1,4 @@
-use crate::engine::model::Direction;
+use crate::engine::Direction;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Coordinate {

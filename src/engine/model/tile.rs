@@ -1,4 +1,4 @@
-use crate::engine::model::{Coordinate, PieceSimple, faction};
+use crate::engine::{Coordinate, PieceSimple, faction};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 

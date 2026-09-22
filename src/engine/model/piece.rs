@@ -1,4 +1,4 @@
-use crate::engine::model::{Coordinate, faction};
+use crate::engine::{Coordinate, faction};
 
 pub use Type::*;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
