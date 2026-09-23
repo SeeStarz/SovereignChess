@@ -1,7 +1,9 @@
 use std::collections::HashSet;
 
 use crate::engine::{
-    Coordinate, GameState, MoveRich, MoveSimple, PieceRich, faction,
+    Coordinate, GameState, MoveRich, MoveSimple, PieceRich,
+    chess_move::CastleRich,
+    faction,
     logic::{self, board_at_external},
     piece,
 };
@@ -18,6 +20,7 @@ pub enum Gesture {
 pub enum MenuClick {
     Promotion(piece::Type),
     Defection(faction::Color),
+    Castle,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -35,26 +38,27 @@ pub struct GamestateChange {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AdapterState {
     Idle,
-    Selected(SelectedStage),
-    Promotion(PromotionStage),
+    Selected(SelectedState),
+    Promotion(PromotionState),
     Done(GamestateChange),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum SelectedStage {
+pub enum SelectedState {
     BoardSelection(PieceRich),
     DefectionSelection(faction::Color),
+    CastleSelection,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct PromotionStage {
+pub struct PromotionState {
     pub origin: Coordinate,
     pub destination: Coordinate,
 }
 
 pub enum SelectedStageResult {
     Done(GamestateChange),
-    Promotion(PromotionStage),
+    Promotion(PromotionState),
 }
 
 impl From<SelectedStageResult> for AdapterState {
@@ -91,8 +95,10 @@ impl From<AdapterState> for UIState {
 pub struct UIHint {
     pub grabbable_pieces: Vec<PieceRich>,
     pub valid_defections: Vec<faction::Color>,
+    pub valid_castles: Vec<CastleRich>,
     pub grabbed_piece: Option<PieceRich>,
     pub selected_defection: Option<faction::Color>,
+    pub castle_selected: bool,
     pub valid_destinations: Vec<Coordinate>,
     pub promotion_options: Vec<piece::Type>,
     pub game_state_change: Option<GamestateChange>,
@@ -155,6 +161,9 @@ impl Adapter {
             (_, Gesture::MenuClick(MenuClick::Defection(faction))) => {
                 self.try_selected_do_defection_click(faction)
             }
+            (_, Gesture::MenuClick(MenuClick::Castle)) => {
+                AdapterState::Selected(SelectedState::CastleSelection)
+            }
 
             // Invalid pairings (e.g. Drop on PromotionStage)
             _ => AdapterState::Idle,
@@ -165,20 +174,31 @@ impl Adapter {
         let grabbable_pieces: Vec<PieceRich> = valid_select_pieces(&self.game_state).collect();
         let valid_defections: Vec<faction::Color> = valid_defections(&self.game_state).collect();
 
+        let valid_castles: Vec<CastleRich> = self
+            .game_state
+            .moves()
+            .into_iter()
+            .filter_map(|m| {
+                if let MoveRich::Castle(castle_move) = m {
+                    Some(castle_move)
+                } else {
+                    None
+                }
+            })
+            .collect();
+
         let grabbed_piece: Option<PieceRich> = match self.state.clone() {
-            AdapterState::Selected(SelectedStage::BoardSelection(piece)) => Some(piece),
+            AdapterState::Selected(SelectedState::BoardSelection(piece)) => Some(piece),
             AdapterState::Promotion(promotion_data) => {
                 board_at_external(&self.game_state, promotion_data.origin)
             }
-            AdapterState::Done(game_state_change) => {
-                get_move_origin(game_state_change.applied_move)
-                    .and_then(|c| board_at_external(&self.game_state, c))
-            }
+            AdapterState::Done(game_state_change) => ui_move_origin(game_state_change.applied_move)
+                .and_then(|c| board_at_external(&self.game_state, c)),
             _ => None,
         };
 
         let selected_defection: Option<faction::Color> = match self.state.clone() {
-            AdapterState::Selected(SelectedStage::DefectionSelection(faction)) => Some(faction),
+            AdapterState::Selected(SelectedState::DefectionSelection(faction)) => Some(faction),
             AdapterState::Done(game_state_change) => {
                 if let MoveRich::Defection(defection_move) = game_state_change.applied_move {
                     Some(defection_move.faction)
@@ -189,18 +209,35 @@ impl Adapter {
             _ => None,
         };
 
+        let castle_selected: bool = match self.state.clone() {
+            AdapterState::Selected(SelectedState::CastleSelection) => true,
+            AdapterState::Done(game_state_change) => {
+                if let MoveRich::Castle(_castle_move) = game_state_change.applied_move {
+                    true
+                } else {
+                    false
+                }
+            }
+            _ => false,
+        };
+
         let valid_destinations: HashSet<Coordinate> = if let Some(piece) = grabbed_piece {
-            valid_advance_from_selected_do_board_click(&self.game_state, piece.coordinate)
+            valid_advance_from_board_selection(&self.game_state, piece.coordinate)
                 .map(|r| match r {
                     SelectedStageResult::Done(game_state_change) => {
-                        get_move_destination(&self.game_state, game_state_change.applied_move)
+                        ui_move_destination(game_state_change.applied_move)
                     }
                     SelectedStageResult::Promotion(promotion_data) => promotion_data.destination,
                 })
                 .collect()
         } else if let Some(faction) = selected_defection {
-            valid_advance_from_selected_do_defection_click(&self.game_state, faction)
-                .map(|c| get_move_destination(&self.game_state, c.applied_move))
+            valid_advance_from_defection_selection(&self.game_state, faction)
+                .map(|c| ui_move_destination(c.applied_move))
+                .collect()
+        } else if castle_selected {
+            valid_castles
+                .iter()
+                .map(|c| c.king_move.destination)
                 .collect()
         } else {
             HashSet::new()
@@ -219,7 +256,7 @@ impl Adapter {
                     _ => None,
                 })
                 .and_then(|m| {
-                    Some(PromotionStage {
+                    Some(PromotionState {
                         origin: m.origin,
                         destination: m.destination,
                     })
@@ -250,8 +287,10 @@ impl Adapter {
         UIHint {
             grabbable_pieces,
             valid_defections,
+            valid_castles,
             grabbed_piece,
             selected_defection,
+            castle_selected,
             valid_destinations,
             promotion_options,
             game_state_change,
@@ -261,7 +300,7 @@ impl Adapter {
 
     fn try_advance_from_selected_do_board_click(
         &self,
-        selected_data: SelectedStage,
+        selected_data: SelectedState,
         coordinate: Coordinate,
     ) -> AdapterState {
         if let Some(selected_stage_result) =
@@ -275,7 +314,7 @@ impl Adapter {
 
     fn try_advance_from_selected_do_board_drop(
         &self,
-        selected_data: SelectedStage,
+        selected_data: SelectedState,
         coordinate: Option<Coordinate>,
     ) -> AdapterState {
         if let Some(coordinate) = coordinate
@@ -290,7 +329,7 @@ impl Adapter {
 
     fn try_advance_from_promotion_do_board_click(
         &self,
-        waiting_promotion_data: PromotionStage,
+        waiting_promotion_data: PromotionState,
         piece_type: piece::Type,
     ) -> AdapterState {
         if let Some(game_state_change) =
@@ -304,7 +343,7 @@ impl Adapter {
 
     fn try_selected_do_board_click(&self, coordinate: Coordinate) -> AdapterState {
         if let Some(piece) = is_valid_idle_do_board_click(&self.game_state, coordinate) {
-            AdapterState::Selected(SelectedStage::BoardSelection(piece))
+            AdapterState::Selected(SelectedState::BoardSelection(piece))
         } else {
             AdapterState::Idle
         }
@@ -312,7 +351,7 @@ impl Adapter {
 
     fn try_selected_do_defection_click(&self, faction: faction::Color) -> AdapterState {
         if let Some(faction) = is_valid_idle_do_defection_click(&self.game_state, faction) {
-            AdapterState::Selected(SelectedStage::DefectionSelection(faction))
+            AdapterState::Selected(SelectedState::DefectionSelection(faction))
         } else {
             AdapterState::Idle
         }
@@ -334,21 +373,21 @@ fn valid_defections(game_state: &GameState) -> impl Iterator<Item = faction::Col
     })
 }
 
-fn valid_advance_from_selected_do_board_click(
+fn valid_advance_from_board_selection(
     game_state: &GameState,
     origin: Coordinate,
 ) -> impl Iterator<Item = SelectedStageResult> {
     game_state.moves().into_iter().filter_map(move |m| {
-        let Some(move_origin) = get_move_origin(m) else {
+        let Some(move_origin) = ui_move_origin(m) else {
             return None;
         };
 
         if move_origin == origin {
             match m {
                 MoveRich::Promotion(_) | MoveRich::RegimeChangePromotion(_) => {
-                    Some(SelectedStageResult::Promotion(PromotionStage {
+                    Some(SelectedStageResult::Promotion(PromotionState {
                         origin,
-                        destination: get_move_destination(game_state, m),
+                        destination: ui_move_destination(m),
                     }))
                 }
                 _ => Some(SelectedStageResult::Done(GamestateChange {
@@ -362,7 +401,7 @@ fn valid_advance_from_selected_do_board_click(
     })
 }
 
-fn valid_advance_from_selected_do_defection_click(
+fn valid_advance_from_defection_selection(
     game_state: &GameState,
     faction: faction::Color,
 ) -> impl Iterator<Item = GamestateChange> {
@@ -380,9 +419,24 @@ fn valid_advance_from_selected_do_defection_click(
     })
 }
 
+fn valid_advance_from_castle_selection(
+    game_state: &GameState,
+) -> impl Iterator<Item = GamestateChange> {
+    game_state.moves().into_iter().filter_map(move |m| {
+        if let MoveRich::Castle(_castle_move) = m {
+            Some(GamestateChange {
+                updated_game_state: game_state.apply_move(MoveSimple::from(m)),
+                applied_move: m,
+            })
+        } else {
+            None
+        }
+    })
+}
+
 fn valid_promotions(
     game_state: &GameState,
-    promotion_stage_data: PromotionStage,
+    promotion_stage_data: PromotionState,
 ) -> impl Iterator<Item = GamestateChange> {
     game_state
         .moves()
@@ -420,37 +474,47 @@ fn is_valid_idle_do_defection_click(
 
 fn is_valid_selected_do_board_click(
     game_state: &GameState,
-    selected_data: SelectedStage,
+    selected_data: SelectedState,
     destination: Coordinate,
 ) -> Option<SelectedStageResult> {
     match selected_data {
-        SelectedStage::BoardSelection(piece) => {
-            valid_advance_from_selected_do_board_click(game_state, piece.coordinate).find(|r| {
-                match r {
-                    SelectedStageResult::Promotion(promotion_stage_data) => {
-                        promotion_stage_data.origin == piece.coordinate
-                            && promotion_stage_data.destination == destination
-                    }
-                    SelectedStageResult::Done(game_state_change) => {
-                        get_move_origin(game_state_change.applied_move) == Some(piece.coordinate)
-                            && get_move_destination(game_state, game_state_change.applied_move)
-                                == destination
-                    }
+        SelectedState::BoardSelection(piece) => {
+            valid_advance_from_board_selection(game_state, piece.coordinate).find(|r| match r {
+                SelectedStageResult::Promotion(promotion_stage_data) => {
+                    promotion_stage_data.origin == piece.coordinate
+                        && promotion_stage_data.destination == destination
+                }
+                SelectedStageResult::Done(game_state_change) => {
+                    ui_move_origin(game_state_change.applied_move) == Some(piece.coordinate)
+                        && ui_move_destination(game_state_change.applied_move) == destination
                 }
             })
         }
 
-        SelectedStage::DefectionSelection(faction) => {
-            valid_advance_from_selected_do_defection_click(game_state, faction).find_map(|c| {
-                if let MoveRich::Defection(defection_move) = c.applied_move
-                    && defection_move.faction == faction
-                    && get_move_destination(game_state, c.applied_move) == destination
-                {
-                    Some(SelectedStageResult::Done(c))
+        SelectedState::DefectionSelection(faction) => {
+            valid_advance_from_defection_selection(game_state, faction).find_map(|c| {
+                if let MoveRich::Defection(defection_move) = c.applied_move {
+                    if defection_move.faction == faction
+                        && ui_move_destination(c.applied_move) == destination
+                    {
+                        Some(SelectedStageResult::Done(c))
+                    } else {
+                        None
+                    }
                 } else {
                     panic!(
                         "Got non-defection move from valid_advance_from_selected_defection_click"
                     )
+                }
+            })
+        }
+
+        SelectedState::CastleSelection => {
+            valid_advance_from_castle_selection(game_state).find_map(|c| {
+                if ui_move_destination(c.applied_move) == destination {
+                    Some(SelectedStageResult::Done(c))
+                } else {
+                    None
                 }
             })
         }
@@ -459,7 +523,7 @@ fn is_valid_selected_do_board_click(
 
 fn is_valid_promotion_do_board_click(
     game_state: &GameState,
-    promotion_stage_data: PromotionStage,
+    promotion_stage_data: PromotionState,
     piece_type: piece::Type,
 ) -> Option<GamestateChange> {
     valid_promotions(game_state, promotion_stage_data).find(|c| {
@@ -471,23 +535,23 @@ fn is_valid_promotion_do_board_click(
     })
 }
 
-fn get_move_origin(chess_move: MoveRich) -> Option<Coordinate> {
+fn ui_move_origin(chess_move: MoveRich) -> Option<Coordinate> {
     match chess_move {
         MoveRich::NormalMove(normal_move) => Some(normal_move.origin),
-        MoveRich::Castle(castle_move) => Some(castle_move.king_move.origin),
+        MoveRich::Castle(_castle_move) => None,
         MoveRich::Defection(_defection_move) => None,
         MoveRich::RegimeChangePromotion(promotion_move) => Some(promotion_move.pawn_move.origin),
         MoveRich::Promotion(promotion_move) => Some(promotion_move.normal_move.origin),
     }
 }
 
-fn get_move_destination(game_state: &GameState, chess_move: MoveRich) -> Coordinate {
+fn ui_move_destination(chess_move: MoveRich) -> Coordinate {
     match chess_move {
         MoveRich::NormalMove(normal_move) => normal_move.destination,
         MoveRich::Castle(castle_move) => castle_move.king_move.destination,
-        MoveRich::Defection(defection_move) => defection_move
-            .destination
-            .unwrap_or_else(|| logic::find_current_player_king_assert(game_state).coordinate),
+        MoveRich::Defection(defection_move) => {
+            defection_move.destination.unwrap_or(defection_move.origin)
+        }
         MoveRich::RegimeChangePromotion(promotion_move) => promotion_move.pawn_move.destination,
         MoveRich::Promotion(promotion_move) => promotion_move.normal_move.destination,
     }

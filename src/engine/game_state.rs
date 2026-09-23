@@ -1,7 +1,4 @@
-use crate::engine::{
-    logic,
-    {MoveRich, MoveSimple, board::Board, chess_move::CastleRich, faction, piece::PieceRich},
-};
+use crate::engine::{Board, CastleSource, MoveRich, MoveSimple, faction, logic, piece::PieceRich};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TurnToPlay {
@@ -24,7 +21,7 @@ pub struct CanonicalState {
     pub board: Board,
     pub player_colors: [faction::Color; 2],
     pub turn_to_play: TurnToPlay,
-    pub remaining_castles: Vec<CastleRich>,
+    pub remaining_castles: Vec<CastleSource>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

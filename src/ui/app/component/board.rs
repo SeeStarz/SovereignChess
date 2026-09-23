@@ -60,6 +60,7 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
 }
 
 pub fn handle_chess_gesture(gesture: Gesture, data: &mut Data) {
+    println!("{:?}", gesture);
     data.adapter.apply(gesture);
     if let Some(game_state_change) = data.adapter.hint().game_state_change {
         data.adapter = Adapter::new(game_state_change.updated_game_state);

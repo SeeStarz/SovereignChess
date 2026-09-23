@@ -1,7 +1,6 @@
 use crate::engine::{
     GameState,
     logic::{
-        self,
         board::find_current_player_king_assert,
         move_generation::calculate::{castle, check, defection, knight, linear, pawn},
     },
@@ -38,7 +37,6 @@ pub fn naive_moves(game_state: &GameState) -> Vec<MoveRich> {
         find_current_player_king_assert(game_state).coordinate,
     );
 
-    // TODO: check for checks
     moves
 }
 

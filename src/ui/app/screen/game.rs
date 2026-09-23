@@ -30,6 +30,12 @@ pub fn generate(data: Rc<RefCell<Data>>) -> ComputedNode {
     let defection_selection_button =
         component::defection_selection(FSize::new(32.0, 32.0), data.clone()).finalize();
 
+    let spacer3 = widget::Builder::default()
+        .size(FSize::new(0.0, 32.0))
+        .finalize();
+
+    let castle_button = component::castle_button(FSize::new(32.0, 32.0), data.clone()).finalize();
+
     let root = widget::Builder::new_col(true)
         .children(vec![
             board,
@@ -37,6 +43,8 @@ pub fn generate(data: Rc<RefCell<Data>>) -> ComputedNode {
             promotion_selection_buttons,
             spacer2,
             defection_selection_button,
+            spacer3,
+            castle_button,
         ])
         .finalize();
 

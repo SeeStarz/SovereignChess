@@ -1,9 +1,7 @@
 use crate::engine::{
-    GameState, logic,
-    {
-        Direction, MoveRich, MoveSimple,
-        chess_move::{CastleRich, CastleSimple},
-    },
+    Coordinate, Direction, GameState, MoveRich, MoveSimple,
+    chess_move::{CastleRich, CastleSimple},
+    logic,
 };
 
 pub fn filter_checks(game_state: &GameState, moves: &mut Vec<MoveRich>) {
@@ -37,22 +35,11 @@ fn is_castle_safe(game_state: &GameState, castle_move: CastleRich) -> bool {
             panic!("Castling out of bounds")
         };
 
-        let Some(piece) = game_state.c().board.at(coordinate) else {
-            panic!("King not found at {:?}", coordinate);
-        };
-
         let mut temporary_game_state = game_state.clone();
-        temporary_game_state
-            .canonical
-            .board
-            .set_at(castle_move.king_move.origin, None);
-        temporary_game_state
-            .canonical
-            .board
-            .set_at(coordinate, Some(piece));
         temporary_game_state.canonical.turn_to_play =
             temporary_game_state.canonical.turn_to_play.other();
-        if !is_enemy_king_safe(&temporary_game_state) {
+
+        if is_coordinate_attackable(&temporary_game_state, coordinate) {
             return false;
         }
     }
@@ -67,4 +54,24 @@ fn is_enemy_king_safe(game_state: &GameState) -> bool {
             let response_game_state = game_state.apply_move(MoveSimple::from(m));
             logic::find_current_player_king(&response_game_state).is_some()
         })
+}
+
+fn is_coordinate_attackable(game_state: &GameState, coordinate: Coordinate) -> bool {
+    logic::move_generation::calculate::naive_moves(game_state)
+        .iter()
+        .any(|&m| get_move_attacked_square(m).is_some_and(|c| c == coordinate))
+}
+
+fn get_move_attacked_square(chess_move: MoveRich) -> Option<Coordinate> {
+    match chess_move {
+        MoveRich::NormalMove(normal_move) => Some(normal_move.destination),
+        MoveRich::Castle(_castle_move) => None,
+        MoveRich::Defection(defection_move) => {
+            Some(defection_move.destination.unwrap_or(defection_move.origin))
+        }
+        MoveRich::RegimeChangePromotion(promotion_move) => {
+            Some(promotion_move.pawn_move.destination)
+        }
+        MoveRich::Promotion(promotion_move) => Some(promotion_move.normal_move.destination),
+    }
 }

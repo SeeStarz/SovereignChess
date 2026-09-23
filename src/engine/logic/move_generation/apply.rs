@@ -1,10 +1,6 @@
 use crate::engine::{
-    GameState,
-    game_state::CanonicalState,
-    logic,
-    {
-        Board, MoveSimple, PieceSimple, chess_move::CastleRich, faction, piece, tile::Special,
-    },
+    Board, CastleSource, GameState, MoveSimple, PieceSimple, faction, game_state::CanonicalState,
+    logic, piece, tile::Special,
 };
 
 pub fn apply_move(game_state: &GameState, chess_move: MoveSimple) -> CanonicalState {
@@ -32,7 +28,7 @@ pub fn apply_move(game_state: &GameState, chess_move: MoveSimple) -> CanonicalSt
 
 fn filter_remaining_castles(
     game_state: &GameState,
-    remaining_castles: &mut Vec<CastleRich>,
+    remaining_castles: &mut Vec<CastleSource>,
     chess_move: MoveSimple,
 ) {
     let affected_coordinates = match chess_move {
@@ -88,7 +84,7 @@ fn filter_remaining_castles(
     remaining_castles.retain(|castle| {
         !affected_coordinates
             .iter()
-            .any(|&c| castle.king_move.origin == c || castle.rook_move.origin == c)
+            .any(|&c| castle.king_coordinate == c || castle.rook_coordinate == c)
     });
 }
 
@@ -147,8 +143,8 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
             let king_destination = castle_move.king_destination;
 
             board.set_at(rook_move.origin, None);
-            board.set_at(rook_move.destination, Some(rook));
             board.set_at(king_piece.coordinate, None);
+            board.set_at(rook_move.destination, Some(rook));
             board.set_at(king_destination, Some(PieceSimple::from(king_piece)));
         }
         MoveSimple::Defection(defection_move) => {

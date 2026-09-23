@@ -1,39 +1,34 @@
 use crate::engine::{
-    GameState, logic,
-    {Direction, MoveRich, chess_move::CastleRich, faction, tile},
+    CastleSource, Direction, GameState, MoveRich,
+    chess_move::{CastleRich, NormalMove},
+    faction, logic, tile,
 };
 
 pub fn add_moves_naive(moves: &mut Vec<MoveRich>, game_state: &GameState) {
-    for &castle_move in game_state.canonical.remaining_castles.iter() {
-        if !check_pieces_allied(game_state, castle_move) {
+    for &castle_source in game_state.canonical.remaining_castles.iter() {
+        if !check_pieces_allied(game_state, castle_source) {
             continue;
         }
 
-        if !check_path_clear(game_state, castle_move) {
+        if !check_path_clear(game_state, castle_source) {
             continue;
         }
 
-        // Because this isn't even supposed to happen and
-        // the helper faction check function is unable to process this
-        if !check_no_special_tile(castle_move) {
-            continue;
-        }
-
-        moves.push(MoveRich::Castle(castle_move));
+        add_castle_source(moves, castle_source);
     }
 }
 
-fn check_pieces_allied(game_state: &GameState, castle_move: CastleRich) -> bool {
-    let Some(king_piece) = game_state.c().board.at(castle_move.king_move.origin) else {
+fn check_pieces_allied(game_state: &GameState, castle_source: CastleSource) -> bool {
+    let Some(king_piece) = game_state.c().board.at(castle_source.king_coordinate) else {
         panic!(
-            "Desync with remaining castles. Expected to find king with castle {:#?}",
-            castle_move
+            "Desync with remaining castles. Expected to find king at {:?}",
+            castle_source.king_coordinate
         )
     };
-    let Some(rook_piece) = game_state.c().board.at(castle_move.rook_move.origin) else {
+    let Some(rook_piece) = game_state.c().board.at(castle_source.rook_coordinate) else {
         panic!(
-            "Desync with remaining castles. Expected to find king with castle {:#?}",
-            castle_move
+            "Desync with remaining castles. Expected to find rook at {:?}",
+            castle_source.rook_coordinate
         )
     };
     if logic::get_allegiance(game_state, king_piece.faction) != faction::Allegiance::Ally {
@@ -45,23 +40,21 @@ fn check_pieces_allied(game_state: &GameState, castle_move: CastleRich) -> bool 
     true
 }
 
-fn check_path_clear(game_state: &GameState, castle_move: CastleRich) -> bool {
-    let rook_offset = Direction::from_coordinate_pair(
-        castle_move.rook_move.origin,
-        castle_move.rook_move.destination,
+fn check_path_clear(game_state: &GameState, castle_source: CastleSource) -> bool {
+    let sweep_vector = Direction::from_coordinate_pair(
+        castle_source.rook_coordinate,
+        castle_source.king_coordinate,
     );
-    let move_distance = rook_offset.manhattan_distance();
-    let rook_direction = Direction::new(
-        rook_offset.row / move_distance as i32,
-        rook_offset.col / move_distance as i32,
+    let sweep_distance = sweep_vector.manhattan_distance() - 1;
+    let sweep_direction = Direction::new(
+        sweep_vector.row / sweep_distance as i32,
+        sweep_vector.col / sweep_distance as i32,
     );
 
-    // Ensure up until the destination the tiles are empty
-    for distance in 1..=move_distance {
-        let Some(coordinate) = castle_move
-            .rook_move
-            .origin
-            .offset(rook_direction * distance as i32)
+    for distance in 1..=sweep_distance {
+        let Some(coordinate) = castle_source
+            .rook_coordinate
+            .offset(sweep_direction * distance as i32)
         else {
             panic!("Castling out of bounds")
         };
@@ -89,4 +82,43 @@ fn check_no_special_tile(castle_move: CastleRich) -> bool {
         }
     }
     true
+}
+
+fn add_castle_source(moves: &mut Vec<MoveRich>, castle_source: CastleSource) {
+    let sweep_vector = Direction::from_coordinate_pair(
+        castle_source.king_coordinate,
+        castle_source.rook_coordinate,
+    );
+    let sweep_distance = sweep_vector.manhattan_distance() - 1;
+    let sweep_direction = Direction::new(
+        sweep_vector.row / sweep_distance as i32,
+        sweep_vector.col / sweep_distance as i32,
+    );
+
+    for distance in 1..=sweep_distance {
+        let Some(king_end_coordinate) = castle_source
+            .king_coordinate
+            .offset(sweep_direction * distance as i32)
+        else {
+            panic!("Castling out of bounds")
+        };
+
+        let Some(rook_end_coordinate) = castle_source
+            .king_coordinate
+            .offset(sweep_direction * (distance - 1) as i32)
+        else {
+            panic!("Castling out of bounds")
+        };
+
+        moves.push(MoveRich::Castle(CastleRich {
+            king_move: NormalMove {
+                origin: castle_source.king_coordinate,
+                destination: king_end_coordinate,
+            },
+            rook_move: NormalMove {
+                origin: castle_source.rook_coordinate,
+                destination: rook_end_coordinate,
+            },
+        }));
+    }
 }

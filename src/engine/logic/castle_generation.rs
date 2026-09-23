@@ -1,9 +1,6 @@
-use crate::engine::{
-    logic,
-    {Board, chess_move::CastleRich, chess_move::NormalMove, direction, piece},
-};
+use crate::engine::{Board, CastleSource, direction, logic, piece};
 
-pub fn generate(board: &Board) -> Vec<CastleRich> {
+pub fn generate(board: &Board) -> Vec<CastleSource> {
     let mut castles = Vec::new();
     for king in logic::board_pieces(board).filter(|p| p.piece_type == piece::King) {
         for &direction in direction::rook() {
@@ -20,29 +17,9 @@ pub fn generate(board: &Board) -> Vec<CastleRich> {
                     continue;
                 }
 
-                let king_end_coordinate = king
-                    .coordinate
-                    .offset(direction * 2)
-                    .expect("Internal logic error at castle_generation");
-
-                let king_move = NormalMove {
-                    origin: king.coordinate,
-                    destination: king_end_coordinate,
-                };
-
-                let rook_end_coordinate = king
-                    .coordinate
-                    .offset(direction)
-                    .expect("Internal logic error at castle_generation");
-
-                let rook_move = NormalMove {
-                    origin: coordinate,
-                    destination: rook_end_coordinate,
-                };
-
-                castles.push(CastleRich {
-                    king_move,
-                    rook_move,
+                castles.push(CastleSource {
+                    king_coordinate: king.coordinate,
+                    rook_coordinate: coordinate,
                 });
             }
         }
