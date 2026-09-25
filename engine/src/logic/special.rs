@@ -1,6 +1,6 @@
-use crate::{Board, FactionID, tile::Special};
+use crate::{Board, FactionId, tile::Special};
 
-pub fn is_special_tile_occupiable(board: &Board, special: Special, faction: FactionID) -> bool {
+pub fn is_special_tile_occupiable(board: &Board, special: Special, faction: FactionId) -> bool {
     if special.faction() == faction {
         return false;
     }

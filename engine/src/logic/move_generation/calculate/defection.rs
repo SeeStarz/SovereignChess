@@ -1,5 +1,5 @@
 use crate::{
-    Coordinate, FactionID, GameState, MoveRich,
+    Coordinate, FactionId, GameState, MoveRich,
     chess_move::DefectionRich,
     direction,
     faction::Allegiance,
@@ -9,7 +9,7 @@ use crate::{
 pub fn add_moves_naive(
     moves: &mut Vec<MoveRich>,
     game_state: &GameState,
-    original_faction: FactionID,
+    original_faction: FactionId,
     origin: Coordinate,
 ) {
     let real_faction_owners = logic::real_faction_owners(game_state);

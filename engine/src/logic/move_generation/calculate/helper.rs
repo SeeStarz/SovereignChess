@@ -1,4 +1,4 @@
-use crate::{FactionID, GameState, MoveRich, chess_move::NormalMove, logic};
+use crate::{FactionId, GameState, MoveRich, chess_move::NormalMove, logic};
 
 /// # Panics
 /// Panic if passed a castle move
@@ -6,7 +6,7 @@ pub fn try_add_move_check_special_tile_rules(
     moves: &mut Vec<MoveRich>,
     game_state: &GameState,
     chess_move: MoveRich,
-    faction: FactionID,
+    faction: FactionId,
 ) {
     let normal_move = match chess_move {
         MoveRich::NormalMove(normal_move) => normal_move,

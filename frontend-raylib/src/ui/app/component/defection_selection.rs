@@ -12,7 +12,7 @@ use crate::{
     util::Observer,
 };
 use adapter_core::{Gesture, MenuClick};
-use engine::{FactionID, faction, logic, piece};
+use engine::{FactionId, faction, logic, piece};
 use raylib::{
     RaylibThread,
     color::Color,
@@ -23,8 +23,10 @@ use std::{cell::RefCell, rc::Rc};
 use strum::IntoEnumIterator;
 
 pub fn build(individual_size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder {
+    let board = &data.borrow().adapter.game_state().board;
     let buttons: Vec<SpecNode> = faction::ColorDefault::iter()
-        .map(|f| FactionID::from(f))
+        .map(|f| FactionId::from(f))
+        .filter(|&f| logic::all_factions(board).any(|f2| f2 == f))
         .map(|faction| {
             let mutator = data.clone();
             let observer = Observer::from(data.clone());
@@ -44,7 +46,7 @@ pub fn build(individual_size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder
     widget::Builder::new_row(true).children(buttons)
 }
 
-fn input_handler(event: Event, rect: FRect, data: &mut Data, faction: FactionID) -> bool {
+fn input_handler(event: Event, rect: FRect, data: &mut Data, faction: FactionId) -> bool {
     match event {
         Event::MousePressed(position)
             if Rectangle::from(rect).check_collision_point_rec(position) =>
@@ -61,7 +63,7 @@ pub fn render_function(
     _thread: &RaylibThread,
     rect: FRect,
     data: &Data,
-    faction: FactionID,
+    faction: FactionId,
 ) {
     let real_faction_owners = logic::real_faction_owners(&data.adapter.game_state());
 

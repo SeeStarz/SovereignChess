@@ -1,11 +1,22 @@
 #![allow(dead_code)]
+
+use std::env;
+
+use engine::{Variant, VariantData};
 mod geometry;
 pub mod render;
 mod sprite;
 mod ui;
 
 fn main() {
-    game::start();
+    let args: Vec<String> = env::args().collect();
+    let variant_data = VariantData::from(match args.get(1) {
+        None => Variant::Standard,
+        Some(name) if name == "standard" => Variant::Standard,
+        Some(name) if name == "arena" => Variant::Arena,
+        Some(name) => panic!("Invalid variant name {}", name),
+    });
+    game::start(variant_data);
 }
 
 pub mod game {
@@ -15,7 +26,7 @@ pub mod game {
         ui::{self, export::input::Event},
     };
     use adapter_core::{Adapter, UIHint};
-    use engine::GameState;
+    use engine::{GameState, VariantData};
     use raylib::prelude::*;
     use std::{cell::RefCell, rc::Rc};
 
@@ -25,7 +36,7 @@ pub mod game {
         pub sprite_manager: sprite::Manager,
     }
 
-    pub fn start() {
+    pub fn start(variant_data: VariantData) {
         let (mut raylib_handle, thread) = raylib::init()
             .resizable()
             .size(1080, 720)
@@ -34,7 +45,7 @@ pub mod game {
             .build();
 
         let data_mutator = Rc::new(RefCell::new({
-            let adapter = Adapter::new(GameState::new());
+            let adapter = Adapter::new(GameState::new(variant_data));
             Data {
                 cached_hint: adapter.hint(),
                 adapter,

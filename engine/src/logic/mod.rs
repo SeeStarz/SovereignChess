@@ -9,6 +9,6 @@ pub use board::{
     pieces_rich as board_pieces_rich, tiles_rich as board_tiles_rich,
 };
 pub use castle_generation::generate as generate_castle;
-pub use faction::{allegiance, current_player_faction, real_faction_owners};
+pub use faction::{all as all_factions, allegiance, current_player_faction, real_faction_owners};
 pub use move_generation::{apply_move, calculate as calculate_move};
 pub use special::is_special_tile_occupiable;

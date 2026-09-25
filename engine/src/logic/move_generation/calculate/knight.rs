@@ -1,5 +1,5 @@
 use crate::{
-    Coordinate, FactionID, GameState, MoveRich,
+    Coordinate, FactionId, GameState, MoveRich,
     chess_move::NormalMove,
     direction,
     faction::Allegiance,
@@ -9,7 +9,7 @@ use crate::{
 pub fn add_moves_naive(
     moves: &mut Vec<MoveRich>,
     game_state: &GameState,
-    faction: FactionID,
+    faction: FactionId,
     origin: Coordinate,
 ) {
     for &direction in direction::knight() {

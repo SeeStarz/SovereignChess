@@ -1,7 +1,7 @@
 use strum::{EnumIter, FromRepr};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct FactionID(pub u32);
+pub struct FactionId(pub u32);
 
 pub use ColorDefault::*;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, FromRepr)]
@@ -21,9 +21,9 @@ pub enum ColorDefault {
     Black = 11,
 }
 
-impl From<ColorDefault> for FactionID {
+impl From<ColorDefault> for FactionId {
     fn from(value: ColorDefault) -> Self {
-        FactionID(value as u32)
+        FactionId(value as u32)
     }
 }
 
@@ -42,9 +42,9 @@ pub enum ColorArena {
     Black = 11,
 }
 
-impl From<ColorArena> for FactionID {
+impl From<ColorArena> for FactionId {
     fn from(value: ColorArena) -> Self {
-        FactionID(value as u32)
+        FactionId(value as u32)
     }
 }
 

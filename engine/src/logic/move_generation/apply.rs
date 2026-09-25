@@ -1,13 +1,13 @@
-use crate::{Board, CastleSource, FactionID, GameState, MoveSimple, PieceSimple, logic, piece};
+use crate::{Board, CastleSource, FactionId, GameState, MoveSimple, PieceSimple, logic, piece};
 
 pub fn apply_move(game_state: &GameState, chess_move: MoveSimple) -> GameState {
     let mut board = game_state.board.clone();
 
     move_pieces(game_state, &mut board, chess_move);
 
-    let mut player_colors = game_state.player_colors.clone();
+    let mut player_main_factions = game_state.player_main_factions.clone();
 
-    change_player_colors(game_state, &mut player_colors, chess_move);
+    change_player_colors(game_state, &mut player_main_factions, chess_move);
 
     let mut remaining_castles = game_state.remaining_castles.clone();
 
@@ -17,9 +17,10 @@ pub fn apply_move(game_state: &GameState, chess_move: MoveSimple) -> GameState {
 
     GameState {
         board,
-        player_colors,
+        player_main_factions,
         turn_manager: turn_to_play,
         remaining_castles,
+        variant_data: game_state.variant_data.clone(),
     }
 }
 
@@ -184,7 +185,7 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
 
 fn change_player_colors(
     game_state: &GameState,
-    player_colors: &mut Vec<FactionID>,
+    player_colors: &mut Vec<FactionId>,
     chess_move: MoveSimple,
 ) {
     match chess_move {

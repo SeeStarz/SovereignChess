@@ -9,7 +9,7 @@ use crate::{
     util::Observer,
 };
 use adapter_core::{Gesture, MenuClick};
-use engine::{FactionID, faction, piece};
+use engine::{FactionId, faction, piece};
 use glam::Vec2;
 use raylib::{
     RaylibThread,
@@ -75,8 +75,8 @@ pub fn render_function(
         &data.sprite_manager,
         &PieceSprite {
             piece_type: piece::Rook,
-            faction: FactionID::from(faction::White),
-            owner: Some(FactionID::from(faction::White)),
+            faction: FactionId::from(faction::White),
+            owner: Some(FactionId::from(faction::White)),
         },
         top_left_rect,
         0.0,
@@ -87,8 +87,8 @@ pub fn render_function(
         &data.sprite_manager,
         &PieceSprite {
             piece_type: piece::King,
-            faction: FactionID::from(faction::White),
-            owner: Some(FactionID::from(faction::White)),
+            faction: FactionId::from(faction::White),
+            owner: Some(FactionId::from(faction::White)),
         },
         bottom_right_rect,
         0.0,

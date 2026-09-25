@@ -48,7 +48,11 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
         return false;
     }
 
-    let tile_size = Vec2::from(rect.size) / 16.0;
+    let tile_size = Vec2::from(rect.size)
+        / Vec2::new(
+            data.adapter.game_state().board.width() as f32,
+            data.adapter.game_state().board.height() as f32,
+        );
     let position = (Vec2::from(click_position) - Vec2::from(rect.position)) / tile_size;
     let click_coordinate = Coordinate::new(position.y as i32, position.x as i32);
 
@@ -70,7 +74,13 @@ pub fn handle_chess_gesture(gesture: Gesture, data: &mut Data) {
 pub fn draw_game(handle: &mut RaylibDrawHandle, thread: &RaylibThread, rect: FRect, data: &Data) {
     let tile_rect = FRect {
         position: rect.position,
-        size: FSize::from(Vec2::from(rect.size) / 16.0),
+        size: FSize::from(
+            Vec2::from(rect.size)
+                / Vec2::new(
+                    data.adapter.game_state().board.width() as f32,
+                    data.adapter.game_state().board.height() as f32,
+                ),
+        ),
     };
     draw_board(handle, thread, tile_rect, data);
     draw_pieces(handle, thread, tile_rect, data);
@@ -83,8 +93,10 @@ fn draw_board(
     tile_rect: FRect,
     data: &Data,
 ) {
-    for r in 0..16 {
-        for c in 0..16 {
+    let height = data.adapter.game_state().board.height() as i32;
+    let width = data.adapter.game_state().board.width() as i32;
+    for r in 0..height {
+        for c in 0..width {
             let coordinate = Coordinate::new(r, c);
             let color = if let Some(special) = data
                 .adapter

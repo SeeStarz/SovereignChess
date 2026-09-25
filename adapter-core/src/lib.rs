@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use engine::{
-    Coordinate, FactionID, GameState, MoveRich, MoveSimple, PieceRich,
+    Coordinate, FactionId, GameState, MoveRich, MoveSimple, PieceRich,
     chess_move::CastleRich,
     faction,
     logic::{self, board_at_rich},
@@ -19,7 +19,7 @@ pub enum Gesture {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MenuClick {
     Promotion(piece::Type),
-    Defection(FactionID),
+    Defection(FactionId),
     Castle,
 }
 
@@ -29,13 +29,13 @@ pub enum BoardGesture {
     Drop(Option<Coordinate>),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GamestateChange {
     pub updated_game_state: GameState,
     pub applied_move: MoveRich,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AdapterState {
     Idle,
     Selected(SelectedState),
@@ -46,7 +46,7 @@ pub enum AdapterState {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SelectedState {
     BoardSelection(PieceRich),
-    DefectionSelection(FactionID),
+    DefectionSelection(FactionId),
     CastleSelection,
 }
 
@@ -91,13 +91,13 @@ impl From<AdapterState> for UIState {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UIHint {
     pub grabbable_pieces: Vec<PieceRich>,
-    pub valid_defections: Vec<FactionID>,
+    pub valid_defections: Vec<FactionId>,
     pub valid_castles: Vec<CastleRich>,
     pub grabbed_piece: Option<PieceRich>,
-    pub selected_defection: Option<FactionID>,
+    pub selected_defection: Option<FactionId>,
     pub castle_selected: bool,
     pub valid_destinations: Vec<Coordinate>,
     pub promotion_options: Vec<piece::Type>,
@@ -105,7 +105,7 @@ pub struct UIHint {
     pub state: UIState,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Adapter {
     game_state: GameState,
     state: AdapterState,
@@ -172,7 +172,7 @@ impl Adapter {
 
     pub fn hint(&self) -> UIHint {
         let grabbable_pieces: Vec<PieceRich> = valid_select_pieces(&self.game_state).collect();
-        let valid_defections: Vec<FactionID> = valid_defections(&self.game_state).collect();
+        let valid_defections: Vec<FactionId> = valid_defections(&self.game_state).collect();
 
         let valid_castles: Vec<CastleRich> = self
             .game_state
@@ -197,7 +197,7 @@ impl Adapter {
             _ => None,
         };
 
-        let selected_defection: Option<FactionID> = match self.state.clone() {
+        let selected_defection: Option<FactionId> = match self.state.clone() {
             AdapterState::Selected(SelectedState::DefectionSelection(faction)) => Some(faction),
             AdapterState::Done(game_state_change) => {
                 if let MoveRich::Defection(defection_move) = game_state_change.applied_move {
@@ -349,7 +349,7 @@ impl Adapter {
         }
     }
 
-    fn try_selected_do_defection_click(&self, faction: FactionID) -> AdapterState {
+    fn try_selected_do_defection_click(&self, faction: FactionId) -> AdapterState {
         if let Some(faction) = is_valid_idle_do_defection_click(&self.game_state, faction) {
             AdapterState::Selected(SelectedState::DefectionSelection(faction))
         } else {
@@ -366,10 +366,10 @@ fn valid_select_pieces(game_state: &GameState) -> impl Iterator<Item = PieceRich
     })
 }
 
-fn valid_defections(game_state: &GameState) -> impl Iterator<Item = FactionID> {
+fn valid_defections(game_state: &GameState) -> impl Iterator<Item = FactionId> {
     let real_faction_owners = logic::real_faction_owners(game_state);
     faction::ColorDefault::iter()
-        .map(|f| FactionID::from(f))
+        .map(|f| FactionId::from(f))
         .filter(move |&f| {
             real_faction_owners.get(&f).cloned() == Some(logic::current_player_faction(game_state))
                 && f != logic::current_player_faction(game_state)
@@ -406,7 +406,7 @@ fn valid_advance_from_board_selection(
 
 fn valid_advance_from_defection_selection(
     game_state: &GameState,
-    faction: FactionID,
+    faction: FactionId,
 ) -> impl Iterator<Item = GamestateChange> {
     game_state.moves().into_iter().filter_map(move |m| {
         if let MoveRich::Defection(defection_move) = m
@@ -470,8 +470,8 @@ fn is_valid_idle_do_board_click(
 
 fn is_valid_idle_do_defection_click(
     game_state: &GameState,
-    faction: FactionID,
-) -> Option<FactionID> {
+    faction: FactionId,
+) -> Option<FactionId> {
     valid_defections(game_state).find(|&f| f == faction)
 }
 

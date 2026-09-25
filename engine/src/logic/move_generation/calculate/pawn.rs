@@ -1,5 +1,5 @@
 use crate::{
-    Board, Coordinate, FactionID, GameState, MoveRich, Vec2,
+    Board, Coordinate, FactionId, GameState, MoveRich, Vec2,
     chess_move::{NormalMove, Promotion, RegimeChangePromotionRich},
     faction::Allegiance,
     logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
@@ -16,7 +16,7 @@ type PawnAttackDirection = Vec2;
 pub fn add_moves_naive(
     moves: &mut Vec<MoveRich>,
     game_state: &GameState,
-    faction: FactionID,
+    faction: FactionId,
     origin: Coordinate,
 ) {
     let (move_directions, attack_directions) = calculate_pawn_directions(origin, &game_state.board);
@@ -149,7 +149,7 @@ fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
     moves: &mut Vec<MoveRich>,
     game_state: &GameState,
     normal_move: NormalMove,
-    faction: FactionID,
+    faction: FactionId,
 ) {
     if normal_move.destination.row >= game_state.board.promotion_area().top
         && normal_move.destination.row <= game_state.board.promotion_area().bottom

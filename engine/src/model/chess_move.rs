@@ -1,4 +1,4 @@
-use crate::{Coordinate, FactionID, piece};
+use crate::{Coordinate, FactionId, piece};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MoveSimple {
@@ -92,7 +92,7 @@ pub struct RegimeChangePromotionRich {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct DefectionSimple {
     pub destination: Option<Coordinate>,
-    pub faction: FactionID,
+    pub faction: FactionId,
 }
 
 impl From<DefectionRich> for DefectionSimple {
@@ -108,5 +108,5 @@ impl From<DefectionRich> for DefectionSimple {
 pub struct DefectionRich {
     pub origin: Coordinate,
     pub destination: Option<Coordinate>,
-    pub faction: FactionID,
+    pub faction: FactionId,
 }

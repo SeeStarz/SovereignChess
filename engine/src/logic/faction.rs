@@ -1,13 +1,13 @@
 use crate::{
-    FactionID, GameState,
+    Board, FactionId, GameState,
     faction::{self, Allegiance},
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use strum::IntoEnumIterator;
 
-pub fn real_faction_owners(game_state: &GameState) -> HashMap<FactionID, FactionID> {
+pub fn real_faction_owners(game_state: &GameState) -> HashMap<FactionId, FactionId> {
     let direct_owners = {
-        let mut direct_owners: HashMap<FactionID, FactionID> = HashMap::new();
+        let mut direct_owners: HashMap<FactionId, FactionId> = HashMap::new();
 
         for special in game_state.board.special_layout().all() {
             let Some(piece) = game_state
@@ -32,10 +32,10 @@ pub fn real_faction_owners(game_state: &GameState) -> HashMap<FactionID, Faction
         direct_owners
     };
 
-    let mut real_owners: HashMap<FactionID, FactionID> = HashMap::new();
-    for faction in faction::ColorDefault::iter().map(|c| FactionID::from(c)) {
+    let mut real_owners: HashMap<FactionId, FactionId> = HashMap::new();
+    for faction in faction::ColorDefault::iter().map(|c| FactionId::from(c)) {
         let mut owner = faction;
-        if game_state.player_colors.iter().any(|&f| f == owner) {
+        if game_state.player_main_factions.iter().any(|&f| f == owner) {
             real_owners.insert(faction, owner);
             continue;
         }
@@ -43,7 +43,7 @@ pub fn real_faction_owners(game_state: &GameState) -> HashMap<FactionID, Faction
         while let Some(&next) = direct_owners.get(&owner) {
             owner = next;
 
-            if game_state.player_colors.iter().any(|&f| f == owner) {
+            if game_state.player_main_factions.iter().any(|&f| f == owner) {
                 real_owners.insert(faction, owner);
                 break;
             }
@@ -52,7 +52,17 @@ pub fn real_faction_owners(game_state: &GameState) -> HashMap<FactionID, Faction
     real_owners
 }
 
-pub fn allegiance(game_state: &GameState, faction: FactionID) -> Allegiance {
+pub fn all(board: &Board) -> impl Iterator<Item = FactionId> {
+    let hash_set: HashSet<FactionId> = board
+        .special_layout()
+        .all()
+        .into_iter()
+        .map(|s| s.faction())
+        .collect();
+    hash_set.into_iter()
+}
+
+pub fn allegiance(game_state: &GameState, faction: FactionId) -> Allegiance {
     let real_faction_owners = real_faction_owners(game_state);
     match real_faction_owners.get(&faction).cloned() {
         None => Allegiance::Neutral,
@@ -66,6 +76,6 @@ pub fn allegiance(game_state: &GameState, faction: FactionID) -> Allegiance {
     }
 }
 
-pub fn current_player_faction(game_state: &GameState) -> FactionID {
-    game_state.player_colors[game_state.turn_manager.current_player().0 as usize]
+pub fn current_player_faction(game_state: &GameState) -> FactionId {
+    game_state.player_main_factions[game_state.turn_manager.current_player().0 as usize]
 }

@@ -1,4 +1,4 @@
-use crate::{Coordinate, FactionID, PieceRich, PieceSimple, PieceWithCoordinate};
+use crate::{Coordinate, FactionId, PieceRich, PieceSimple, PieceWithCoordinate};
 use std::collections::HashSet;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -19,13 +19,13 @@ pub struct TileRich {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Special {
-    faction: FactionID,
+    faction: FactionId,
     coordinate: Coordinate,
     other_coordinate: Coordinate,
 }
 
 impl Special {
-    pub fn faction(&self) -> FactionID {
+    pub fn faction(&self) -> FactionId {
         self.faction
     }
 
@@ -37,7 +37,7 @@ impl Special {
         self.other_coordinate
     }
 
-    fn new_pair(coordinates: [Coordinate; 2], faction: FactionID) -> [Self; 2] {
+    fn new_pair(coordinates: [Coordinate; 2], faction: FactionId) -> [Self; 2] {
         [
             Special {
                 faction,
@@ -56,11 +56,11 @@ impl Special {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SpecialLayoutInput {
     pub coordinates: [Coordinate; 2],
-    pub faction: FactionID,
+    pub faction: FactionId,
 }
 
 impl SpecialLayoutInput {
-    pub fn new(coordinate1: Coordinate, coordinate2: Coordinate, faction: FactionID) -> Self {
+    pub fn new(coordinate1: Coordinate, coordinate2: Coordinate, faction: FactionId) -> Self {
         Self {
             coordinates: [coordinate1, coordinate2],
             faction,
@@ -73,7 +73,7 @@ pub struct SpecialLayout(Vec<Special>);
 
 impl SpecialLayout {
     pub fn new(inputs: &[SpecialLayoutInput]) -> Option<Self> {
-        let faction_hash_set: HashSet<FactionID> = inputs.iter().map(|i| i.faction).collect();
+        let faction_hash_set: HashSet<FactionId> = inputs.iter().map(|i| i.faction).collect();
         if faction_hash_set.len() != inputs.len() {
             return None;
         }

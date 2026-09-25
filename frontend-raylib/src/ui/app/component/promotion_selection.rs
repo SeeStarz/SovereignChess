@@ -12,7 +12,7 @@ use crate::{
     util::Observer,
 };
 use adapter_core::{Gesture, MenuClick};
-use engine::{FactionID, faction, piece};
+use engine::{FactionId, faction, piece};
 use raylib::{
     RaylibThread,
     color::Color,
@@ -79,8 +79,8 @@ pub fn render_function(
         &data.sprite_manager,
         &PieceSprite {
             piece_type,
-            faction: FactionID::from(faction::White),
-            owner: Some(FactionID::from(faction::White)),
+            faction: FactionId::from(faction::White),
+            owner: Some(FactionId::from(faction::White)),
         },
         rect,
         0.0,
