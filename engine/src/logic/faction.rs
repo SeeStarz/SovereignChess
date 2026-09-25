@@ -1,7 +1,6 @@
 use crate::{
     FactionID, GameState,
     faction::{self, Allegiance},
-    tile,
 };
 use std::collections::HashMap;
 use strum::IntoEnumIterator;
@@ -10,10 +9,10 @@ pub fn real_faction_owners(game_state: &GameState) -> HashMap<FactionID, Faction
     let direct_owners = {
         let mut direct_owners: HashMap<FactionID, FactionID> = HashMap::new();
 
-        for special in tile::Special::all() {
+        for special in game_state.board.special_layout().all() {
             let Some(piece) = game_state
                 .board
-                .at(special.coordinate)
+                .at(special.coordinate())
                 .expect("Special tile out of bounds")
                 .0
             else {
@@ -23,12 +22,12 @@ pub fn real_faction_owners(game_state: &GameState) -> HashMap<FactionID, Faction
             assert!(
                 game_state
                     .board
-                    .at(special.other().coordinate)
+                    .at(special.other_coordinate())
                     .expect("Special tile out of bounds")
                     .0
                     .is_none()
             );
-            direct_owners.insert(special.faction, piece.faction);
+            direct_owners.insert(special.faction(), piece.faction);
         }
         direct_owners
     };

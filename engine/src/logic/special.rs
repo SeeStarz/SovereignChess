@@ -1,12 +1,12 @@
 use crate::{Board, FactionID, tile::Special};
 
 pub fn is_special_tile_occupiable(board: &Board, special: Special, faction: FactionID) -> bool {
-    if special.faction == faction {
+    if special.faction() == faction {
         return false;
     }
 
     if let Some(_piece) = board
-        .at(special.other().coordinate)
+        .at(special.other_coordinate())
         .expect("Special tile out of bounds")
         .0
     {

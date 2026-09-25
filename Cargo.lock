@@ -305,7 +305,6 @@ dependencies = [
  "adapter-core",
  "engine",
  "glam",
- "lazy_static",
  "raylib",
  "strum",
 ]

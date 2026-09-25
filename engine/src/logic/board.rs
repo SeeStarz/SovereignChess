@@ -1,4 +1,4 @@
-use crate::{Coordinate, GameState, PieceRich, TileRich, logic, piece, tile};
+use crate::{Coordinate, GameState, PieceRich, TileRich, logic, piece};
 
 pub fn tiles_rich(game_state: &GameState) -> impl Iterator<Item = TileRich> {
     game_state.board.tiles().map(|t| {
@@ -6,7 +6,7 @@ pub fn tiles_rich(game_state: &GameState) -> impl Iterator<Item = TileRich> {
         TileRich {
             coordinate: t.coordinate,
             piece,
-            special: tile::Special::at(t.coordinate).cloned(),
+            special: game_state.board.special_layout().at(t.coordinate),
         }
     })
 }

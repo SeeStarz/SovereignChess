@@ -19,6 +19,7 @@ impl GameState {
             16,
             16,
             Area::new(6, 9, 6, 9),
+            initializer::special::standard_layout(),
         )
         .expect("Failed to initialize board");
         let player_colors = vec![

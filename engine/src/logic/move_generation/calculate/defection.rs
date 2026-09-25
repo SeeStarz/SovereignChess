@@ -4,7 +4,6 @@ use crate::{
     direction,
     faction::Allegiance,
     logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
-    tile,
 };
 
 pub fn add_moves_naive(
@@ -23,7 +22,12 @@ pub fn add_moves_naive(
     });
 
     for controlled_faction in controlled_factions {
-        if tile::Special::at(origin).is_some_and(|&t| t.faction == controlled_faction) {
+        if game_state
+            .board
+            .special_layout()
+            .at(origin)
+            .is_some_and(|t| t.faction() == controlled_faction)
+        {
             for &direction in direction::queen() {
                 let destination = origin.offset(direction);
                 let Some(tile) = game_state.board.at(destination) else {

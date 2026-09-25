@@ -15,7 +15,7 @@ use crate::{
     util::Observer,
 };
 use adapter_core::{Adapter, BoardGesture, Gesture};
-use engine::{Coordinate, tile};
+use engine::Coordinate;
 use glam::Vec2;
 use raylib::{
     RaylibThread,
@@ -81,13 +81,19 @@ fn draw_board(
     handle: &mut RaylibDrawHandle,
     _thread: &RaylibThread,
     tile_rect: FRect,
-    _data: &Data,
+    data: &Data,
 ) {
     for r in 0..16 {
         for c in 0..16 {
             let coordinate = Coordinate::new(r, c);
-            let color = if let Some(special) = tile::Special::at(coordinate) {
-                special.faction.to_color()
+            let color = if let Some(special) = data
+                .adapter
+                .game_state()
+                .board
+                .special_layout()
+                .at(coordinate)
+            {
+                special.faction().to_color()
             } else {
                 if (r + c) % 2 == 0 {
                     Color::BROWN

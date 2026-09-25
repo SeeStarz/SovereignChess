@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
 use crate::{
-    Coordinate, PieceSimple, PieceWithCoordinate, TileSimple, model::geometry::Area,
-    tile::TileWithCoordinate,
+    Coordinate, PieceSimple, PieceWithCoordinate, TileSimple,
+    model::geometry::Area,
+    tile::{SpecialLayout, TileWithCoordinate},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -11,6 +12,7 @@ pub struct Board {
     width: u32,
     height: u32,
     promotion_area: Area,
+    special_layout: SpecialLayout,
 }
 
 impl Board {
@@ -24,6 +26,10 @@ impl Board {
 
     pub fn promotion_area(&self) -> Area {
         self.promotion_area
+    }
+
+    pub fn special_layout(&self) -> &SpecialLayout {
+        &self.special_layout
     }
 
     pub fn tiles(&self) -> impl Iterator<Item = TileWithCoordinate> {
@@ -43,11 +49,22 @@ impl Board {
         self.tiles().filter_map(|t| t.piece)
     }
 
-    pub fn empty(width: u32, height: u32, promotion_area: Area) -> Option<Board> {
+    pub fn empty(
+        width: u32,
+        height: u32,
+        promotion_area: Area,
+        special_layout: SpecialLayout,
+    ) -> Option<Board> {
         if promotion_area.left < 0 || promotion_area.top < 0 {
             return None;
         }
         if promotion_area.right as u32 >= width || promotion_area.bottom as u32 >= height {
+            return None;
+        }
+        if !special_layout.all().into_iter().all(|s| {
+            Self::is_coordinate_valid_standalone(width, height, s.coordinate())
+                && Self::is_coordinate_valid_standalone(width, height, s.other_coordinate())
+        }) {
             return None;
         }
 
@@ -56,6 +73,7 @@ impl Board {
             width,
             height,
             promotion_area,
+            special_layout,
         })
     }
 
@@ -64,8 +82,9 @@ impl Board {
         width: u32,
         height: u32,
         promotion_area: Area,
+        special_layout: SpecialLayout,
     ) -> Option<Board> {
-        let mut board = Self::empty(width, height, promotion_area)?;
+        let mut board = Self::empty(width, height, promotion_area, special_layout)?;
         if !map
             .into_iter()
             .all(|(&coordinate, &piece)| board.set_at(coordinate, Some(piece)))
@@ -75,11 +94,15 @@ impl Board {
         Some(board)
     }
 
-    pub fn is_coordinate_valid(&self, coordinate: Coordinate) -> bool {
+    fn is_coordinate_valid_standalone(width: u32, height: u32, coordinate: Coordinate) -> bool {
         coordinate.row >= 0
-            && coordinate.row < self.height as i32
+            && coordinate.row < height as i32
             && coordinate.col >= 0
-            && coordinate.col < self.width as i32
+            && coordinate.col < width as i32
+    }
+
+    pub fn is_coordinate_valid(&self, coordinate: Coordinate) -> bool {
+        Self::is_coordinate_valid_standalone(self.width, self.height, coordinate)
     }
 
     pub fn at(&self, coordinate: Coordinate) -> Option<TileSimple> {

@@ -1,6 +1,4 @@
-use crate::{
-    Board, CastleSource, FactionID, GameState, MoveSimple, PieceSimple, logic, piece, tile::Special,
-};
+use crate::{Board, CastleSource, FactionID, GameState, MoveSimple, PieceSimple, logic, piece};
 
 pub fn apply_move(game_state: &GameState, chess_move: MoveSimple) -> GameState {
     let mut board = game_state.board.clone();
@@ -144,7 +142,11 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
 
             if let Some(destination) = defection_move.destination {
                 assert!(
-                    Special::at(king_origin).map(|s| s.faction)
+                    game_state
+                        .board
+                        .special_layout()
+                        .at(king_origin)
+                        .map(|s| s.faction())
                         == Some(logic::current_player_faction(game_state))
                 );
 
@@ -160,7 +162,11 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
                 let king_coordinate = logic::find_current_player_king_assert(game_state).coordinate;
 
                 assert!(
-                    Special::at(king_coordinate).map(|s| s.faction)
+                    game_state
+                        .board
+                        .special_layout()
+                        .at(king_coordinate)
+                        .map(|s| s.faction())
                         != Some(logic::current_player_faction(game_state))
                 );
 

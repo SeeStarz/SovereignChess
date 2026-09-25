@@ -1,6 +1,5 @@
-use crate::{Coordinate, FactionID, PieceRich, PieceSimple, PieceWithCoordinate, faction};
-use lazy_static::lazy_static;
-use std::collections::HashMap;
+use crate::{Coordinate, FactionID, PieceRich, PieceSimple, PieceWithCoordinate};
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TileSimple(pub Option<PieceSimple>);
@@ -20,184 +19,97 @@ pub struct TileRich {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Special {
-    pub faction: FactionID,
-    pub coordinate: Coordinate,
+    faction: FactionID,
+    coordinate: Coordinate,
     other_coordinate: Coordinate,
 }
 
 impl Special {
-    pub fn other(&self) -> Special {
-        *SPECIAL_MAP_BY_COORDINATE
-            .get(&self.other_coordinate)
-            .expect("Special tile has no pair")
+    pub fn faction(&self) -> FactionID {
+        self.faction
     }
 
-    pub fn at(coordinate: Coordinate) -> Option<&'static Special> {
-        SPECIAL_MAP_BY_COORDINATE.get(&coordinate).to_owned()
+    pub fn coordinate(&self) -> Coordinate {
+        self.coordinate
     }
 
-    pub fn with_color(faction: FactionID) -> &'static [Special] {
-        SPECIAL_MAP_BY_FACTION.get(&faction).expect(&format!(
-            "Faction {:?} does not have special tiles",
-            faction
-        ))
+    pub fn other_coordinate(&self) -> Coordinate {
+        self.other_coordinate
     }
 
-    pub fn all() -> &'static [Special] {
-        &*SPECIAL_TILES_DEFAULT
+    fn new_pair(coordinates: [Coordinate; 2], faction: FactionID) -> [Self; 2] {
+        [
+            Special {
+                faction,
+                coordinate: coordinates[0],
+                other_coordinate: coordinates[1],
+            },
+            Special {
+                faction,
+                coordinate: coordinates[1],
+                other_coordinate: coordinates[0],
+            },
+        ]
     }
 }
 
-lazy_static! {
-    static ref SPECIAL_MAP_BY_COORDINATE: HashMap<Coordinate, Special> = SPECIAL_TILES_DEFAULT
-        .iter()
-        .map(|&t| (t.coordinate, t))
-        .collect();
-    static ref SPECIAL_MAP_BY_FACTION: HashMap<FactionID, [Special; 2]> = {
-        let mut map = HashMap::new();
-        for i in (0..24).step_by(2) {
-            map.insert(
-                SPECIAL_TILES_DEFAULT[i].faction,
-                [SPECIAL_TILES_DEFAULT[i], SPECIAL_TILES_DEFAULT[i + 1]],
-            );
-            assert!(SPECIAL_TILES_DEFAULT[i].faction == SPECIAL_TILES_DEFAULT[i + 1].faction)
-        }
-        map
-    };
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct SpecialLayoutInput {
+    pub coordinates: [Coordinate; 2],
+    pub faction: FactionID,
+}
 
-    // ORDER IS IMPORTANT
-    static ref SPECIAL_TILES_DEFAULT: [Special; 24] = [
-        // White
-        Special {
-            faction: FactionID::from(faction::White),
-            coordinate: Coordinate::new(7, 7),
-            other_coordinate: Coordinate::new(8, 8),
-        },
-        Special {
-            faction: FactionID::from(faction::White),
-            coordinate: Coordinate::new(8, 8),
-            other_coordinate: Coordinate::new(7, 7),
-        },
-        // Green
-        Special {
-            faction: FactionID::from(faction::Green),
-            coordinate: Coordinate::new(5, 10),
-            other_coordinate: Coordinate::new(10, 5),
-        },
-        Special {
-            faction: FactionID::from(faction::Green),
-            coordinate: Coordinate::new(10, 5),
-            other_coordinate: Coordinate::new(5, 10),
-        },
-        // Ash
-        Special {
-            faction: FactionID::from(faction::Ash),
-            coordinate: Coordinate::new(6, 9),
-            other_coordinate: Coordinate::new(9, 6),
-        },
-        Special {
-            faction: FactionID::from(faction::Ash),
-            coordinate: Coordinate::new(9, 6),
-            other_coordinate: Coordinate::new(6, 9),
-        },
-        // Cyan
-        Special {
-            faction: FactionID::from(faction::Cyan),
-            coordinate: Coordinate::new(7, 10),
-            other_coordinate: Coordinate::new(8, 5),
-        },
-        Special {
-            faction: FactionID::from(faction::Cyan),
-            coordinate: Coordinate::new(8, 5),
-            other_coordinate: Coordinate::new(7, 10),
-        },
-        // Navy
-        Special {
-            faction: FactionID::from(faction::Navy),
-            coordinate: Coordinate::new(4, 11),
-            other_coordinate: Coordinate::new(11, 4),
-        },
-        Special {
-            faction: FactionID::from(faction::Navy),
-            coordinate: Coordinate::new(11, 4),
-            other_coordinate: Coordinate::new(4, 11),
-        },
-        // Violet
-        Special {
-            faction: FactionID::from(faction::Violet),
-            coordinate: Coordinate::new(5, 8),
-            other_coordinate: Coordinate::new(10, 7),
-        },
-        Special {
-            faction: FactionID::from(faction::Violet),
-            coordinate: Coordinate::new(10, 7),
-            other_coordinate: Coordinate::new(5, 8),
-        },
-        // Pink
-        Special {
-            faction: FactionID::from(faction::Pink),
-            coordinate: Coordinate::new(5, 7),
-            other_coordinate: Coordinate::new(10, 8),
-        },
-        Special {
-            faction: FactionID::from(faction::Pink),
-            coordinate: Coordinate::new(10, 8),
-            other_coordinate: Coordinate::new(5, 7),
-        },
-        // Red
-        Special {
-            faction: FactionID::from(faction::Red),
-            coordinate: Coordinate::new(4, 4),
-            other_coordinate: Coordinate::new(11, 11),
-        },
-        Special {
-            faction: FactionID::from(faction::Red),
-            coordinate: Coordinate::new(11, 11),
-            other_coordinate: Coordinate::new(4, 4),
-        },
-        // Orange
-        Special {
-            faction: FactionID::from(faction::Orange),
-            coordinate: Coordinate::new(7, 5),
-            other_coordinate: Coordinate::new(8, 10),
-        },
-        Special {
-            faction: FactionID::from(faction::Orange),
-            coordinate: Coordinate::new(8, 10),
-            other_coordinate: Coordinate::new(7, 5),
-        },
-        // Slate
-        Special {
-            faction: FactionID::from(faction::Slate),
-            coordinate: Coordinate::new(6, 6),
-            other_coordinate: Coordinate::new(9, 9),
-        },
-        Special {
-            faction: FactionID::from(faction::Slate),
-            coordinate: Coordinate::new(9, 9),
-            other_coordinate: Coordinate::new(6, 6),
-        },
-        // Yellow
-        Special {
-            faction: FactionID::from(faction::Yellow),
-            coordinate: Coordinate::new(5, 5),
-            other_coordinate: Coordinate::new(10, 10),
-        },
-        Special {
-            faction: FactionID::from(faction::Yellow),
-            coordinate: Coordinate::new(10, 10),
-            other_coordinate: Coordinate::new(5, 5),
-        },
-        // Black
-        Special {
-            faction: FactionID::from(faction::Black),
-            coordinate: Coordinate::new(7, 8),
-            other_coordinate: Coordinate::new(8, 7),
-        },
-        Special {
-            faction: FactionID::from(faction::Black),
-            coordinate: Coordinate::new(8, 7),
-            other_coordinate: Coordinate::new(7, 8),
-        },
-    ];
+impl SpecialLayoutInput {
+    pub fn new(coordinate1: Coordinate, coordinate2: Coordinate, faction: FactionID) -> Self {
+        Self {
+            coordinates: [coordinate1, coordinate2],
+            faction,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct SpecialLayout(Vec<Special>);
+
+impl SpecialLayout {
+    pub fn new(inputs: &[SpecialLayoutInput]) -> Option<Self> {
+        let faction_hash_set: HashSet<FactionID> = inputs.iter().map(|i| i.faction).collect();
+        if faction_hash_set.len() != inputs.len() {
+            return None;
+        }
+
+        let coordinates_hash_set: HashSet<Coordinate> =
+            inputs.iter().flat_map(|i| i.coordinates).collect();
+        if coordinates_hash_set.len() != 2 * inputs.len() {
+            return None;
+        }
+
+        let specials: Vec<Special> = inputs
+            .iter()
+            .flat_map(|i| Special::new_pair(i.coordinates, i.faction))
+            .collect();
+        Some(Self(specials))
+    }
+
+    pub fn all(&self) -> impl Iterator<Item = Special> {
+        self.0.iter().cloned()
+    }
+
+    pub fn at(&self, coordinate: Coordinate) -> Option<Special> {
+        self.0.iter().find(|s| s.coordinate == coordinate).cloned()
+    }
+
+    /// Panics
+    /// If special provided isn't from this layout
+    pub fn other(&self, special: Special) -> Special {
+        if !self.0.contains(&special) {
+            panic!("Provided special tile isn't from this layout")
+        }
+
+        *self
+            .0
+            .iter()
+            .find(|s| s.coordinate == special.other_coordinate)
+            .expect("Special tile has no pair")
+    }
 }
