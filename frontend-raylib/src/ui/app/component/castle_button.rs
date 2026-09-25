@@ -4,15 +4,12 @@ use crate::{
     sprite::{CompositeDraw, PieceSprite},
     ui::{
         app::component::board,
-        framework::{
-            input::Event,
-            widget::{self},
-        },
+        framework::{input::Event, widget},
     },
     util::Observer,
 };
 use adapter_core::{Gesture, MenuClick};
-use engine::{faction, piece};
+use engine::{FactionID, faction, piece};
 use glam::Vec2;
 use raylib::{
     RaylibThread,
@@ -67,7 +64,7 @@ pub fn render_function(
         size: two_thirds_size,
     };
 
-    let hint = data.adapter.hint();
+    let hint = &data.cached_hint;
     if hint.valid_castles.len() > 0 {
         handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::BLUE);
     } else {
@@ -78,8 +75,8 @@ pub fn render_function(
         &data.sprite_manager,
         &PieceSprite {
             piece_type: piece::Rook,
-            faction: faction::White,
-            owner: Some(faction::White),
+            faction: FactionID::from(faction::White),
+            owner: Some(FactionID::from(faction::White)),
         },
         top_left_rect,
         0.0,
@@ -90,8 +87,8 @@ pub fn render_function(
         &data.sprite_manager,
         &PieceSprite {
             piece_type: piece::King,
-            faction: faction::White,
-            owner: Some(faction::White),
+            faction: FactionID::from(faction::White),
+            owner: Some(FactionID::from(faction::White)),
         },
         bottom_right_rect,
         0.0,

@@ -12,7 +12,7 @@ use crate::{
     util::Observer,
 };
 use adapter_core::{Gesture, MenuClick};
-use engine::{faction, piece};
+use engine::{FactionID, faction, logic, piece};
 use raylib::{
     RaylibThread,
     color::Color,
@@ -23,7 +23,8 @@ use std::{cell::RefCell, rc::Rc};
 use strum::IntoEnumIterator;
 
 pub fn build(individual_size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder {
-    let buttons: Vec<SpecNode> = faction::Color::iter()
+    let buttons: Vec<SpecNode> = faction::ColorDefault::iter()
+        .map(|f| FactionID::from(f))
         .map(|faction| {
             let mutator = data.clone();
             let observer = Observer::from(data.clone());
@@ -43,7 +44,7 @@ pub fn build(individual_size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder
     widget::Builder::new_row(true).children(buttons)
 }
 
-fn input_handler(event: Event, rect: FRect, data: &mut Data, faction: faction::Color) -> bool {
+fn input_handler(event: Event, rect: FRect, data: &mut Data, faction: FactionID) -> bool {
     match event {
         Event::MousePressed(position)
             if Rectangle::from(rect).check_collision_point_rec(position) =>
@@ -60,9 +61,11 @@ pub fn render_function(
     _thread: &RaylibThread,
     rect: FRect,
     data: &Data,
-    faction: faction::Color,
+    faction: FactionID,
 ) {
-    let hint = data.adapter.hint();
+    let real_faction_owners = logic::real_faction_owners(&data.adapter.game_state());
+
+    let hint = &data.cached_hint;
     if hint.valid_defections.contains(&faction) {
         handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::BLUE);
     } else {
@@ -74,8 +77,7 @@ pub fn render_function(
         &PieceSprite {
             piece_type: piece::King,
             faction,
-            owner: data.adapter.game_state().derived.real_faction_owners[faction as usize]
-                .map(|_| faction),
+            owner: real_faction_owners.get(&faction).map(|_| faction),
         },
         rect,
         0.0,

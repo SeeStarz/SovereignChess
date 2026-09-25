@@ -1,13 +1,12 @@
-use crate::{
-    GameState, logic,
-    {MoveRich, chess_move::NormalMove, faction, tile},
-};
+use crate::{FactionID, GameState, MoveRich, chess_move::NormalMove, logic, tile};
 
+/// # Panics
+/// Panic if passed a castle move
 pub fn try_add_move_check_special_tile_rules(
     moves: &mut Vec<MoveRich>,
     game_state: &GameState,
     chess_move: MoveRich,
-    faction: faction::Color,
+    faction: FactionID,
 ) {
     let normal_move = match chess_move {
         MoveRich::NormalMove(normal_move) => normal_move,
@@ -21,7 +20,7 @@ pub fn try_add_move_check_special_tile_rules(
                 destination,
             }
         }
-        _ => panic!(),
+        MoveRich::Castle(_castle_move) => panic!(),
     };
 
     let Some(&special_destination) = tile::Special::at(normal_move.destination) else {
@@ -31,7 +30,7 @@ pub fn try_add_move_check_special_tile_rules(
 
     // Means that we are not trying to occupy special tile colored the same as current faction
     // We are also not trying to occupy special tile where there currently is a piece on the other pair
-    if logic::is_special_tile_occupiable(&game_state.c().board, special_destination, faction) {
+    if logic::is_special_tile_occupiable(&game_state.board, special_destination, faction) {
         moves.push(chess_move);
         return;
     }

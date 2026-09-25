@@ -50,9 +50,7 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
 
     let tile_size = Vec2::from(rect.size) / 16.0;
     let position = (Vec2::from(click_position) - Vec2::from(rect.position)) / tile_size;
-    let Some(click_coordinate) = Coordinate::new(position.y as i32, position.x as i32) else {
-        return false;
-    };
+    let click_coordinate = Coordinate::new(position.y as i32, position.x as i32);
 
     handle_chess_gesture(Gesture::Board(BoardGesture::Click(click_coordinate)), data);
     true
@@ -60,8 +58,12 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
 
 pub fn handle_chess_gesture(gesture: Gesture, data: &mut Data) {
     data.adapter.apply(gesture);
-    if let Some(game_state_change) = data.adapter.hint().game_state_change {
+    let hint = data.adapter.hint();
+    if let Some(game_state_change) = hint.game_state_change.clone() {
         data.adapter = Adapter::new(game_state_change.updated_game_state);
+        data.cached_hint = data.adapter.hint();
+    } else {
+        data.cached_hint = hint;
     }
 }
 
@@ -83,7 +85,7 @@ fn draw_board(
 ) {
     for r in 0..16 {
         for c in 0..16 {
-            let coordinate = Coordinate::new_unchecked(r, c);
+            let coordinate = Coordinate::new(r, c);
             let color = if let Some(special) = tile::Special::at(coordinate) {
                 special.faction.to_color()
             } else {
@@ -122,7 +124,7 @@ fn draw_pieces(
             owner: piece.owner,
         };
 
-        let position = Vec2::new(piece.coordinate.col() as f32, piece.coordinate.row() as f32)
+        let position = Vec2::new(piece.coordinate.col as f32, piece.coordinate.row as f32)
             * Vec2::from(tile_rect.size)
             + Vec2::from(tile_rect.position);
         let dest = FRect {
@@ -140,7 +142,7 @@ fn draw_legal_moves(
     tile_rect: FRect,
     data: &Data,
 ) {
-    let hint = data.adapter.hint();
+    let hint = &data.cached_hint;
 
     if let Some(piece) = hint.grabbed_piece {
         let position = coordinate_to_centered_position(piece.coordinate, tile_rect);
@@ -153,7 +155,7 @@ fn draw_legal_moves(
         );
     }
 
-    for destination in hint.valid_destinations {
+    for &destination in hint.valid_destinations.iter() {
         let position = coordinate_to_centered_position(destination, tile_rect);
         handle.draw_ellipse(
             position.x as i32,
@@ -166,7 +168,6 @@ fn draw_legal_moves(
 }
 
 fn coordinate_to_centered_position(coordinate: Coordinate, tile_rect: FRect) -> Vec2 {
-    Vec2::new(coordinate.col() as f32 + 0.5, coordinate.row() as f32 + 0.5)
-        * Vec2::from(tile_rect.size)
+    Vec2::new(coordinate.col as f32 + 0.5, coordinate.row as f32 + 0.5) * Vec2::from(tile_rect.size)
         + Vec2::from(tile_rect.position)
 }

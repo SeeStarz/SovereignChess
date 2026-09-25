@@ -1,20 +1,19 @@
 use crate::{
-    GameState,
+    GameState, MoveRich,
     logic::{
+        self,
         board::find_current_player_king_assert,
         move_generation::calculate::{castle, check, defection, knight, linear, pawn},
     },
-    {MoveRich, piece},
+    piece,
 };
 
 pub fn naive_moves(game_state: &GameState) -> Vec<MoveRich> {
+    let current_player_faction = logic::current_player_faction(game_state);
     let mut moves = Vec::new();
     game_state
         .pieces()
-        .filter(|p| {
-            game_state.derived.real_faction_owners[p.faction as usize]
-                == Some(game_state.c().player_colors[game_state.c().turn_to_play as usize])
-        })
+        .filter(|p| p.owner == Some(current_player_faction))
         .for_each(|p| {
             match p.piece_type {
                 // None of these check for checks, it does however check for faction rules
@@ -33,7 +32,7 @@ pub fn naive_moves(game_state: &GameState) -> Vec<MoveRich> {
     defection::add_moves_naive(
         &mut moves,
         game_state,
-        game_state.c().player_colors[game_state.c().turn_to_play as usize],
+        current_player_faction,
         find_current_player_king_assert(game_state).coordinate,
     );
 

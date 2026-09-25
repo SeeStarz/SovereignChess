@@ -14,13 +14,14 @@ pub mod game {
         sprite,
         ui::{self, export::input::Event},
     };
-    use adapter_core::Adapter;
+    use adapter_core::{Adapter, UIHint};
     use engine::GameState;
     use raylib::prelude::*;
     use std::{cell::RefCell, rc::Rc};
 
     pub struct Data {
         pub adapter: Adapter,
+        pub cached_hint: UIHint,
         pub sprite_manager: sprite::Manager,
     }
 
@@ -29,12 +30,14 @@ pub mod game {
             .resizable()
             .size(1080, 720)
             .title("Sovereign Chess")
-            .vsync()
+            // .vsync()
             .build();
 
         let data_mutator = Rc::new(RefCell::new({
+            let adapter = Adapter::new(GameState::new());
             Data {
-                adapter: Adapter::new(GameState::new()),
+                cached_hint: adapter.hint(),
+                adapter,
                 sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
             }
         }));

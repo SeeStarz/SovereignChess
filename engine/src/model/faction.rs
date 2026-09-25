@@ -1,21 +1,51 @@
 use strum::{EnumIter, FromRepr};
 
-pub use Color::*;
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct FactionID(pub u32);
+
+pub use ColorDefault::*;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, FromRepr)]
-#[repr(usize)]
-pub enum Color {
-    White,
-    Pink,
-    Slate,
-    Red,
-    Orange,
-    Yellow,
-    Green,
-    Cyan,
-    Navy,
-    Ash,
-    Violet,
-    Black,
+#[repr(u32)]
+pub enum ColorDefault {
+    White = 0,
+    Pink = 1,
+    Slate = 2,
+    Red = 3,
+    Orange = 4,
+    Yellow = 5,
+    Green = 6,
+    Cyan = 7,
+    Navy = 8,
+    Ash = 9,
+    Violet = 10,
+    Black = 11,
+}
+
+impl From<ColorDefault> for FactionID {
+    fn from(value: ColorDefault) -> Self {
+        FactionID(value as u32)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, FromRepr)]
+#[repr(u32)]
+pub enum ColorArena {
+    White = 0,
+    Pink = 1,
+    Red = 3,
+    Orange = 4,
+    Yellow = 5,
+    Green = 6,
+    Cyan = 7,
+    Navy = 8,
+    Violet = 9,
+    Black = 11,
+}
+
+impl From<ColorArena> for FactionID {
+    fn from(value: ColorArena) -> Self {
+        FactionID(value as u32)
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

@@ -1,10 +1,10 @@
 use crate::{
-    GameState,
+    Coordinate, GameState, MoveRich, PieceSimple,
+    chess_move::NormalMove,
+    direction,
+    faction::Allegiance,
     logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
-    {
-        Coordinate, MoveRich, PieceSimple, chess_move::NormalMove, direction, faction::Allegiance,
-        piece, tile,
-    },
+    piece,
 };
 
 /// Responsible for Queen, Rook, Bishop, and King moves
@@ -26,12 +26,13 @@ pub fn add_moves_naive(
 
     for &direction in directions {
         for distance in 1..=distance {
-            let Some(destination) = origin.offset(direction * distance) else {
+            let destination = origin.offset(direction * distance);
+            let Some(tile) = game_state.board.at(destination) else {
                 break;
             };
 
-            if let Some(victim) = game_state.c().board.at(destination) {
-                if logic::get_allegiance(game_state, victim.faction) == Allegiance::Enemy {
+            if let Some(victim) = tile.0 {
+                if logic::allegiance(game_state, victim.faction) == Allegiance::Enemy {
                     try_add_move_check_special_tile_rules(
                         moves,
                         game_state,
@@ -43,9 +44,7 @@ pub fn add_moves_naive(
                     );
                 }
                 break;
-            } else if tile::Special::at(destination)
-                .is_none_or(|s| game_state.c().board.at(s.coordinate).is_none())
-            {
+            } else {
                 try_add_move_check_special_tile_rules(
                     moves,
                     game_state,

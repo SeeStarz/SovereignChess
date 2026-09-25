@@ -54,34 +54,32 @@ impl widget::SpecNode {
 
             use AxisSizingRequest::*;
 
-            let major_length = match self.core.size_request.get_on_axis(major_axis) {
+            let major_length = match self.core.size_request.on_axis(major_axis) {
                 Fixed(length) => Some(length),
                 Expand(_) => None,
                 Shrink => Some(children.iter().fold(0.0, |acc, c| {
                     acc + c
                         .cache
                         .size
-                        .get_on_axis(major_axis)
+                        .on_axis(major_axis)
                         .expect("Unresolved size for shrink children")
                 })),
             };
 
             assert!(
-                major_length != Some(0.0)
-                    || self.core.size_request.get_on_axis(major_axis) != Shrink
+                major_length != Some(0.0) || self.core.size_request.on_axis(major_axis) != Shrink
             );
 
-            let minor_length = match self.core.size_request.get_on_axis(minor_axis) {
+            let minor_length = match self.core.size_request.on_axis(minor_axis) {
                 Fixed(length) => Some(length),
                 Expand(_) => None,
                 Shrink => Some(children.iter().fold(0.0, |acc, c| {
-                    (acc as f32).max(c.cache.size.get_on_axis(minor_axis).unwrap_or(0.0))
+                    (acc as f32).max(c.cache.size.on_axis(minor_axis).unwrap_or(0.0))
                 })),
             };
 
             assert!(
-                minor_length != Some(0.0)
-                    || self.core.size_request.get_on_axis(minor_axis) != Shrink
+                minor_length != Some(0.0) || self.core.size_request.on_axis(minor_axis) != Shrink
             );
 
             WorkCache {
@@ -128,7 +126,7 @@ impl IntermediaryNode {
 
         // None variant should mean the child is of type expand
         let used_major_length = self.children.iter().fold(0.0, |acc, c| {
-            acc + c.cache.size.get_on_axis(major_axis).unwrap_or(0.0)
+            acc + c.cache.size.on_axis(major_axis).unwrap_or(0.0)
         });
 
         let usable_major_length = major_length - used_major_length;
@@ -136,7 +134,7 @@ impl IntermediaryNode {
         use AxisSizingRequest::*;
 
         let total_growth_factor = self.children.iter().fold(0, |acc, c| {
-            acc + match c.spec.size_request.get_on_axis(major_axis) {
+            acc + match c.spec.size_request.on_axis(major_axis) {
                 Expand(grow_factor) => grow_factor,
                 _ => 0,
             }
@@ -147,9 +145,9 @@ impl IntermediaryNode {
         assert!(usable_major_length >= 0.0 || total_growth_factor == 0);
 
         self.children.iter_mut().for_each(|c| {
-            let child_major_length = match c.spec.size_request.get_on_axis(major_axis) {
-                Fixed(_width) => c.cache.size.get_on_axis(major_axis).unwrap(),
-                Shrink => c.cache.size.get_on_axis(major_axis).unwrap(),
+            let child_major_length = match c.spec.size_request.on_axis(major_axis) {
+                Fixed(_width) => c.cache.size.on_axis(major_axis).unwrap(),
+                Shrink => c.cache.size.on_axis(major_axis).unwrap(),
                 Expand(grow_factor) => {
                     usable_major_length / total_growth_factor as f32 * grow_factor as f32
                 }
@@ -221,7 +219,7 @@ impl IntermediaryNode {
                                 ))
                         }
                     };
-                    accumulated_major_length += c.cache.size.get_on_axis(major_axis).unwrap();
+                    accumulated_major_length += c.cache.size.on_axis(major_axis).unwrap();
                     c.position_widgets(FPosition::from(origin))
                 })
                 .collect()

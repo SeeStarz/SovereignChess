@@ -88,12 +88,12 @@ impl FlexDirection {
 }
 
 pub trait AxisIndexable<T> {
-    fn get_on_axis(&self, axis: Axis) -> T;
+    fn on_axis(&self, axis: Axis) -> T;
     fn set_on_axis(&mut self, value: T, axis: Axis);
 }
 
 impl<T: Copy> AxisIndexable<T> for Size<T> {
-    fn get_on_axis(&self, axis: Axis) -> T {
+    fn on_axis(&self, axis: Axis) -> T {
         use Axis::*;
         match axis {
             Horizontal => self.width,

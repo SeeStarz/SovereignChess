@@ -1,5 +1,5 @@
 use crate::{
-    Coordinate, Direction, GameState, MoveRich, MoveSimple,
+    Coordinate, GameState, MoveRich, MoveSimple, Vec2,
     chess_move::{CastleRich, CastleSimple},
     logic,
 };
@@ -16,31 +16,34 @@ pub fn filter_checks(game_state: &GameState, moves: &mut Vec<MoveRich>) {
 }
 
 fn is_castle_safe(game_state: &GameState, castle_move: CastleRich) -> bool {
-    let king_offset = Direction::from_coordinate_pair(
+    let king_offset = Vec2::from_coordinate_pair(
         castle_move.king_move.origin,
         castle_move.king_move.destination,
     );
     let move_distance = king_offset.manhattan_distance();
-    let king_direction = Direction::new(
+    let king_direction = Vec2::new(
         king_offset.row / move_distance as i32,
         king_offset.col / move_distance as i32,
     );
 
     for distance in 0..=move_distance {
-        let Some(coordinate) = castle_move
+        let coordinate = castle_move
             .king_move
             .origin
-            .offset(king_direction * distance as i32)
-        else {
+            .offset(king_direction * distance as i32);
+
+        if !game_state.board.is_coordinate_valid(coordinate) {
             panic!("Castling out of bounds")
         };
 
         let mut temporary_game_state = game_state.clone();
-        temporary_game_state.canonical.turn_to_play =
-            temporary_game_state.canonical.turn_to_play.other();
-
-        if is_coordinate_attackable(&temporary_game_state, coordinate) {
-            return false;
+        temporary_game_state.turn_manager = temporary_game_state.turn_manager.next_turn();
+        while temporary_game_state.turn_manager.current_player()
+            != game_state.turn_manager.current_player()
+        {
+            if is_coordinate_attackable(&temporary_game_state, coordinate) {
+                return false;
+            }
         }
     }
 
@@ -59,10 +62,10 @@ fn is_enemy_king_safe(game_state: &GameState) -> bool {
 fn is_coordinate_attackable(game_state: &GameState, coordinate: Coordinate) -> bool {
     logic::move_generation::calculate::naive_moves(game_state)
         .iter()
-        .any(|&m| get_move_attacked_square(m).is_some_and(|c| c == coordinate))
+        .any(|&m| move_attacked_square(m).is_some_and(|c| c == coordinate))
 }
 
-fn get_move_attacked_square(chess_move: MoveRich) -> Option<Coordinate> {
+fn move_attacked_square(chess_move: MoveRich) -> Option<Coordinate> {
     match chess_move {
         MoveRich::NormalMove(normal_move) => Some(normal_move.destination),
         MoveRich::Castle(_castle_move) => None,

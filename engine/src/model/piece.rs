@@ -1,4 +1,4 @@
-use crate::{Coordinate, faction};
+use crate::{Coordinate, FactionID};
 
 pub use Type::*;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -13,12 +13,13 @@ pub enum Type {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct PieceSimple {
-    pub faction: faction::Color,
+    pub faction: FactionID,
     pub piece_type: self::Type,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct PieceWithCoordinate {
-    pub faction: faction::Color,
+    pub faction: FactionID,
     pub piece_type: self::Type,
     pub coordinate: Coordinate,
 }
@@ -33,7 +34,7 @@ impl From<PieceWithCoordinate> for PieceSimple {
 }
 
 impl PieceWithCoordinate {
-    pub fn from_piece(piece: PieceSimple, coordinate: Coordinate) -> Self {
+    pub fn from_simple(piece: PieceSimple, coordinate: Coordinate) -> Self {
         Self {
             faction: piece.faction,
             piece_type: piece.piece_type,
@@ -44,8 +45,8 @@ impl PieceWithCoordinate {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct PieceRich {
-    pub faction: faction::Color,
-    pub owner: Option<faction::Color>,
+    pub faction: FactionID,
+    pub owner: Option<FactionID>,
     pub piece_type: self::Type,
     pub coordinate: Coordinate,
 }
@@ -60,9 +61,9 @@ impl From<PieceRich> for PieceSimple {
 }
 
 impl PieceRich {
-    pub fn from_piece(
+    pub fn from_simple(
         piece: PieceSimple,
-        owner: Option<faction::Color>,
+        owner: Option<FactionID>,
         coordinate: Coordinate,
     ) -> Self {
         Self {

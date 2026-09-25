@@ -1,27 +1,26 @@
 use crate::{
-    Board, CastleSource, GameState, MoveSimple, PieceSimple, faction, game_state::CanonicalState,
-    logic, piece, tile::Special,
+    Board, CastleSource, FactionID, GameState, MoveSimple, PieceSimple, logic, piece, tile::Special,
 };
 
-pub fn apply_move(game_state: &GameState, chess_move: MoveSimple) -> CanonicalState {
-    let mut board = game_state.c().board;
+pub fn apply_move(game_state: &GameState, chess_move: MoveSimple) -> GameState {
+    let mut board = game_state.board.clone();
 
     move_pieces(game_state, &mut board, chess_move);
 
-    let mut player_colors = game_state.c().player_colors;
+    let mut player_colors = game_state.player_colors.clone();
 
     change_player_colors(game_state, &mut player_colors, chess_move);
 
-    let mut remaining_castles = game_state.c().remaining_castles.clone();
+    let mut remaining_castles = game_state.remaining_castles.clone();
 
     filter_remaining_castles(game_state, &mut remaining_castles, chess_move);
 
-    let turn_to_play = game_state.c().turn_to_play.other();
+    let turn_to_play = game_state.turn_manager.next_turn();
 
-    CanonicalState {
+    GameState {
         board,
         player_colors,
-        turn_to_play,
+        turn_manager: turn_to_play,
         remaining_castles,
     }
 }
@@ -38,28 +37,19 @@ fn filter_remaining_castles(
             promotion_move.normal_move.destination,
         ],
         MoveSimple::RegimeChangePromotion(promotion_move) => {
-            let player_main_faction =
-                game_state.c().player_colors[game_state.c().turn_to_play as usize];
-
-            let king_coordinate = game_state
-                .pieces()
-                .find_map(|p| {
-                    if p.faction == player_main_faction && p.piece_type == piece::King {
-                        Some(p.coordinate)
-                    } else {
-                        None
-                    }
-                })
-                .expect(&format!(
-                    "King is not found for faction {:?}",
-                    player_main_faction
-                ));
-
-            vec![
-                promotion_move.pawn_move.origin,
-                promotion_move.pawn_move.destination,
-                king_coordinate,
-            ]
+            let king_coordinate = logic::find_current_player_king(game_state).map(|p| p.coordinate);
+            if let Some(king_coordinate) = king_coordinate {
+                vec![
+                    promotion_move.pawn_move.origin,
+                    promotion_move.pawn_move.destination,
+                    king_coordinate,
+                ]
+            } else {
+                vec![
+                    promotion_move.pawn_move.origin,
+                    promotion_move.pawn_move.destination,
+                ]
+            }
         }
         MoveSimple::Castle(castle_move) => {
             vec![
@@ -91,7 +81,7 @@ fn filter_remaining_castles(
 fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple) {
     match chess_move {
         MoveSimple::NormalMove(normal_move) => {
-            let Some(piece) = board.at(normal_move.origin) else {
+            let Some(piece) = board.at(normal_move.origin).expect("Move out of bounds").0 else {
                 panic!(
                     "Attempted to move nothing at position: {:?}",
                     normal_move.origin
@@ -102,7 +92,8 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
         }
         MoveSimple::Promotion(promotion_move) => {
             let normal_move = promotion_move.normal_move;
-            let Some(mut piece) = board.at(normal_move.origin) else {
+            let Some(mut piece) = board.at(normal_move.origin).expect("Move out of bounds").0
+            else {
                 panic!(
                     "Attempted to move nothing at position: {:?}",
                     normal_move.origin
@@ -115,7 +106,8 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
         }
         MoveSimple::RegimeChangePromotion(promotion_move) => {
             let normal_move = promotion_move.pawn_move;
-            let Some(mut piece) = board.at(normal_move.origin) else {
+            let Some(mut piece) = board.at(normal_move.origin).expect("Move out of bounds").0
+            else {
                 panic!(
                     "Attempted to move nothing at position: {:?}",
                     normal_move.origin
@@ -132,7 +124,7 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
         }
         MoveSimple::Castle(castle_move) => {
             let rook_move = castle_move.rook_move;
-            let Some(rook) = board.at(rook_move.origin) else {
+            let Some(rook) = board.at(rook_move.origin).expect("Move out of bounds").0 else {
                 panic!(
                     "Attempted to move nothing at position: {:?}",
                     rook_move.origin
@@ -178,7 +170,7 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
                         faction: defection_move.faction,
                         piece_type: piece::King,
                     }),
-                )
+                );
             }
         }
     };
@@ -186,22 +178,23 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
 
 fn change_player_colors(
     game_state: &GameState,
-    player_colors: &mut [faction::Color; 2],
+    player_colors: &mut Vec<FactionID>,
     chess_move: MoveSimple,
 ) {
     match chess_move {
         MoveSimple::RegimeChangePromotion(promotion_move) => {
-            let faction = logic::board_at_external(game_state, promotion_move.pawn_move.origin)
+            let faction = logic::board_at_rich(game_state, promotion_move.pawn_move.origin)
                 .expect(&format!(
                     "Attempted to move nothing at position {:?}",
                     promotion_move.pawn_move.origin
                 ))
                 .faction;
 
-            player_colors[game_state.c().turn_to_play as usize] = faction;
+            player_colors[game_state.turn_manager.current_player().0 as usize] = faction;
         }
         MoveSimple::Defection(defection_move) => {
-            player_colors[game_state.c().turn_to_play as usize] = defection_move.faction;
+            player_colors[game_state.turn_manager.current_player().0 as usize] =
+                defection_move.faction;
         }
         _ => {}
     }

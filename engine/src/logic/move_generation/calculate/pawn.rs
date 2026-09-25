@@ -1,33 +1,31 @@
 use crate::{
-    GameState,
+    Board, Coordinate, FactionID, GameState, MoveRich, Vec2,
+    chess_move::{NormalMove, Promotion, RegimeChangePromotionRich},
+    faction::Allegiance,
     logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
-    {
-        Coordinate, Direction, MoveRich,
-        chess_move::{NormalMove, Promotion, RegimeChangePromotionRich},
-        faction::{self, Allegiance},
-        piece,
-    },
+    piece,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct PawnMoveDirection {
-    direction: Direction,
+    direction: Vec2,
     double_move: bool,
 }
-type PawnAttackDirection = Direction;
+type PawnAttackDirection = Vec2;
 
 pub fn add_moves_naive(
     moves: &mut Vec<MoveRich>,
     game_state: &GameState,
-    faction: faction::Color,
+    faction: FactionID,
     origin: Coordinate,
 ) {
-    let (move_directions, attack_directions) = calculate_pawn_directions(origin);
-    for direction in move_directions {
-        let Some(destination) = origin.offset(direction.direction) else {
+    let (move_directions, attack_directions) = calculate_pawn_directions(origin, &game_state.board);
+    for pawn_direction in move_directions {
+        let destination = origin.offset(pawn_direction.direction);
+        let Some(tile) = game_state.board.at(destination) else {
             continue;
         };
-        if game_state.c().board.at(destination).is_some() {
+        if tile.0.is_some() {
             continue;
         }
 
@@ -41,11 +39,12 @@ pub fn add_moves_naive(
             faction,
         );
 
-        if direction.double_move {
-            let Some(destination) = origin.offset(direction.direction * 2) else {
+        if pawn_direction.double_move {
+            let destination = origin.offset(pawn_direction.direction * 2);
+            let Some(tile) = game_state.board.at(destination) else {
                 continue;
             };
-            if game_state.c().board.at(destination).is_some() {
+            if tile.0.is_some() {
                 continue;
             }
 
@@ -62,13 +61,14 @@ pub fn add_moves_naive(
     }
 
     for direction in attack_directions {
-        let Some(destination) = origin.offset(direction) else {
+        let destination = origin.offset(direction);
+        let Some(tile) = game_state.board.at(destination) else {
             continue;
         };
-        let Some(victim) = game_state.c().board.at(destination) else {
+        let Some(victim) = tile.0 else {
             continue;
         };
-        if logic::get_allegiance(game_state, victim.faction) != Allegiance::Enemy {
+        if logic::allegiance(game_state, victim.faction) != Allegiance::Enemy {
             continue;
         }
 
@@ -86,30 +86,31 @@ pub fn add_moves_naive(
 
 fn calculate_pawn_directions(
     origin: Coordinate,
+    board: &Board,
 ) -> (Vec<PawnMoveDirection>, Vec<PawnAttackDirection>) {
     let move_directions = {
         let mut move_directions = Vec::new();
-        if origin.row() < 7 {
+        if origin.row < board.promotion_area().top {
             move_directions.push(PawnMoveDirection {
-                direction: Direction::new(1, 0),
-                double_move: origin.row() < 2,
+                direction: Vec2::new(1, 0),
+                double_move: origin.row < 2,
             });
-        } else if origin.row() > 8 {
+        } else if origin.row > board.promotion_area().bottom {
             move_directions.push(PawnMoveDirection {
-                direction: Direction::new(-1, 0),
-                double_move: origin.row() > 13,
+                direction: Vec2::new(-1, 0),
+                double_move: origin.row >= board.height() as i32 - 2,
             });
         }
 
-        if origin.col() < 7 {
+        if origin.col < board.promotion_area().left {
             move_directions.push(PawnMoveDirection {
-                direction: Direction::new(0, 1),
-                double_move: origin.col() < 2,
+                direction: Vec2::new(0, 1),
+                double_move: origin.col < 2,
             });
-        } else if origin.col() > 8 {
+        } else if origin.col > board.promotion_area().right {
             move_directions.push(PawnMoveDirection {
-                direction: Direction::new(0, -1),
-                double_move: origin.col() > 13,
+                direction: Vec2::new(0, -1),
+                double_move: origin.col >= board.width() as i32 - 2,
             });
         }
         move_directions
@@ -121,11 +122,11 @@ fn calculate_pawn_directions(
         if move_directions.len() == 1 {
             let direction = move_directions[0].direction;
             if direction.row != 0 {
-                attack_directions.push(direction + Direction::new(0, 1));
-                attack_directions.push(direction + Direction::new(0, -1));
+                attack_directions.push(direction + Vec2::new(0, 1));
+                attack_directions.push(direction + Vec2::new(0, -1));
             } else {
-                attack_directions.push(direction + Direction::new(1, 0));
-                attack_directions.push(direction + Direction::new(-1, 0));
+                attack_directions.push(direction + Vec2::new(1, 0));
+                attack_directions.push(direction + Vec2::new(-1, 0));
             }
         } else {
             // A pawn is somehow in the inner 2x2 ring if false
@@ -148,12 +149,12 @@ fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
     moves: &mut Vec<MoveRich>,
     game_state: &GameState,
     normal_move: NormalMove,
-    faction: faction::Color,
+    faction: FactionID,
 ) {
-    if normal_move.destination.row() > 5
-        && normal_move.destination.row() < 10
-        && normal_move.destination.col() > 5
-        && normal_move.destination.col() < 10
+    if normal_move.destination.row >= game_state.board.promotion_area().top
+        && normal_move.destination.row <= game_state.board.promotion_area().bottom
+        && normal_move.destination.col >= game_state.board.promotion_area().left
+        && normal_move.destination.col <= game_state.board.promotion_area().right
     {
         [piece::Queen, piece::Rook, piece::Bishop, piece::Knight]
             .into_iter()

@@ -1,18 +1,18 @@
-use crate::{Board, CastleSource, direction, logic, piece};
+use crate::{Board, CastleSource, direction, piece};
 
 pub fn generate(board: &Board) -> Vec<CastleSource> {
     let mut castles = Vec::new();
-    for king in logic::board_pieces(board).filter(|p| p.piece_type == piece::King) {
+    let board_length = board.width().max(board.height());
+    for king in board.pieces().filter(|p| p.piece_type == piece::King) {
         for &direction in direction::rook() {
-            for distance in 2..board.tiles.len() {
-                let Some(coordinate) = king.coordinate.offset(direction * distance as i32) else {
-                    break;
-                };
-
-                let Some(piece) = board.at(coordinate) else {
+            for distance in 2..board_length {
+                let coordinate = king.coordinate.offset(direction * distance as i32);
+                let Some(tile) = board.at(coordinate) else {
                     continue;
                 };
-
+                let Some(piece) = tile.0 else {
+                    continue;
+                };
                 if piece.piece_type != piece::Rook {
                     continue;
                 }

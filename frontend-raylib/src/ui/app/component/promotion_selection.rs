@@ -12,7 +12,7 @@ use crate::{
     util::Observer,
 };
 use adapter_core::{Gesture, MenuClick};
-use engine::{faction, piece};
+use engine::{FactionID, faction, piece};
 use raylib::{
     RaylibThread,
     color::Color,
@@ -68,7 +68,7 @@ pub fn render_function(
     data: &Data,
     piece_type: piece::Type,
 ) {
-    let hint = data.adapter.hint();
+    let hint = &data.cached_hint;
     if hint.promotion_options.contains(&piece_type) {
         handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::BLUE);
     } else {
@@ -79,8 +79,8 @@ pub fn render_function(
         &data.sprite_manager,
         &PieceSprite {
             piece_type,
-            faction: faction::White,
-            owner: Some(faction::White),
+            faction: FactionID::from(faction::White),
+            owner: Some(FactionID::from(faction::White)),
         },
         rect,
         0.0,

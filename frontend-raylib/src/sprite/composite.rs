@@ -3,7 +3,7 @@ use crate::{
     render::ToColor,
     sprite::{self, Manager},
 };
-use engine::{faction, piece};
+use engine::{FactionID, piece};
 use raylib::{
     color::Color,
     core::drawing::{RaylibDraw, RaylibDrawHandle},
@@ -99,8 +99,8 @@ impl<'a, T> CompositeDraw<T> for RaylibDrawHandle<'a> {
 
 pub struct PieceSprite {
     pub piece_type: piece::Type,
-    pub faction: faction::Color,
-    pub owner: Option<faction::Color>,
+    pub faction: FactionID,
+    pub owner: Option<FactionID>,
 }
 
 impl CompositeSprite for PieceSprite {

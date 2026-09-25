@@ -1,14 +1,15 @@
-use engine::faction;
+use engine::{FactionID, faction};
 use raylib::color::Color;
 
 pub trait ToColor {
     fn to_color(self) -> Color;
 }
 
-impl ToColor for faction::Color {
+impl ToColor for FactionID {
     fn to_color(self) -> Color {
-        use faction::Color::*;
-        match self {
+        use faction::ColorDefault::*;
+        let faction = faction::ColorDefault::from_repr(self.0).expect("Unknown FactionID");
+        match faction {
             White => Color::WHITE,
             Pink => Color::PINK,
             Slate => Color::SLATEGRAY,
