@@ -1,8 +1,7 @@
 use crate::{
     GameState, MoveRich,
     logic::{
-        self,
-        board::find_current_player_king_assert,
+        self, find_current_player_king,
         move_generation::calculate::{castle, check, defection, knight, linear, pawn},
     },
     piece,
