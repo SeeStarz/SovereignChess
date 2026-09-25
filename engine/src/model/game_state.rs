@@ -15,11 +15,11 @@ pub struct GameState {
 impl GameState {
     pub fn new() -> Self {
         let board = Board::from_piece_hashmap(
-            &initializer::board::normal::generate(),
-            16,
-            16,
-            Area::new(6, 9, 6, 9),
-            initializer::special::standard_layout(),
+            &initializer::board::arena(),
+            12,
+            12,
+            Area::new(5, 6, 5, 6),
+            initializer::special::arena(),
         )
         .expect("Failed to initialize board");
         let player_colors = vec![

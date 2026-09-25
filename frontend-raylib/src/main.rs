@@ -67,6 +67,7 @@ pub mod game {
             //// Working version
             {
                 let mut draw_handle = raylib_handle.begin_drawing(&thread);
+                draw_handle.clear_background(Color::BLACK);
                 widget_tree.render(&mut draw_handle, &thread);
             }
         }
