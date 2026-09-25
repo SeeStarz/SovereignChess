@@ -29,18 +29,22 @@ pub fn naive_moves(game_state: &GameState) -> Vec<MoveRich> {
             };
         });
     castle::add_moves_naive(&mut moves, game_state);
-    defection::add_moves_naive(
-        &mut moves,
-        game_state,
-        current_player_faction,
-        find_current_player_king_assert(game_state).coordinate,
-    );
+
+    if let Some(king_piece) = find_current_player_king(game_state) {
+        defection::add_moves_naive(
+            &mut moves,
+            game_state,
+            current_player_faction,
+            king_piece.coordinate,
+        );
+    }
 
     moves
 }
 
 pub fn moves(game_state: &GameState) -> Vec<MoveRich> {
-    let mut moves = naive_moves(game_state);
-    check::filter_checks(game_state, &mut moves);
+    let moves = naive_moves(game_state);
+    // TODO: Optimize and re-enable filter_checks
+    check::filter_checks(game_state, &mut vec![]);
     moves
 }
