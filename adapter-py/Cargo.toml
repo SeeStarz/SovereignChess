@@ -1,0 +1,14 @@
+[package]
+name = "adapter-py"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "adapter"
+crate-type = ["cdylib"]
+
+[dependencies]
+adapter-core = { version = "0.1.0", path = "../adapter-core", features = [
+    "pyo3",
+] }
+pyo3 = "0.29.2"
