@@ -1,4 +1,4 @@
-use crate::Coordinate;
+use crate::definition::engine::Coordinate;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct CastleSource {

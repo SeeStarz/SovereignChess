@@ -1,7 +1,6 @@
 use crate::{
-    Board, CastleSource, GameState, MoveRich, Vec2,
-    chess_move::{CastleRich, NormalMove},
-    faction, logic,
+    Board, GameState, logic,
+    shared::{CastleSource, MoveRich, Vec2, chess_move, faction},
 };
 
 pub fn add_moves_naive(moves: &mut Vec<MoveRich>, game_state: &GameState) {
@@ -23,7 +22,7 @@ fn check_pieces_allied(game_state: &GameState, castle_source: CastleSource) -> b
         .board
         .at(castle_source.king_coordinate)
         .expect("CastleSource out of bounds")
-        .0
+        .piece
     else {
         panic!(
             "Desync with remaining castles. Expected to find king at {:?}",
@@ -34,7 +33,7 @@ fn check_pieces_allied(game_state: &GameState, castle_source: CastleSource) -> b
         .board
         .at(castle_source.rook_coordinate)
         .expect("CastleSource out of bounds")
-        .0
+        .piece
     else {
         panic!(
             "Desync with remaining castles. Expected to find rook at {:?}",
@@ -68,7 +67,7 @@ fn check_path_clear(game_state: &GameState, castle_source: CastleSource) -> bool
             .board
             .at(coordinate)
             .expect("Castling out of bounds")
-            .0
+            .piece
         {
             return false;
         }
@@ -100,12 +99,12 @@ fn add_castle_source(moves: &mut Vec<MoveRich>, board: &Board, castle_source: Ca
             panic!("Castling out of bounds")
         };
 
-        moves.push(MoveRich::Castle(CastleRich {
-            king_move: NormalMove {
+        moves.push(MoveRich::Castle(chess_move::CastleRich {
+            king_move: chess_move::Normal {
                 origin: castle_source.king_coordinate,
                 destination: king_end_coordinate,
             },
-            rook_move: NormalMove {
+            rook_move: chess_move::Normal {
                 origin: castle_source.rook_coordinate,
                 destination: rook_end_coordinate,
             },

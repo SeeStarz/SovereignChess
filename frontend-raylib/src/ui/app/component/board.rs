@@ -14,8 +14,10 @@ use crate::{
     },
     util::Observer,
 };
-use adapter_core::{Adapter, BoardGesture, Gesture};
-use engine::Coordinate;
+use adapter_core::{
+    game::view_game_state,
+    gesture::{Adapter, BoardGesture, Gesture},
+};
 use glam::Vec2;
 use raylib::{
     RaylibThread,
@@ -23,6 +25,7 @@ use raylib::{
     math::Rectangle,
     prelude::{RaylibDraw, RaylibDrawHandle},
 };
+use shared_model::definition::engine::Coordinate;
 
 pub fn build(size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder {
     let observer = Observer::from(data.clone());
@@ -64,6 +67,7 @@ pub fn handle_chess_gesture(gesture: Gesture, data: &mut Data) {
     data.adapter.apply(gesture);
     let hint = data.adapter.hint();
     if let Some(game_state_change) = hint.game_state_change.clone() {
+        data.cached_view = view_game_state(&game_state_change.updated_game_state);
         data.adapter = Adapter::new(game_state_change.updated_game_state);
         data.cached_hint = data.adapter.hint();
     } else {
@@ -105,7 +109,7 @@ fn draw_board(
                 .special_layout()
                 .at(coordinate)
             {
-                special.faction().to_color()
+                special.faction.to_color()
             } else {
                 if (r + c) % 2 == 0 {
                     Color::BROWN
@@ -135,7 +139,7 @@ fn draw_pieces(
     tile_rect: FRect,
     data: &Data,
 ) {
-    for piece in data.adapter.game_state().pieces() {
+    for piece in data.cached_view.board_view.pieces.iter() {
         let sprite = PieceSprite {
             piece_type: piece.piece_type,
             faction: piece.faction,

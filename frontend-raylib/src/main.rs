@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
+use adapter_core::game::game_state_from_variant_preset;
+use shared_model::definition::engine::VariantPreset;
 use std::env;
-
-use engine::{Variant, VariantData};
 mod geometry;
 pub mod render;
 mod sprite;
@@ -10,13 +10,13 @@ mod ui;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let variant_data = VariantData::from(match args.get(1) {
-        None => Variant::Standard,
-        Some(name) if name == "standard" => Variant::Standard,
-        Some(name) if name == "arena" => Variant::Arena,
+    let variant_preset = match args.get(1) {
+        None => VariantPreset::Standard,
+        Some(name) if name == "standard" => VariantPreset::Standard,
+        Some(name) if name == "arena" => VariantPreset::Arena,
         Some(name) => panic!("Invalid variant name {}", name),
-    });
-    game::start(variant_data);
+    };
+    game::start(game_state_from_variant_preset(variant_preset));
 }
 
 pub mod game {
@@ -25,18 +25,23 @@ pub mod game {
         sprite,
         ui::{self, export::input::Event},
     };
-    use adapter_core::{Adapter, UIHint};
-    use engine::{GameState, VariantData};
+    use adapter_core::{
+        export::GameState,
+        game::view_game_state,
+        gesture::{Adapter, UIHint},
+    };
     use raylib::prelude::*;
+    use shared_model::definition::engine::GameStateView;
     use std::{cell::RefCell, rc::Rc};
 
     pub struct Data {
         pub adapter: Adapter,
         pub cached_hint: UIHint,
+        pub cached_view: GameStateView,
         pub sprite_manager: sprite::Manager,
     }
 
-    pub fn start(variant_data: VariantData) {
+    pub fn start(game_state: GameState) {
         let (mut raylib_handle, thread) = raylib::init()
             .resizable()
             .size(1080, 720)
@@ -45,9 +50,11 @@ pub mod game {
             .build();
 
         let data_mutator = Rc::new(RefCell::new({
-            let adapter = Adapter::new(GameState::new(variant_data));
+            let view = view_game_state(&game_state);
+            let adapter = Adapter::new(game_state);
             Data {
                 cached_hint: adapter.hint(),
+                cached_view: view,
                 adapter,
                 sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
             }

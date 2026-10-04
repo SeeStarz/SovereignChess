@@ -11,23 +11,23 @@ use crate::{
     },
     util::Observer,
 };
-use adapter_core::{Gesture, MenuClick};
-use engine::{FactionId, faction, logic, piece};
+use adapter_core::gesture::{Gesture, MenuClick};
 use raylib::{
     RaylibThread,
     color::Color,
     drawing::{RaylibDraw, RaylibDrawHandle},
     math::Rectangle,
 };
-use std::{cell::RefCell, rc::Rc};
-use strum::IntoEnumIterator;
+use shared_model::definition::engine::{FactionId, piece};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 pub fn build(individual_size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder {
-    let board = &data.borrow().adapter.game_state().board;
-    let buttons: Vec<SpecNode> = faction::ColorDefault::iter()
-        .map(|f| FactionId::from(f))
-        .filter(|&f| logic::all_factions(board).any(|f2| f2 == f))
-        .map(|faction| {
+    let buttons: Vec<SpecNode> = data
+        .borrow()
+        .cached_view
+        .factions
+        .iter()
+        .map(|&faction| {
             let mutator = data.clone();
             let observer = Observer::from(data.clone());
 
@@ -65,7 +65,8 @@ pub fn render_function(
     data: &Data,
     faction: FactionId,
 ) {
-    let real_faction_owners = logic::real_faction_owners(&data.adapter.game_state());
+    let real_faction_owners: HashMap<FactionId, FactionId> =
+        data.cached_view.owned_factions.iter().cloned().collect();
 
     let hint = &data.cached_hint;
     if hint.valid_defections.contains(&faction) {

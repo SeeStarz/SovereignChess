@@ -1,4 +1,4 @@
-use crate::Vec2;
+use crate::shared::Vec2;
 
 // BE CAREFUL ABOUT THE ORDER
 const DIRECTION_STORE: [Vec2; 16] = [

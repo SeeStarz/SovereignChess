@@ -1,4 +1,7 @@
-use crate::{Board, CastleSource, direction, piece};
+use crate::{
+    Board, direction,
+    shared::{CastleSource, piece},
+};
 
 pub fn generate(board: &Board) -> Vec<CastleSource> {
     let mut castles = Vec::new();
@@ -10,7 +13,7 @@ pub fn generate(board: &Board) -> Vec<CastleSource> {
                 let Some(tile) = board.at(coordinate) else {
                     continue;
                 };
-                let Some(piece) = tile.0 else {
+                let Some(piece) = tile.piece else {
                     continue;
                 };
                 if piece.piece_type != piece::Rook {

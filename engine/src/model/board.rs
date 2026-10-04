@@ -1,9 +1,7 @@
-use std::collections::HashMap;
-
 use crate::{
-    Coordinate, PieceSimple, PieceWithCoordinate, TileSimple,
-    model::geometry::Area,
-    tile::{SpecialLayout, TileWithCoordinate},
+    PieceWithCoordinate, TileSimple, TileWithCoordinate, logic,
+    shared::{Area, Coordinate, PieceSimple},
+    tile::{self, SpecialLayout},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -12,7 +10,7 @@ pub struct Board {
     width: u32,
     height: u32,
     promotion_area: Area,
-    special_layout: SpecialLayout,
+    special_layout: tile::SpecialLayout,
 }
 
 impl Board {
@@ -37,10 +35,13 @@ impl Board {
             (0..self.width).map(move |c| {
                 let coordinate = Coordinate::new(r as i32, c as i32);
                 let tile = self.at(coordinate).unwrap();
-                let piece = tile
-                    .0
-                    .map(|p| PieceWithCoordinate::from_simple(p, coordinate));
-                TileWithCoordinate { coordinate, piece }
+                let piece = tile.piece;
+                let special_tile_pair = self.special_layout.at(coordinate);
+                TileWithCoordinate {
+                    coordinate,
+                    piece,
+                    special_tile_pair,
+                }
             })
         })
     }
@@ -62,8 +63,8 @@ impl Board {
             return None;
         }
         if !special_layout.all().into_iter().all(|s| {
-            Self::is_coordinate_valid_standalone(width, height, s.coordinate())
-                && Self::is_coordinate_valid_standalone(width, height, s.other_coordinate())
+            Self::is_coordinate_valid_standalone(width, height, s.coordinates[0])
+                && Self::is_coordinate_valid_standalone(width, height, s.coordinates[1])
         }) {
             return None;
         }
@@ -77,8 +78,8 @@ impl Board {
         })
     }
 
-    pub fn from_piece_hashmap(
-        map: &HashMap<Coordinate, PieceSimple>,
+    pub fn from_piece_list(
+        map: &Vec<(Coordinate, PieceSimple)>,
         width: u32,
         height: u32,
         promotion_area: Area,
@@ -87,7 +88,7 @@ impl Board {
         let mut board = Self::empty(width, height, promotion_area, special_layout)?;
         if !map
             .into_iter()
-            .all(|(&coordinate, &piece)| board.set_at(coordinate, Some(piece)))
+            .all(|&(coordinate, piece)| board.set_at(coordinate, Some(piece)))
         {
             return None;
         }
@@ -105,16 +106,28 @@ impl Board {
         Self::is_coordinate_valid_standalone(self.width, self.height, coordinate)
     }
 
-    pub fn at(&self, coordinate: Coordinate) -> Option<TileSimple> {
+    pub fn at(&self, coordinate: Coordinate) -> Option<TileWithCoordinate> {
         if !self.is_coordinate_valid(coordinate) {
             return None;
         }
 
-        Some(self.tiles[(self.height as i32 * coordinate.row + coordinate.col) as usize])
+        let piece = self.tiles[(self.height as i32 * coordinate.row + coordinate.col) as usize].0;
+        let piece = piece.map(|p| PieceWithCoordinate::from_simple(p, coordinate));
+        let special_tile_pair = self.special_layout.at(coordinate);
+
+        Some(TileWithCoordinate {
+            piece,
+            special_tile_pair,
+            coordinate,
+        })
     }
 
     pub fn set_at(&mut self, coordinate: Coordinate, piece: Option<PieceSimple>) -> bool {
         if !self.is_coordinate_valid(coordinate) {
+            return false;
+        }
+
+        if piece.is_some_and(|p| !logic::is_faction_in_board(self, p.faction)) {
             return false;
         }
 

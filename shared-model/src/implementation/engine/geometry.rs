@@ -1,8 +1,4 @@
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Coordinate {
-    pub row: i32,
-    pub col: i32,
-}
+use crate::definition::engine::{Area, Coordinate, Vec2};
 
 impl Coordinate {
     pub const fn new(row: i32, col: i32) -> Self {
@@ -12,12 +8,6 @@ impl Coordinate {
     pub const fn offset(&self, direction: Vec2) -> Self {
         Self::new(self.row + direction.row, self.col + direction.col)
     }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Vec2 {
-    pub row: i32,
-    pub col: i32,
 }
 
 impl Vec2 {
@@ -35,14 +25,6 @@ impl Vec2 {
     pub fn manhattan_distance(&self) -> u32 {
         self.row.abs() as u32 + self.col.abs() as u32
     }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Area {
-    pub left: i32,
-    pub right: i32,
-    pub top: i32,
-    pub bottom: i32,
 }
 
 impl Area {

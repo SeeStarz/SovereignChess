@@ -8,8 +8,7 @@ use crate::{
     },
     util::Observer,
 };
-use adapter_core::{Gesture, MenuClick};
-use engine::{FactionId, faction, piece};
+use adapter_core::gesture::{Gesture, MenuClick};
 use glam::Vec2;
 use raylib::{
     RaylibThread,
@@ -17,6 +16,7 @@ use raylib::{
     drawing::{RaylibDraw, RaylibDrawHandle},
     math::Rectangle,
 };
+use shared_model::definition::engine::{FactionId, faction, piece};
 use std::{cell::RefCell, rc::Rc};
 
 pub fn build(size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder {

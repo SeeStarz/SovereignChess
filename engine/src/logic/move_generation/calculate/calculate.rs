@@ -1,17 +1,16 @@
 use crate::{
-    GameState, MoveRich,
+    GameState,
     logic::{
         self, find_current_player_king,
         move_generation::calculate::{castle, check, defection, knight, linear, pawn},
     },
-    piece,
+    shared::{MoveRich, piece},
 };
 
 pub fn naive_moves(game_state: &GameState) -> Vec<MoveRich> {
     let current_player_faction = logic::current_player_faction(game_state);
     let mut moves = Vec::new();
-    game_state
-        .pieces()
+    logic::board_pieces_rich(game_state)
         .filter(|p| p.owner == Some(current_player_faction))
         .for_each(|p| {
             match p.piece_type {

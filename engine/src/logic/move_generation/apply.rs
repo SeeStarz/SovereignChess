@@ -1,4 +1,7 @@
-use crate::{Board, CastleSource, FactionId, GameState, MoveSimple, PieceSimple, logic, piece};
+use crate::{
+    Board, GameState, logic,
+    shared::{CastleSource, FactionId, MoveSimple, PieceSimple, piece},
+};
 
 pub fn apply_move(game_state: &GameState, chess_move: MoveSimple) -> GameState {
     let mut board = game_state.board.clone();
@@ -80,18 +83,25 @@ fn filter_remaining_castles(
 fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple) {
     match chess_move {
         MoveSimple::NormalMove(normal_move) => {
-            let Some(piece) = board.at(normal_move.origin).expect("Move out of bounds").0 else {
+            let Some(piece) = board
+                .at(normal_move.origin)
+                .expect("Move out of bounds")
+                .piece
+            else {
                 panic!(
                     "Attempted to move nothing at position: {:?}",
                     normal_move.origin
                 );
             };
             board.set_at(normal_move.origin, None);
-            board.set_at(normal_move.destination, Some(piece));
+            board.set_at(normal_move.destination, Some(PieceSimple::from(piece)));
         }
         MoveSimple::Promotion(promotion_move) => {
             let normal_move = promotion_move.normal_move;
-            let Some(mut piece) = board.at(normal_move.origin).expect("Move out of bounds").0
+            let Some(mut piece) = board
+                .at(normal_move.origin)
+                .expect("Move out of bounds")
+                .piece
             else {
                 panic!(
                     "Attempted to move nothing at position: {:?}",
@@ -101,11 +111,14 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
             assert!(piece.piece_type == piece::Pawn);
             piece.piece_type = promotion_move.piece_type;
             board.set_at(normal_move.origin, None);
-            board.set_at(normal_move.destination, Some(piece));
+            board.set_at(normal_move.destination, Some(PieceSimple::from(piece)));
         }
         MoveSimple::RegimeChangePromotion(promotion_move) => {
             let normal_move = promotion_move.pawn_move;
-            let Some(mut piece) = board.at(normal_move.origin).expect("Move out of bounds").0
+            let Some(mut piece) = board
+                .at(normal_move.origin)
+                .expect("Move out of bounds")
+                .piece
             else {
                 panic!(
                     "Attempted to move nothing at position: {:?}",
@@ -119,11 +132,15 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
             piece.piece_type = piece::King;
             board.set_at(normal_move.origin, None);
             board.set_at(king_coordinate, None);
-            board.set_at(normal_move.destination, Some(piece));
+            board.set_at(normal_move.destination, Some(PieceSimple::from(piece)));
         }
         MoveSimple::Castle(castle_move) => {
             let rook_move = castle_move.rook_move;
-            let Some(rook) = board.at(rook_move.origin).expect("Move out of bounds").0 else {
+            let Some(rook) = board
+                .at(rook_move.origin)
+                .expect("Move out of bounds")
+                .piece
+            else {
                 panic!(
                     "Attempted to move nothing at position: {:?}",
                     rook_move.origin
@@ -135,7 +152,7 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
 
             board.set_at(rook_move.origin, None);
             board.set_at(king_piece.coordinate, None);
-            board.set_at(rook_move.destination, Some(rook));
+            board.set_at(rook_move.destination, Some(PieceSimple::from(rook)));
             board.set_at(king_destination, Some(PieceSimple::from(king_piece)));
         }
         MoveSimple::Defection(defection_move) => {
@@ -147,7 +164,7 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
                         .board
                         .special_layout()
                         .at(king_origin)
-                        .map(|s| s.faction())
+                        .map(|s| s.faction)
                         == Some(logic::current_player_faction(game_state))
                 );
 
@@ -167,7 +184,7 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
                         .board
                         .special_layout()
                         .at(king_coordinate)
-                        .map(|s| s.faction())
+                        .map(|s| s.faction)
                         != Some(logic::current_player_faction(game_state))
                 );
 
@@ -190,7 +207,11 @@ fn change_player_colors(
 ) {
     match chess_move {
         MoveSimple::RegimeChangePromotion(promotion_move) => {
-            let faction = logic::board_at_rich(game_state, promotion_move.pawn_move.origin)
+            let faction = game_state
+                .board
+                .at(promotion_move.pawn_move.origin)
+                .expect("Move out of bounds")
+                .piece
                 .expect(&format!(
                     "Attempted to move nothing at position {:?}",
                     promotion_move.pawn_move.origin

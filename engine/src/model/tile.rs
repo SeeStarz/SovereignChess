@@ -1,4 +1,9 @@
-use crate::{Coordinate, FactionId, PieceRich, PieceSimple, PieceWithCoordinate};
+use shared_model::definition::engine::tile::SpecialPair;
+
+use crate::{
+    PieceWithCoordinate,
+    shared::{Coordinate, FactionId, PieceSimple, tile},
+};
 use std::collections::HashSet;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -7,72 +12,15 @@ pub struct TileSimple(pub Option<PieceSimple>);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TileWithCoordinate {
     pub piece: Option<PieceWithCoordinate>,
+    pub special_tile_pair: Option<tile::SpecialPair>,
     pub coordinate: Coordinate,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct TileRich {
-    pub piece: Option<PieceRich>,
-    pub special: Option<Special>,
-    pub coordinate: Coordinate,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Special {
-    faction: FactionId,
-    coordinate: Coordinate,
-    other_coordinate: Coordinate,
-}
-
-impl Special {
-    pub fn faction(&self) -> FactionId {
-        self.faction
-    }
-
-    pub fn coordinate(&self) -> Coordinate {
-        self.coordinate
-    }
-
-    pub fn other_coordinate(&self) -> Coordinate {
-        self.other_coordinate
-    }
-
-    fn new_pair(coordinates: [Coordinate; 2], faction: FactionId) -> [Self; 2] {
-        [
-            Special {
-                faction,
-                coordinate: coordinates[0],
-                other_coordinate: coordinates[1],
-            },
-            Special {
-                faction,
-                coordinate: coordinates[1],
-                other_coordinate: coordinates[0],
-            },
-        ]
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct SpecialLayoutInput {
-    pub coordinates: [Coordinate; 2],
-    pub faction: FactionId,
-}
-
-impl SpecialLayoutInput {
-    pub fn new(coordinate1: Coordinate, coordinate2: Coordinate, faction: FactionId) -> Self {
-        Self {
-            coordinates: [coordinate1, coordinate2],
-            faction,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct SpecialLayout(Vec<Special>);
+pub struct SpecialLayout(pub Vec<tile::SpecialPair>);
 
 impl SpecialLayout {
-    pub fn new(inputs: &[SpecialLayoutInput]) -> Option<Self> {
+    pub fn new(inputs: Vec<SpecialPair>) -> Option<Self> {
         let faction_hash_set: HashSet<FactionId> = inputs.iter().map(|i| i.faction).collect();
         if faction_hash_set.len() != inputs.len() {
             return None;
@@ -84,32 +32,17 @@ impl SpecialLayout {
             return None;
         }
 
-        let specials: Vec<Special> = inputs
-            .iter()
-            .flat_map(|i| Special::new_pair(i.coordinates, i.faction))
-            .collect();
-        Some(Self(specials))
+        Some(Self(inputs))
     }
 
-    pub fn all(&self) -> impl Iterator<Item = Special> {
+    pub fn all(&self) -> impl Iterator<Item = tile::SpecialPair> {
         self.0.iter().cloned()
     }
 
-    pub fn at(&self, coordinate: Coordinate) -> Option<Special> {
-        self.0.iter().find(|s| s.coordinate == coordinate).cloned()
-    }
-
-    /// Panics
-    /// If special provided isn't from this layout
-    pub fn other(&self, special: Special) -> Special {
-        if !self.0.contains(&special) {
-            panic!("Provided special tile isn't from this layout")
-        }
-
-        *self
-            .0
+    pub fn at(&self, coordinate: Coordinate) -> Option<tile::SpecialPair> {
+        self.0
             .iter()
-            .find(|s| s.coordinate == special.other_coordinate)
-            .expect("Special tile has no pair")
+            .find(|s| s.coordinates[0] == coordinate || s.coordinates[1] == coordinate)
+            .cloned()
     }
 }

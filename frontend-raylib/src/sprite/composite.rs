@@ -3,11 +3,11 @@ use crate::{
     render::ToColor,
     sprite::{self, Manager},
 };
-use engine::{FactionId, piece};
 use raylib::{
     color::Color,
     core::drawing::{RaylibDraw, RaylibDrawHandle},
 };
+use shared_model::definition::engine::{FactionId, piece};
 
 pub struct CompositeSpritePart {
     pub sprite: sprite::Prototype,

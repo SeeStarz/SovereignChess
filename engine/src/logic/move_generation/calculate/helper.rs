@@ -1,4 +1,7 @@
-use crate::{FactionId, GameState, MoveRich, chess_move::NormalMove, logic};
+use crate::{
+    GameState, logic,
+    shared::{FactionId, MoveRich},
+};
 
 /// # Panics
 /// Panic if passed a castle move
@@ -8,41 +11,27 @@ pub fn try_add_move_check_special_tile_rules(
     chess_move: MoveRich,
     faction: FactionId,
 ) {
-    let normal_move = match chess_move {
-        MoveRich::NormalMove(normal_move) => normal_move,
-        MoveRich::Promotion(promotion_move) => promotion_move.normal_move,
-        MoveRich::RegimeChangePromotion(promotion_move) => promotion_move.pawn_move,
-        MoveRich::Defection(defection_move) => {
-            let origin = defection_move.origin;
-            let destination = defection_move.destination.unwrap_or(origin);
-            NormalMove {
-                origin,
-                destination,
-            }
+    let (origin, destination) = match chess_move {
+        MoveRich::NormalMove(normal_move) => (normal_move.origin, normal_move.destination),
+        MoveRich::Promotion(promotion_move) => (
+            promotion_move.normal_move.origin,
+            promotion_move.normal_move.destination,
+        ),
+        MoveRich::RegimeChangePromotion(promotion_move) => (
+            promotion_move.pawn_move.origin,
+            promotion_move.pawn_move.destination,
+        ),
+        MoveRich::Defection(defection_move) => (
+            defection_move.origin,
+            defection_move.destination.unwrap_or(defection_move.origin),
+        ),
+        MoveRich::Castle(_castle_move) => {
+            panic!("try_add_move_check_special_tile_rules can not handle check")
         }
-        MoveRich::Castle(_castle_move) => panic!(),
     };
 
-    let Some(special_destination) = game_state
-        .board
-        .special_layout()
-        .at(normal_move.destination)
-    else {
+    if logic::is_possibly_special_tile_occupiable(&game_state.board, origin, destination, faction) {
         moves.push(chess_move);
         return;
-    };
-
-    // Means that we are not trying to occupy special tile colored the same as current faction
-    // We are also not trying to occupy special tile where there currently is a piece on the other pair
-    if logic::is_special_tile_occupiable(&game_state.board, special_destination, faction) {
-        moves.push(chess_move);
-        return;
-    }
-
-    // If the current moved piece is the one on the other pair, it's safe to move there
-    if let Some(special_origin) = game_state.board.special_layout().at(normal_move.origin)
-        && game_state.board.special_layout().other(special_origin) == special_destination
-    {
-        moves.push(chess_move);
     }
 }

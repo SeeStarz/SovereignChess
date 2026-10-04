@@ -1,9 +1,7 @@
 use crate::{
-    Coordinate, FactionId, GameState, MoveRich,
-    chess_move::NormalMove,
-    direction,
-    faction::Allegiance,
+    GameState, direction,
     logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
+    shared::{Coordinate, FactionId, MoveRich, chess_move, faction},
 };
 
 pub fn add_moves_naive(
@@ -17,8 +15,8 @@ pub fn add_moves_naive(
         let Some(tile) = game_state.board.at(destination) else {
             continue;
         };
-        if let Some(victim) = tile.0 {
-            if logic::allegiance(game_state, victim.faction) != Allegiance::Enemy {
+        if let Some(victim) = tile.piece {
+            if logic::allegiance(game_state, victim.faction) != faction::Allegiance::Enemy {
                 continue;
             }
         }
@@ -26,7 +24,7 @@ pub fn add_moves_naive(
         try_add_move_check_special_tile_rules(
             moves,
             game_state,
-            MoveRich::NormalMove(NormalMove {
+            MoveRich::NormalMove(chess_move::Normal {
                 origin,
                 destination,
             }),

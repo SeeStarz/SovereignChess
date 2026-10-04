@@ -1,9 +1,7 @@
 use crate::{
-    Board, Coordinate, FactionId, GameState, MoveRich, Vec2,
-    chess_move::{NormalMove, Promotion, RegimeChangePromotionRich},
-    faction::Allegiance,
+    Board, GameState,
     logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
-    piece,
+    shared::{Coordinate, FactionId, MoveRich, Vec2, chess_move, faction, piece},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -25,14 +23,14 @@ pub fn add_moves_naive(
         let Some(tile) = game_state.board.at(destination) else {
             continue;
         };
-        if tile.0.is_some() {
+        if tile.piece.is_some() {
             continue;
         }
 
         try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
             moves,
             game_state,
-            NormalMove {
+            chess_move::Normal {
                 origin,
                 destination,
             },
@@ -44,14 +42,14 @@ pub fn add_moves_naive(
             let Some(tile) = game_state.board.at(destination) else {
                 continue;
             };
-            if tile.0.is_some() {
+            if tile.piece.is_some() {
                 continue;
             }
 
             try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
                 moves,
                 game_state,
-                NormalMove {
+                chess_move::Normal {
                     origin,
                     destination,
                 },
@@ -65,17 +63,17 @@ pub fn add_moves_naive(
         let Some(tile) = game_state.board.at(destination) else {
             continue;
         };
-        let Some(victim) = tile.0 else {
+        let Some(victim) = tile.piece else {
             continue;
         };
-        if logic::allegiance(game_state, victim.faction) != Allegiance::Enemy {
+        if logic::allegiance(game_state, victim.faction) != faction::Allegiance::Enemy {
             continue;
         }
 
         try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
             moves,
             game_state,
-            NormalMove {
+            chess_move::Normal {
                 origin,
                 destination,
             },
@@ -148,7 +146,7 @@ fn calculate_pawn_directions(
 fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
     moves: &mut Vec<MoveRich>,
     game_state: &GameState,
-    normal_move: NormalMove,
+    normal_move: chess_move::Normal,
     faction: FactionId,
 ) {
     if normal_move.destination.row >= game_state.board.promotion_area().top
@@ -162,7 +160,7 @@ fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
                 try_add_move_check_special_tile_rules(
                     moves,
                     game_state,
-                    MoveRich::Promotion(Promotion {
+                    MoveRich::Promotion(chess_move::Promotion {
                         normal_move,
                         piece_type,
                     }),
@@ -172,7 +170,7 @@ fn try_add_pawn_move_with_possibly_promotion_check_special_tile_rules(
         try_add_move_check_special_tile_rules(
             moves,
             game_state,
-            MoveRich::RegimeChangePromotion(RegimeChangePromotionRich {
+            MoveRich::RegimeChangePromotion(chess_move::RegimeChangePromotionRich {
                 pawn_move: normal_move,
                 king_origin: logic::find_current_player_king(game_state).map(|p| p.coordinate),
             }),

@@ -1,9 +1,7 @@
-use std::collections::HashMap;
+use crate::shared::{Coordinate, FactionId, PieceSimple, faction, piece};
 
-use crate::{Coordinate, FactionId, PieceSimple, faction, piece};
-
-pub fn generate() -> HashMap<Coordinate, PieceSimple> {
-    HashMap::from([
+pub fn generate() -> Vec<(Coordinate, PieceSimple)> {
+    vec![
         (
             Coordinate::new(11, 6),
             PieceSimple {
@@ -564,5 +562,5 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
                 piece_type: piece::Pawn,
             },
         ),
-    ])
+    ]
 }

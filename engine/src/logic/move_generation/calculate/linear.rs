@@ -1,13 +1,9 @@
 use crate::{
-    Coordinate, GameState, MoveRich, PieceSimple,
-    chess_move::NormalMove,
-    direction,
-    faction::Allegiance,
+    GameState, direction,
     logic::{self, move_generation::calculate::helper::try_add_move_check_special_tile_rules},
-    piece,
+    shared::{Coordinate, MoveRich, PieceSimple, chess_move, faction, piece},
 };
 
-/// Responsible for Queen, Rook, Bishop, and King moves
 pub fn add_moves_naive(
     moves: &mut Vec<MoveRich>,
     game_state: &GameState,
@@ -31,12 +27,12 @@ pub fn add_moves_naive(
                 break;
             };
 
-            if let Some(victim) = tile.0 {
-                if logic::allegiance(game_state, victim.faction) == Allegiance::Enemy {
+            if let Some(victim) = tile.piece {
+                if logic::allegiance(game_state, victim.faction) == faction::Allegiance::Enemy {
                     try_add_move_check_special_tile_rules(
                         moves,
                         game_state,
-                        MoveRich::NormalMove(NormalMove {
+                        MoveRich::NormalMove(chess_move::Normal {
                             origin,
                             destination,
                         }),
@@ -48,7 +44,7 @@ pub fn add_moves_naive(
                 try_add_move_check_special_tile_rules(
                     moves,
                     game_state,
-                    MoveRich::NormalMove(NormalMove {
+                    MoveRich::NormalMove(chess_move::Normal {
                         origin,
                         destination,
                     }),

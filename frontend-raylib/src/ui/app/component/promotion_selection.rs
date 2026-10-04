@@ -11,14 +11,14 @@ use crate::{
     },
     util::Observer,
 };
-use adapter_core::{Gesture, MenuClick};
-use engine::{FactionId, faction, piece};
+use adapter_core::gesture::{Gesture, MenuClick};
 use raylib::{
     RaylibThread,
     color::Color,
     drawing::{RaylibDraw, RaylibDrawHandle},
     math::Rectangle,
 };
+use shared_model::definition::engine::{FactionId, faction, piece};
 use std::{cell::RefCell, rc::Rc};
 
 pub fn build(individual_size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder {
