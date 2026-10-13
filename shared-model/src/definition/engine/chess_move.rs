@@ -1,6 +1,9 @@
 use crate::definition::engine::{Coordinate, FactionId, piece};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum MoveSimple {
     NormalMove(Normal),
     Castle(CastleSimple),
@@ -10,6 +13,7 @@ pub enum MoveSimple {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum MoveRich {
     NormalMove(Normal),
     Castle(CastleRich),
@@ -19,24 +23,28 @@ pub enum MoveRich {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Normal {
     pub origin: Coordinate,
     pub destination: Coordinate,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CastleSimple {
     pub king_destination: Coordinate,
     pub rook_move: Normal,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CastleRich {
     pub king_move: Normal,
     pub rook_move: Normal,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Promotion {
     pub normal_move: Normal,
     pub piece_type: piece::Type,
@@ -45,24 +53,28 @@ pub struct Promotion {
 // Piece type is king
 // Can be coup d'etat or overthrow, same thing here internally
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct RegimeChangePromotionSimple {
     pub pawn_move: Normal,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct RegimeChangePromotionRich {
     pub pawn_move: Normal,
     pub king_origin: Option<Coordinate>,
 }
 
-// Move can be None because moving only happens if defecting on a colored square the same color as chosen faction
+// Destination can be None because moving only happens if defecting on a colored square the same color as chosen faction
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct DefectionSimple {
     pub destination: Option<Coordinate>,
     pub faction: FactionId,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct DefectionRich {
     pub origin: Coordinate,
     pub destination: Option<Coordinate>,

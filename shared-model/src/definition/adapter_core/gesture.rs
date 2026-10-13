@@ -1,8 +1,11 @@
 use crate::definition::engine::{
     Coordinate, FactionId, MoveRich, PieceRich, chess_move::CastleRich, piece,
 };
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Gesture {
     Board(BoardGesture),
     MenuClick(MenuClick),
@@ -10,6 +13,7 @@ pub enum Gesture {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum MenuClick {
     Promotion(piece::Type),
     Defection(FactionId),
@@ -17,12 +21,14 @@ pub enum MenuClick {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum BoardGesture {
     Click(Coordinate),
     Drop(Option<Coordinate>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum IntraGameStateStage {
     Idle,
     Selected,
@@ -31,6 +37,7 @@ pub enum IntraGameStateStage {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct IntraGameStateView {
     pub grabbable_pieces: Vec<PieceRich>,
     pub valid_defections: Vec<FactionId>,

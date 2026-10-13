@@ -7,7 +7,6 @@ mod geometry;
 pub mod piece;
 mod player;
 pub mod tile;
-mod turn;
 mod variant;
 
 pub use board_view::BoardRow;
@@ -23,8 +22,7 @@ pub use geometry::Vec2;
 pub use piece::PieceRich;
 pub use piece::PieceSimple;
 pub use player::PlayerId;
+pub use player::SeatId;
 pub use tile::TileRich;
-pub use turn::SeatId;
-pub use turn::TurnManager;
 pub use variant::VariantData;
 pub use variant::VariantPreset;

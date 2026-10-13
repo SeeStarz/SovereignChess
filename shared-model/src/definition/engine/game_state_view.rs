@@ -1,7 +1,10 @@
 use crate::definition::engine::{BoardView, FactionId, PlayerId, VariantData};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GameStateView {
     pub board_view: BoardView,
     pub player_main_factions: HashMap<PlayerId, FactionId>,

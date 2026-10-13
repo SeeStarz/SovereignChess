@@ -1,5 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SeatId(pub u32);
+use crate::shared::SeatId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TurnManager {

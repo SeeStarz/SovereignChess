@@ -1,9 +1,6 @@
 use crate::{
-    Board, initializer, logic,
-    shared::{
-        CastleSource, FactionId, MoveRich, MoveSimple, SeatId, TurnManager, VariantData,
-        VariantPreset,
-    },
+    Board, TurnManager, initializer, logic,
+    shared::{CastleSource, FactionId, MoveRich, MoveSimple, SeatId, VariantData, VariantPreset},
     tile::SpecialLayout,
 };
 use std::collections::HashMap;
