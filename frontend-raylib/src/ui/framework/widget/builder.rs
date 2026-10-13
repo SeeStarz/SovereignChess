@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::{
     geometry::{FPosition, FSize, Size},
     ui::framework::{

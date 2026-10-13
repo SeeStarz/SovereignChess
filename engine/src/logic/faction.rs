@@ -34,13 +34,17 @@ pub fn real_faction_owners(game_state: &GameState) -> HashMap<FactionId, Faction
         while let Some(&next) = direct_owners.get(&owner) {
             owner = next;
 
-            if game_state.player_main_factions.iter().any(|&f| f == owner) {
+            if game_state
+                .player_main_factions
+                .values()
+                .any(|&f| f == owner)
+            {
                 real_owners.insert(faction, owner);
                 break;
             }
         }
     }
-    for &main_faction in game_state.player_main_factions.iter() {
+    for &main_faction in game_state.player_main_factions.values() {
         real_owners.insert(main_faction, main_faction);
     }
     real_owners
@@ -71,7 +75,12 @@ pub fn allegiance(game_state: &GameState, faction: FactionId) -> Allegiance {
 }
 
 pub fn current_player_faction(game_state: &GameState) -> FactionId {
-    game_state.player_main_factions[game_state.turn_manager.current_player().0 as usize]
+    let current_player = game_state.turn_manager.current_player();
+    game_state
+        .player_main_factions
+        .get(&current_player)
+        .expect(&format!("Seat ID {:?} not found", current_player))
+        .to_owned()
 }
 
 pub fn is_faction_in_board(board: &Board, faction: FactionId) -> bool {

@@ -121,6 +121,7 @@ pub struct Rect<T> {
     pub position: Position<T>,
     pub size: Size<T>,
 }
+#[allow(dead_code)]
 pub type IRect = Rect<i32>;
 pub type FRect = Rect<f32>;
 impl<T> Rect<T> {

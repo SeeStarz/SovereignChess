@@ -2,16 +2,13 @@ use crate::{
     game::Data,
     geometry::{FPosition, FRect, FSize},
     sprite::{CompositeDraw, PieceSprite},
-    ui::{
-        app::component::board,
-        framework::{
-            input::Event,
-            widget::{self, prototype::SpecNode},
-        },
+    ui::framework::{
+        input::Event,
+        widget::{self, prototype::SpecNode},
     },
     util::Observer,
 };
-use adapter_core::gesture::{Gesture, MenuClick};
+use adapter_core::{Gesture, MenuClick, SessionAction};
 use raylib::{
     RaylibThread,
     color::Color,
@@ -54,7 +51,10 @@ fn input_handler(event: Event, rect: FRect, data: &mut Data, piece_type: piece::
         Event::MousePressed(position)
             if Rectangle::from(rect).check_collision_point_rec(position) =>
         {
-            board::handle_chess_gesture(Gesture::MenuClick(MenuClick::Promotion(piece_type)), data);
+            data.session
+                .do_action(SessionAction::Gesture(Gesture::MenuClick(
+                    MenuClick::Promotion(piece_type),
+                )));
             true
         }
         _ => false,
@@ -68,8 +68,13 @@ pub fn render_function(
     data: &Data,
     piece_type: piece::Type,
 ) {
-    let hint = &data.cached_hint;
-    if hint.promotion_options.contains(&piece_type) {
+    if data
+        .session
+        .game_view()
+        .intra_game_state
+        .promotion_options
+        .contains(&piece_type)
+    {
         handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::BLUE);
     } else {
         handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::GRAY);

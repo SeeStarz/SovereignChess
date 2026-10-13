@@ -2,16 +2,13 @@ use crate::{
     game::Data,
     geometry::{FPosition, FRect, FSize},
     sprite::{CompositeDraw, PieceSprite},
-    ui::{
-        app::component::board,
-        framework::{
-            input::Event,
-            widget::{self, prototype::SpecNode},
-        },
+    ui::framework::{
+        input::Event,
+        widget::{self, prototype::SpecNode},
     },
     util::Observer,
 };
-use adapter_core::gesture::{Gesture, MenuClick};
+use adapter_core::{Gesture, MenuClick, SessionAction};
 use raylib::{
     RaylibThread,
     color::Color,
@@ -19,13 +16,13 @@ use raylib::{
     math::Rectangle,
 };
 use shared_model::definition::engine::{FactionId, piece};
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 pub fn build(individual_size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder {
-    let buttons: Vec<SpecNode> = data
-        .borrow()
-        .cached_view
-        .factions
+    let mut factions = data.borrow().session.game_view().game_state.factions;
+    factions.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let buttons: Vec<SpecNode> = factions
         .iter()
         .map(|&faction| {
             let mutator = data.clone();
@@ -51,7 +48,10 @@ fn input_handler(event: Event, rect: FRect, data: &mut Data, faction: FactionId)
         Event::MousePressed(position)
             if Rectangle::from(rect).check_collision_point_rec(position) =>
         {
-            board::handle_chess_gesture(Gesture::MenuClick(MenuClick::Defection(faction)), data);
+            data.session
+                .do_action(SessionAction::Gesture(Gesture::MenuClick(
+                    MenuClick::Defection(faction),
+                )));
             true
         }
         _ => false,
@@ -65,11 +65,13 @@ pub fn render_function(
     data: &Data,
     faction: FactionId,
 ) {
-    let real_faction_owners: HashMap<FactionId, FactionId> =
-        data.cached_view.owned_factions.iter().cloned().collect();
-
-    let hint = &data.cached_hint;
-    if hint.valid_defections.contains(&faction) {
+    if data
+        .session
+        .game_view()
+        .intra_game_state
+        .valid_defections
+        .contains(&faction)
+    {
         handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::BLUE);
     } else {
         handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::GRAY);
@@ -80,7 +82,13 @@ pub fn render_function(
         &PieceSprite {
             piece_type: piece::King,
             faction,
-            owner: real_faction_owners.get(&faction).map(|_| faction),
+            owner: data
+                .session
+                .game_view()
+                .game_state
+                .owned_factions
+                .get(&faction)
+                .map(|_| faction),
         },
         rect,
         0.0,

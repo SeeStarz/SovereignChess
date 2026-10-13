@@ -1,21 +1,23 @@
 use crate::{
-    Board, initializer,
-    logic::{self},
-    shared::{CastleSource, FactionId, TurnManager, VariantData, VariantPreset},
+    Board, initializer, logic,
+    shared::{
+        CastleSource, FactionId, MoveRich, MoveSimple, SeatId, TurnManager, VariantData,
+        VariantPreset,
+    },
     tile::SpecialLayout,
 };
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GameState {
     pub board: Board,
-    pub player_main_factions: Vec<FactionId>,
+    pub player_main_factions: HashMap<SeatId, FactionId>,
     pub turn_manager: TurnManager,
     pub remaining_castles: Vec<CastleSource>,
-    pub variant_data: VariantData,
 }
 
 impl GameState {
-    pub fn new(variant_data: VariantData) -> Option<Self> {
+    pub fn new(variant_data: &VariantData) -> Option<Self> {
         let special_layout = SpecialLayout::new(variant_data.special_tile_pairs.clone())?;
 
         let board = Board::from_piece_list(
@@ -34,7 +36,6 @@ impl GameState {
             player_main_factions,
             turn_manager,
             remaining_castles,
-            variant_data,
         })
     }
 
@@ -43,6 +44,27 @@ impl GameState {
             VariantPreset::Standard => initializer::variant::standard(),
             VariantPreset::Arena => initializer::variant::arena(),
         };
-        Self::new(variant_data).expect(&format!("Preset {:?} is broken", variant_preset))
+
+        Self::new(&variant_data).expect(&format!("Variant {:?} is broken", variant_preset))
+    }
+
+    pub fn apply_move_unchecked(&self, chess_move: MoveSimple) -> Self {
+        logic::apply_move(self, chess_move)
+    }
+
+    pub fn apply_move(&self, chess_move: MoveSimple) -> Option<Self> {
+        if self
+            .legal_moves()
+            .into_iter()
+            .any(|m| MoveSimple::from(m) == chess_move)
+        {
+            Some(self.apply_move_unchecked(chess_move))
+        } else {
+            None
+        }
+    }
+
+    pub fn legal_moves(&self) -> Vec<MoveRich> {
+        logic::calculate_move(self)
     }
 }

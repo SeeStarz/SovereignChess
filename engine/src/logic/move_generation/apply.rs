@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+
+use shared_model::definition::engine::SeatId;
+
 use crate::{
     Board, GameState, logic,
     shared::{CastleSource, FactionId, MoveSimple, PieceSimple, piece},
@@ -23,7 +27,6 @@ pub fn apply_move(game_state: &GameState, chess_move: MoveSimple) -> GameState {
         player_main_factions,
         turn_manager: turn_to_play,
         remaining_castles,
-        variant_data: game_state.variant_data.clone(),
     }
 }
 
@@ -202,9 +205,11 @@ fn move_pieces(game_state: &GameState, board: &mut Board, chess_move: MoveSimple
 
 fn change_player_colors(
     game_state: &GameState,
-    player_colors: &mut Vec<FactionId>,
+    player_colors: &mut HashMap<SeatId, FactionId>,
     chess_move: MoveSimple,
 ) {
+    let current_player = game_state.turn_manager.current_player();
+
     match chess_move {
         MoveSimple::RegimeChangePromotion(promotion_move) => {
             let faction = game_state
@@ -218,11 +223,10 @@ fn change_player_colors(
                 ))
                 .faction;
 
-            player_colors[game_state.turn_manager.current_player().0 as usize] = faction;
+            player_colors.insert(current_player, faction);
         }
         MoveSimple::Defection(defection_move) => {
-            player_colors[game_state.turn_manager.current_player().0 as usize] =
-                defection_move.faction;
+            player_colors.insert(current_player, defection_move.faction);
         }
         _ => {}
     }

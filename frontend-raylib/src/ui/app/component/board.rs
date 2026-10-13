@@ -14,10 +14,7 @@ use crate::{
     },
     util::Observer,
 };
-use adapter_core::{
-    game::view_game_state,
-    gesture::{Adapter, BoardGesture, Gesture},
-};
+use adapter_core::{BoardGesture, Gesture, SessionAction};
 use glam::Vec2;
 use raylib::{
     RaylibThread,
@@ -53,26 +50,22 @@ fn handle_input(event: Event, rect: FRect, data: &mut Data) -> bool {
 
     let tile_size = Vec2::from(rect.size)
         / Vec2::new(
-            data.adapter.game_state().board.width() as f32,
-            data.adapter.game_state().board.height() as f32,
+            data.session.game_view().game_state.board_view.width as f32,
+            data.session.game_view().game_state.board_view.height as f32,
         );
     let position = (Vec2::from(click_position) - Vec2::from(rect.position)) / tile_size;
     let click_coordinate = Coordinate::new(position.y as i32, position.x as i32);
 
-    handle_chess_gesture(Gesture::Board(BoardGesture::Click(click_coordinate)), data);
-    true
-}
-
-pub fn handle_chess_gesture(gesture: Gesture, data: &mut Data) {
-    data.adapter.apply(gesture);
-    let hint = data.adapter.hint();
-    if let Some(game_state_change) = hint.game_state_change.clone() {
-        data.cached_view = view_game_state(&game_state_change.updated_game_state);
-        data.adapter = Adapter::new(game_state_change.updated_game_state);
-        data.cached_hint = data.adapter.hint();
-    } else {
-        data.cached_hint = hint;
+    // TODO: REMOVE
+    if data.session.game_view().game_state.waiting_swap {
+        data.session.do_action(SessionAction::Swap(false));
     }
+
+    data.session
+        .do_action(SessionAction::Gesture(Gesture::Board(BoardGesture::Click(
+            click_coordinate,
+        ))));
+    true
 }
 
 pub fn draw_game(handle: &mut RaylibDrawHandle, thread: &RaylibThread, rect: FRect, data: &Data) {
@@ -81,8 +74,8 @@ pub fn draw_game(handle: &mut RaylibDrawHandle, thread: &RaylibThread, rect: FRe
         size: FSize::from(
             Vec2::from(rect.size)
                 / Vec2::new(
-                    data.adapter.game_state().board.width() as f32,
-                    data.adapter.game_state().board.height() as f32,
+                    data.session.game_view().game_state.board_view.height as f32,
+                    data.session.game_view().game_state.board_view.width as f32,
                 ),
         ),
     };
@@ -97,17 +90,13 @@ fn draw_board(
     tile_rect: FRect,
     data: &Data,
 ) {
-    let height = data.adapter.game_state().board.height() as i32;
-    let width = data.adapter.game_state().board.width() as i32;
+    let height = data.session.game_view().game_state.board_view.height as i32;
+    let width = data.session.game_view().game_state.board_view.width as i32;
     for r in 0..height {
         for c in 0..width {
-            let coordinate = Coordinate::new(r, c);
-            let color = if let Some(special) = data
-                .adapter
-                .game_state()
-                .board
-                .special_layout()
-                .at(coordinate)
+            let color = if let Some(special) =
+                data.session.game_view().game_state.board_view.rows[r as usize].0[c as usize]
+                    .special
             {
                 special.faction.to_color()
             } else {
@@ -139,7 +128,7 @@ fn draw_pieces(
     tile_rect: FRect,
     data: &Data,
 ) {
-    for piece in data.cached_view.board_view.pieces.iter() {
+    for piece in data.session.game_view().game_state.board_view.pieces.iter() {
         let sprite = PieceSprite {
             piece_type: piece.piece_type,
             faction: piece.faction,
@@ -164,9 +153,9 @@ fn draw_legal_moves(
     tile_rect: FRect,
     data: &Data,
 ) {
-    let hint = &data.cached_hint;
+    let intra_game_state_view = &data.session.game_view().intra_game_state;
 
-    if let Some(piece) = hint.grabbed_piece {
+    if let Some(piece) = intra_game_state_view.grabbed_piece {
         let position = coordinate_to_centered_position(piece.coordinate, tile_rect);
         handle.draw_ellipse(
             position.x as i32,
@@ -177,7 +166,7 @@ fn draw_legal_moves(
         );
     }
 
-    for &destination in hint.valid_destinations.iter() {
+    for &destination in intra_game_state_view.valid_destinations.iter() {
         let position = coordinate_to_centered_position(destination, tile_rect);
         handle.draw_ellipse(
             position.x as i32,

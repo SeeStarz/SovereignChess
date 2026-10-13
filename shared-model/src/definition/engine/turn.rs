@@ -1,10 +1,10 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct TurnId(pub u32);
+pub struct SeatId(pub u32);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TurnManager {
     player_count: u32,
-    current_player: TurnId,
+    current_player: SeatId,
 }
 
 impl TurnManager {
@@ -17,7 +17,7 @@ impl TurnManager {
 
         TurnManager {
             player_count,
-            current_player: TurnId(0),
+            current_player: SeatId(0),
         }
     }
 
@@ -25,14 +25,14 @@ impl TurnManager {
         self.player_count
     }
 
-    pub fn current_player(&self) -> TurnId {
+    pub fn current_player(&self) -> SeatId {
         self.current_player
     }
 
     pub fn next_turn(&self) -> TurnManager {
         TurnManager {
             player_count: self.player_count,
-            current_player: TurnId((self.current_player.0 + 1) % self.player_count),
+            current_player: SeatId((self.current_player.0 + 1) % self.player_count),
         }
     }
 }

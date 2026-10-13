@@ -8,7 +8,7 @@ pub fn filter_checks(game_state: &GameState, moves: &mut Vec<MoveRich>) {
         if let MoveRich::Castle(castle_move) = m {
             is_castle_safe(game_state, castle_move)
         } else {
-            let do_move_game_state = logic::apply_move(game_state, MoveSimple::from(m));
+            let do_move_game_state = game_state.apply_move_unchecked(MoveSimple::from(m));
             is_enemy_king_safe(&do_move_game_state)
         }
     });
@@ -46,17 +46,16 @@ fn is_castle_safe(game_state: &GameState, castle_move: chess_move::CastleRich) -
         }
     }
 
-    is_enemy_king_safe(&logic::apply_move(
-        game_state,
-        MoveSimple::Castle(chess_move::CastleSimple::from(castle_move)),
-    ))
+    is_enemy_king_safe(&game_state.apply_move_unchecked(MoveSimple::Castle(
+        chess_move::CastleSimple::from(castle_move),
+    )))
 }
 
 fn is_enemy_king_safe(game_state: &GameState) -> bool {
     logic::move_generation::calculate::naive_moves(game_state)
         .iter()
         .all(|&m| {
-            let response_game_state = logic::apply_move(game_state, MoveSimple::from(m));
+            let response_game_state = game_state.apply_move_unchecked(MoveSimple::from(m));
             logic::find_current_player_king(&response_game_state).is_some()
         })
 }

@@ -21,6 +21,7 @@ pub trait CompositeSprite {
 }
 
 pub trait CompositeDraw<T> {
+    #[allow(dead_code)]
     fn draw_composite(
         &mut self,
         asset_manager: &Manager,

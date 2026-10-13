@@ -15,6 +15,7 @@ use std::{cell::RefCell, rc::Rc};
 #[allow(unused_imports)]
 pub use toggle_button::build as toggle_button;
 
+#[allow(dead_code)]
 mod toggle_button {
     use super::*;
 

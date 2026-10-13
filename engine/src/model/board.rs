@@ -3,6 +3,7 @@ use crate::{
     shared::{Area, Coordinate, PieceSimple},
     tile::{self, SpecialLayout},
 };
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Board {
@@ -79,7 +80,7 @@ impl Board {
     }
 
     pub fn from_piece_list(
-        map: &Vec<(Coordinate, PieceSimple)>,
+        map: &HashMap<Coordinate, PieceSimple>,
         width: u32,
         height: u32,
         promotion_area: Area,
@@ -88,7 +89,7 @@ impl Board {
         let mut board = Self::empty(width, height, promotion_area, special_layout)?;
         if !map
             .into_iter()
-            .all(|&(coordinate, piece)| board.set_at(coordinate, Some(piece)))
+            .all(|(&coordinate, &piece)| board.set_at(coordinate, Some(piece)))
         {
             return None;
         }

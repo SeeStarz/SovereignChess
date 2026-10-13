@@ -31,7 +31,7 @@ pub struct GamestateChange {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum AdapterState {
+enum AdapterState {
     Idle,
     Selected(SelectedState),
     Promotion(PromotionState),
@@ -39,19 +39,19 @@ pub enum AdapterState {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum SelectedState {
+enum SelectedState {
     BoardSelection(PieceRich),
     DefectionSelection(FactionId),
     CastleSelection,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct PromotionState {
+struct PromotionState {
     pub origin: Coordinate,
     pub destination: Coordinate,
 }
 
-pub enum SelectedStageResult {
+enum SelectedStageResult {
     Done(GamestateChange),
     Promotion(PromotionState),
 }
@@ -68,26 +68,26 @@ impl From<SelectedStageResult> for AdapterState {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum UIState {
+pub enum IntraGameStateStage {
     Idle,
     Selected,
     Promotion,
     Done,
 }
 
-impl From<AdapterState> for UIState {
+impl From<AdapterState> for IntraGameStateStage {
     fn from(state: AdapterState) -> Self {
         match state {
-            AdapterState::Idle => UIState::Idle,
-            AdapterState::Selected(_) => UIState::Selected,
-            AdapterState::Promotion(_) => UIState::Promotion,
-            AdapterState::Done(_) => UIState::Done,
+            AdapterState::Idle => IntraGameStateStage::Idle,
+            AdapterState::Selected(_) => IntraGameStateStage::Selected,
+            AdapterState::Promotion(_) => IntraGameStateStage::Promotion,
+            AdapterState::Done(_) => IntraGameStateStage::Done,
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UIHint {
+pub struct IntraGameStateView {
     pub grabbable_pieces: Vec<PieceRich>,
     pub valid_defections: Vec<FactionId>,
     pub valid_castles: Vec<CastleRich>,
@@ -97,7 +97,7 @@ pub struct UIHint {
     pub valid_destinations: Vec<Coordinate>,
     pub promotion_options: Vec<piece::Type>,
     pub game_state_change: Option<GamestateChange>,
-    pub state: UIState,
+    pub state: IntraGameStateStage,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -114,8 +114,8 @@ impl Adapter {
         }
     }
 
-    pub fn game_state(&self) -> GameState {
-        self.game_state.clone()
+    pub fn game_state(&self) -> &GameState {
+        &self.game_state
     }
 
     pub fn apply(&mut self, gesture: Gesture) {
@@ -165,7 +165,7 @@ impl Adapter {
         }
     }
 
-    pub fn hint(&self) -> UIHint {
+    pub fn view(&self) -> IntraGameStateView {
         let grabbable_pieces: Vec<PieceRich> = valid_select_pieces(&self.game_state).collect();
         let valid_defections: Vec<FactionId> = valid_defections(&self.game_state).collect();
 
@@ -275,9 +275,9 @@ impl Adapter {
             None
         };
 
-        let state = UIState::from(self.state.clone());
+        let state = IntraGameStateStage::from(self.state.clone());
 
-        UIHint {
+        IntraGameStateView {
             grabbable_pieces,
             valid_defections,
             valid_castles,
@@ -389,7 +389,7 @@ fn valid_advance_from_board_selection(
                         }))
                     }
                     _ => Some(SelectedStageResult::Done(GamestateChange {
-                        updated_game_state: logic::apply_move(game_state, MoveSimple::from(m)),
+                        updated_game_state: game_state.apply_move_unchecked(MoveSimple::from(m)),
                         applied_move: m,
                     })),
                 }
@@ -410,7 +410,7 @@ fn valid_advance_from_defection_selection(
                 && defection_move.faction == faction
             {
                 Some(GamestateChange {
-                    updated_game_state: logic::apply_move(game_state, MoveSimple::from(m)),
+                    updated_game_state: game_state.apply_move_unchecked(MoveSimple::from(m)),
                     applied_move: m,
                 })
             } else {
@@ -427,7 +427,7 @@ fn valid_advance_from_castle_selection(
         .filter_map(move |m| {
             if let MoveRich::Castle(_castle_move) = m {
                 Some(GamestateChange {
-                    updated_game_state: logic::apply_move(game_state, MoveSimple::from(m)),
+                    updated_game_state: game_state.apply_move_unchecked(MoveSimple::from(m)),
                     applied_move: m,
                 })
             } else {
@@ -454,7 +454,7 @@ fn valid_promotions(
             _ => false,
         })
         .map(|m| GamestateChange {
-            updated_game_state: logic::apply_move(game_state, MoveSimple::from(m)),
+            updated_game_state: game_state.apply_move_unchecked(MoveSimple::from(m)),
             applied_move: m,
         })
 }

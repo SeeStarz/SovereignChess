@@ -1,3 +1,8 @@
-pub mod export;
-pub mod game;
-pub mod gesture;
+mod gesture;
+mod session;
+
+pub use gesture::{
+    Adapter as GestureAdapter, BoardGesture, GamestateChange, Gesture, IntraGameStateStage,
+    IntraGameStateView, MenuClick,
+};
+pub use session::{Action as SessionAction, Adapter as SessionAdapter, GameView};

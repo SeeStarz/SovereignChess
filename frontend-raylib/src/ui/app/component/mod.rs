@@ -1,4 +1,4 @@
-pub mod board;
+mod board;
 mod castle_button;
 pub mod debug;
 mod defection_selection;

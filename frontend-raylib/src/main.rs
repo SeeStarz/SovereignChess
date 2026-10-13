@@ -1,6 +1,4 @@
-#![allow(dead_code)]
-
-use adapter_core::game::game_state_from_variant_preset;
+use adapter_core::SessionAdapter;
 use shared_model::definition::engine::VariantPreset;
 use std::env;
 mod geometry;
@@ -16,7 +14,7 @@ fn main() {
         Some(name) if name == "arena" => VariantPreset::Arena,
         Some(name) => panic!("Invalid variant name {}", name),
     };
-    game::start(game_state_from_variant_preset(variant_preset));
+    game::start(SessionAdapter::new_from_preset(variant_preset));
 }
 
 pub mod game {
@@ -25,23 +23,16 @@ pub mod game {
         sprite,
         ui::{self, export::input::Event},
     };
-    use adapter_core::{
-        export::GameState,
-        game::view_game_state,
-        gesture::{Adapter, UIHint},
-    };
+    use adapter_core::SessionAdapter;
     use raylib::prelude::*;
-    use shared_model::definition::engine::GameStateView;
     use std::{cell::RefCell, rc::Rc};
 
     pub struct Data {
-        pub adapter: Adapter,
-        pub cached_hint: UIHint,
-        pub cached_view: GameStateView,
+        pub session: SessionAdapter,
         pub sprite_manager: sprite::Manager,
     }
 
-    pub fn start(game_state: GameState) {
+    pub fn start(session: SessionAdapter) {
         let (mut raylib_handle, thread) = raylib::init()
             .resizable()
             .size(1080, 720)
@@ -50,12 +41,8 @@ pub mod game {
             .build();
 
         let data_mutator = Rc::new(RefCell::new({
-            let view = view_game_state(&game_state);
-            let adapter = Adapter::new(game_state);
             Data {
-                cached_hint: adapter.hint(),
-                cached_view: view,
-                adapter,
+                session,
                 sprite_manager: sprite::Manager::new(&mut raylib_handle, &thread),
             }
         }));

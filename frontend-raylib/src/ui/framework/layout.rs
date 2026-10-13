@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::geometry::{FPosition, Size};
 
 #[derive(Clone, Copy, Debug, PartialEq)]

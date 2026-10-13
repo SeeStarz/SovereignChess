@@ -2,13 +2,10 @@ use crate::{
     game::Data,
     geometry::{FPosition, FRect, FSize},
     sprite::{CompositeDraw, PieceSprite},
-    ui::{
-        app::component::board,
-        framework::{input::Event, widget},
-    },
+    ui::framework::{input::Event, widget},
     util::Observer,
 };
-use adapter_core::gesture::{Gesture, MenuClick};
+use adapter_core::{Gesture, MenuClick, SessionAction};
 use glam::Vec2;
 use raylib::{
     RaylibThread,
@@ -38,7 +35,10 @@ fn input_handler(event: Event, rect: FRect, data: &mut Data) -> bool {
         Event::MousePressed(position)
             if Rectangle::from(rect).check_collision_point_rec(position) =>
         {
-            board::handle_chess_gesture(Gesture::MenuClick(MenuClick::Castle), data);
+            data.session
+                .do_action(SessionAction::Gesture(Gesture::MenuClick(
+                    MenuClick::Castle,
+                )));
             true
         }
         _ => false,
@@ -64,8 +64,14 @@ pub fn render_function(
         size: two_thirds_size,
     };
 
-    let hint = &data.cached_hint;
-    if hint.valid_castles.len() > 0 {
+    if data
+        .session
+        .game_view()
+        .intra_game_state
+        .valid_castles
+        .len()
+        > 0
+    {
         handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::BLUE);
     } else {
         handle.draw_rectangle_pro(rect, FPosition::default(), 0.0, Color::GRAY);
