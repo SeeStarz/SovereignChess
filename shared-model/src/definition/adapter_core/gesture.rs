@@ -1,0 +1,45 @@
+use crate::definition::engine::{
+    Coordinate, FactionId, MoveRich, PieceRich, chess_move::CastleRich, piece,
+};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Gesture {
+    Board(BoardGesture),
+    MenuClick(MenuClick),
+    Cancel,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum MenuClick {
+    Promotion(piece::Type),
+    Defection(FactionId),
+    Castle,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BoardGesture {
+    Click(Coordinate),
+    Drop(Option<Coordinate>),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum IntraGameStateStage {
+    Idle,
+    Selected,
+    Promotion,
+    Done,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct IntraGameStateView {
+    pub grabbable_pieces: Vec<PieceRich>,
+    pub valid_defections: Vec<FactionId>,
+    pub valid_castles: Vec<CastleRich>,
+    pub grabbed_piece: Option<PieceRich>,
+    pub selected_defection: Option<FactionId>,
+    pub castle_selected: bool,
+    pub valid_destinations: Vec<Coordinate>,
+    pub promotion_options: Vec<piece::Type>,
+    pub move_made: Option<MoveRich>,
+    pub state: IntraGameStateStage,
+}

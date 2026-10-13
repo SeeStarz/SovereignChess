@@ -1,24 +1,20 @@
 use crate::definition::engine::chess_move::{
-    CastleRich, CastleSimple, DefectionRich, DefectionSimple, MoveRichRust, MoveSimpleRust,
+    CastleRich, CastleSimple, DefectionRich, DefectionSimple, MoveRich, MoveSimple,
     RegimeChangePromotionRich, RegimeChangePromotionSimple,
 };
 
-impl From<MoveRichRust> for MoveSimpleRust {
-    fn from(chess_move: MoveRichRust) -> Self {
+impl From<MoveRich> for MoveSimple {
+    fn from(chess_move: MoveRich) -> Self {
         match chess_move {
-            MoveRichRust::Castle(castle_move) => {
-                MoveSimpleRust::Castle(CastleSimple::from(castle_move))
+            MoveRich::Castle(castle_move) => MoveSimple::Castle(CastleSimple::from(castle_move)),
+            MoveRich::Defection(defection_move) => {
+                MoveSimple::Defection(DefectionSimple::from(defection_move))
             }
-            MoveRichRust::Defection(defection_move) => {
-                MoveSimpleRust::Defection(DefectionSimple::from(defection_move))
+            MoveRich::RegimeChangePromotion(promotion_move) => {
+                MoveSimple::RegimeChangePromotion(RegimeChangePromotionSimple::from(promotion_move))
             }
-            MoveRichRust::RegimeChangePromotion(promotion_move) => {
-                MoveSimpleRust::RegimeChangePromotion(RegimeChangePromotionSimple::from(
-                    promotion_move,
-                ))
-            }
-            MoveRichRust::Promotion(promotion_move) => MoveSimpleRust::Promotion(promotion_move),
-            MoveRichRust::NormalMove(normal_move) => MoveSimpleRust::NormalMove(normal_move),
+            MoveRich::Promotion(promotion_move) => MoveSimple::Promotion(promotion_move),
+            MoveRich::NormalMove(normal_move) => MoveSimple::NormalMove(normal_move),
         }
     }
 }

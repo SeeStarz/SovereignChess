@@ -14,7 +14,6 @@ use crate::{
     },
     util::Observer,
 };
-use adapter_core::{BoardGesture, Gesture, SessionAction};
 use glam::Vec2;
 use raylib::{
     RaylibThread,
@@ -22,7 +21,10 @@ use raylib::{
     math::Rectangle,
     prelude::{RaylibDraw, RaylibDrawHandle},
 };
-use shared_model::definition::engine::Coordinate;
+use shared_model::definition::{
+    adapter_core::{BoardGesture, Gesture, SessionAction},
+    engine::Coordinate,
+};
 
 pub fn build(size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder {
     let observer = Observer::from(data.clone());

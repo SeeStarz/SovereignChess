@@ -1,23 +1,13 @@
-use crate::gesture::{self, Gesture, IntraGameStateView};
+use crate::gesture;
 use engine::{GameSession, GameState, game_session, initializer, logic};
-use shared_model::definition::engine::{
-    BoardRow, BoardView, Coordinate, FactionId, GameStateView, MoveSimple, PlayerId, VariantData,
-    VariantPreset,
+use shared_model::definition::{
+    adapter_core::{GameView, SessionAction},
+    engine::{
+        BoardRow, BoardView, Coordinate, FactionId, GameStateView, MoveSimple, PlayerId,
+        VariantData, VariantPreset,
+    },
 };
 use std::collections::HashMap;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Action {
-    Move(MoveSimple),
-    Gesture(Gesture),
-    Swap(bool),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct GameView {
-    pub intra_game_state: IntraGameStateView,
-    pub game_state: GameStateView,
-}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Adapter {
@@ -57,9 +47,9 @@ impl Adapter {
         Self::new(variant_data).expect(&format!("Variant {:?} is broken", variant_preset))
     }
 
-    pub fn do_action(&mut self, action: Action) -> bool {
+    pub fn do_action(&mut self, action: SessionAction) -> bool {
         match action {
-            Action::Swap(swap) => {
+            SessionAction::Swap(swap) => {
                 let command = game_session::Command::Swap(swap);
                 let result = self.session.do_command(command);
                 assert_eq!(
@@ -69,7 +59,7 @@ impl Adapter {
                 self.cached_game_view = self.game_view_internal();
                 result
             }
-            Action::Move(chess_move) => {
+            SessionAction::Move(chess_move) => {
                 let command = game_session::Command::Move(chess_move);
                 let result = self.session.do_command(command);
                 if result {
@@ -79,17 +69,14 @@ impl Adapter {
                 }
                 result
             }
-            Action::Gesture(gesture) => {
+            SessionAction::Gesture(gesture) => {
                 if self.session.waiting_swap_command() {
                     false
                 } else {
                     self.gesture_adapter.apply(gesture);
                     self.cached_game_view = self.game_view_internal();
-                    if let Some(game_state_change) = &self.gesture_adapter.view().game_state_change
-                    {
-                        self.do_action(Action::Move(MoveSimple::from(
-                            game_state_change.applied_move,
-                        )));
+                    if let Some(move_made) = self.gesture_adapter.view().move_made {
+                        self.do_action(SessionAction::Move(MoveSimple::from(move_made)));
                     }
                     true
                 }

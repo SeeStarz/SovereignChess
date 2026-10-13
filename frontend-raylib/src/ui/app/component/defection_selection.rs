@@ -8,14 +8,16 @@ use crate::{
     },
     util::Observer,
 };
-use adapter_core::{Gesture, MenuClick, SessionAction};
 use raylib::{
     RaylibThread,
     color::Color,
     drawing::{RaylibDraw, RaylibDrawHandle},
     math::Rectangle,
 };
-use shared_model::definition::engine::{FactionId, piece};
+use shared_model::definition::{
+    adapter_core::{Gesture, MenuClick, SessionAction},
+    engine::{FactionId, piece},
+};
 use std::{cell::RefCell, rc::Rc};
 
 pub fn build(individual_size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder {

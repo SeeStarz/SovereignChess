@@ -1,7 +1,7 @@
 use crate::definition::engine::{Coordinate, FactionId, piece};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum MoveSimpleRust {
+pub enum MoveSimple {
     NormalMove(Normal),
     Castle(CastleSimple),
     Promotion(Promotion),
@@ -10,21 +10,12 @@ pub enum MoveSimpleRust {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum MoveRichRust {
+pub enum MoveRich {
     NormalMove(Normal),
     Castle(CastleRich),
     Promotion(Promotion),
     RegimeChangePromotion(RegimeChangePromotionRich),
     Defection(DefectionRich),
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum MoveEnumC {
-    NormalMove,
-    Castle,
-    Promotion,
-    RegimeChangePromotion,
-    Defection,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

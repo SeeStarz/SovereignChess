@@ -5,7 +5,6 @@ use crate::{
     ui::framework::{input::Event, widget},
     util::Observer,
 };
-use adapter_core::{Gesture, MenuClick, SessionAction};
 use glam::Vec2;
 use raylib::{
     RaylibThread,
@@ -13,7 +12,10 @@ use raylib::{
     drawing::{RaylibDraw, RaylibDrawHandle},
     math::Rectangle,
 };
-use shared_model::definition::engine::{FactionId, faction, piece};
+use shared_model::definition::{
+    adapter_core::{Gesture, MenuClick, SessionAction},
+    engine::{FactionId, faction, piece},
+};
 use std::{cell::RefCell, rc::Rc};
 
 pub fn build(size: FSize, data: Rc<RefCell<Data>>) -> widget::Builder {
