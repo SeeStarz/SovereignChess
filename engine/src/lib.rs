@@ -1,4 +1,3 @@
-pub mod initializer;
 pub mod logic;
 mod model;
 

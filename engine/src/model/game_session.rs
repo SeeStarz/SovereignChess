@@ -1,5 +1,5 @@
 use crate::{
-    GameState, initializer,
+    GameState,
     shared::{MoveSimple, PlayerId, SeatId, VariantData, VariantPreset},
 };
 use std::collections::HashMap;
@@ -34,12 +34,8 @@ impl GameSession {
     }
 
     pub fn new_from_preset(variant_preset: VariantPreset) -> Self {
-        let variant_data = match variant_preset {
-            VariantPreset::Standard => initializer::variant::standard(),
-            VariantPreset::Arena => initializer::variant::arena(),
-        };
-
-        Self::new(variant_data).expect(&format!("Variant {:?} is broken", variant_preset))
+        Self::new(VariantData::from(variant_preset))
+            .expect(&format!("Variant {:?} is broken", variant_preset))
     }
 
     pub fn do_command(&mut self, command: Command) -> bool {

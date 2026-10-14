@@ -1,0 +1,18 @@
+[package]
+name = "adapter-py"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "rust_bridge"
+path = "src/rust/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+shared-model = { version = "0.1.0", path = "../shared-model", features = [
+    "serde",
+] }
+adapter-core = { version = "0.1.0", path = "../adapter-core" }
+pyo3 = "0.29.3"
+serde = "1.0.229"
+serde_json = "1.0.154"

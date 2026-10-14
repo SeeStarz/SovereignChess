@@ -1,5 +1,5 @@
 use crate::gesture;
-use engine::{GameSession, GameState, game_session, initializer, logic};
+use engine::{GameSession, GameState, game_session, logic};
 use shared_model::definition::{
     adapter_core::{GameView, SessionAction},
     engine::{
@@ -39,12 +39,8 @@ impl Adapter {
     }
 
     pub fn new_from_preset(variant_preset: VariantPreset) -> Self {
-        let variant_data = match variant_preset {
-            VariantPreset::Standard => initializer::variant::standard(),
-            VariantPreset::Arena => initializer::variant::arena(),
-        };
-
-        Self::new(variant_data).expect(&format!("Variant {:?} is broken", variant_preset))
+        Self::new(VariantData::from(variant_preset))
+            .expect(&format!("Variant {:?} is broken", variant_preset))
     }
 
     pub fn do_action(&mut self, action: SessionAction) -> bool {

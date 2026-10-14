@@ -1,4 +1,4 @@
-use crate::shared::{Coordinate, FactionId, faction, tile};
+use crate::definition::engine::{Coordinate, FactionId, faction, tile};
 
 pub fn standard() -> Vec<tile::SpecialPair> {
     vec![

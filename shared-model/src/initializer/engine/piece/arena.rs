@@ -1,4 +1,4 @@
-use crate::shared::{Coordinate, FactionId, PieceSimple, faction, piece};
+use crate::definition::engine::{Coordinate, FactionId, PieceSimple, faction, piece};
 use std::collections::HashMap;
 
 pub fn generate() -> HashMap<Coordinate, PieceSimple> {

@@ -9,6 +9,7 @@ pub struct VariantData {
     pub board_width: u32,
     pub board_height: u32,
     pub promotion_area: Area,
+    #[cfg_attr(feature = "serde", serde(with = "crate::helper::hashmap_as_vec"))]
     pub initial_pieces: HashMap<Coordinate, PieceSimple>,
     pub special_tile_pairs: Vec<tile::SpecialPair>,
     pub player_main_factions: HashMap<SeatId, FactionId>,

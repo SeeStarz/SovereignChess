@@ -1,5 +1,5 @@
 use crate::{
-    Board, TurnManager, initializer, logic,
+    Board, TurnManager, logic,
     shared::{CastleSource, FactionId, MoveRich, MoveSimple, SeatId, VariantData, VariantPreset},
     tile::SpecialLayout,
 };
@@ -37,12 +37,8 @@ impl GameState {
     }
 
     pub fn new_from_preset(variant_preset: VariantPreset) -> Self {
-        let variant_data = match variant_preset {
-            VariantPreset::Standard => initializer::variant::standard(),
-            VariantPreset::Arena => initializer::variant::arena(),
-        };
-
-        Self::new(&variant_data).expect(&format!("Variant {:?} is broken", variant_preset))
+        Self::new(&VariantData::from(variant_preset))
+            .expect(&format!("Variant {:?} is broken", variant_preset))
     }
 
     pub fn apply_move_unchecked(&self, chess_move: MoveSimple) -> Self {
