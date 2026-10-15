@@ -10,7 +10,7 @@ from typing import TypeAlias, Annotated, Any
 
 class EnumVariant(BaseModel):
     model_config = ConfigDict(
-        alias_generator=to_pascal, validate_by_alias=True, validate_by_name=True
+        alias_generator=to_pascal, validate_by_alias=True, validate_by_name=True, serialize_by_alias=True
     )
 
 
