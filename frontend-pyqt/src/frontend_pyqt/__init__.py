@@ -6,8 +6,8 @@ from PySide6.QtWidgets import (
     QStackedWidget,
     QPushButton,
 )
-from PySide6.QtCore import Qt, QTimer, QRect, QSize, QPoint, QSizeF, QPointF
-from PySide6.QtGui import QPainter, QColor, QPaintEvent, QPen, QImage
+from PySide6.QtCore import Qt, QTimer, QRect, QSize, QPoint, QSizeF, QPointF, Signal
+from PySide6.QtGui import QMouseEvent, QPainter, QColor, QPaintEvent, QPen, QImage
 from adapter_py.api.session import SessionAdapter
 from adapter_py.model.engine import (
     VariantPreset,
@@ -16,7 +16,16 @@ from adapter_py.model.engine import (
     FactionId,
     PieceRich,
 )
-from adapter_py.model.adapter import GameView
+from adapter_py.model.adapter import (
+    GameView,
+    Gesture,
+    GestureBoardVariant,
+    BoardGesture,
+    BoardGestureClickVariant,
+    SessionAction,
+    SessionActionGestureVariant,
+)
+from adapter_py.model.engine import Coordinate
 import sys
 import signal
 
@@ -35,6 +44,7 @@ def main():
     push_stack(stack, main_screen(stack))
     stack.show()
 
+    # This is so that python is waken up every 100ms to process signals
     sigint_timer = QTimer(stack, interval=100)
     sigint_timer.timeout.connect(lambda: None)
     sigint_timer.start()
@@ -67,6 +77,12 @@ def main_screen(stack: QStackedWidget):
     return widget
 
 
+def mock(session: SessionAdapter, board_widget: BoardWidget, gesture: Gesture):
+    session.do_action(SessionAction(root=SessionActionGestureVariant(gesture=gesture)))
+    board_widget.game_view = session.game_view()
+    board_widget.repaint()
+
+
 def play_screen(stack: QStackedWidget, preset: VariantPreset) -> QWidget:
     layout = QVBoxLayout()
     layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -74,6 +90,9 @@ def play_screen(stack: QStackedWidget, preset: VariantPreset) -> QWidget:
     game = SessionAdapter.new_from_preset(preset)
     board_widget = BoardWidget(game.game_view())
     board_widget.setFixedSize(520, 520)
+    board_widget.on_gesture_made.connect(
+        lambda gesture: mock(game, board_widget, gesture)
+    )
     layout.addWidget(board_widget)
 
     back = QPushButton("Back")
@@ -102,12 +121,15 @@ def pop_stack(stack: QStackedWidget):
 
 class BoardWidget(QWidget):
     game_view: GameView
+    on_gesture_made: Signal = Signal(Gesture)
 
     def __init__(self, game_view: GameView, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.game_view = game_view
 
-    def paintEvent(self, _event: QPaintEvent):
+    def paintEvent(self, event: QPaintEvent):
+        super().paintEvent(event)
+
         width = self.width() - 8
         height = self.height() - 8
         size = QSize(width, height)
@@ -119,6 +141,28 @@ class BoardWidget(QWidget):
                 rect,
             )
             paint_pieces(self.game_view.game_state.board_view, painter, rect)
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        super().mouseReleaseEvent(event)
+
+        width = self.width() - 8
+        height = self.height() - 8
+        tile_width = width / self.game_view.game_state.board_view.width
+        tile_height = height / self.game_view.game_state.board_view.height
+
+        position = event.position()
+        position -= QPointF(4.0, 4.0)
+
+        tile_position = Coordinate(
+            col=int(position.x() // tile_width), row=int(position.y() // tile_height)
+        )
+
+        click_gesture = BoardGestureClickVariant(click=tile_position)
+        gesture = Gesture(
+            root=GestureBoardVariant(board=BoardGesture(root=click_gesture))
+        )
+
+        self.on_gesture_made.emit(gesture)
 
 
 def paint_board(board_view: BoardView, painter: QPainter, rect: QRect):
