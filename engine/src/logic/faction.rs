@@ -29,11 +29,8 @@ pub fn real_faction_owners(game_state: &GameState) -> HashMap<FactionId, Faction
     };
 
     let mut real_owners: HashMap<FactionId, FactionId> = HashMap::new();
-    for (&faction, &owner) in direct_owners.iter() {
-        let mut owner = owner;
-        while let Some(&next) = direct_owners.get(&owner) {
-            owner = next;
-
+    for &faction in direct_owners.keys() {
+        while let Some(&owner) = direct_owners.get(&faction) {
             if game_state
                 .player_main_factions
                 .values()
