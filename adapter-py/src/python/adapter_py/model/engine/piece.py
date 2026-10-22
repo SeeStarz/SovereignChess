@@ -1,11 +1,12 @@
 from __future__ import annotations
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel, RootModel, ConfigDict
 from typing import Literal, Optional, Self
 from adapter_py.model.engine.faction import FactionId
 from adapter_py.model.engine.geometry import Coordinate
 
 
 class PieceType(RootModel):
+    model_config: ConfigDict = ConfigDict(frozen=True)
     root: (
         Literal["Pawn"]
         | Literal["Knight"]

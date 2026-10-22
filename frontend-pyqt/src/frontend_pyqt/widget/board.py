@@ -4,8 +4,6 @@ from PySide6.QtGui import QMouseEvent, QPainter, QColor, QPaintEvent, QPen
 from adapter_py.model.engine import BoardView
 from adapter_py.model.adapter import (
     GameView,
-    Gesture,
-    GestureBoardVariant,
     BoardGesture,
     BoardGestureClickVariant,
 )
@@ -15,7 +13,7 @@ from frontend_pyqt.helper import faction_to_color, piece_image
 
 class BoardWidget(QWidget):
     game_view: GameView
-    on_gesture_made: Signal = Signal(Gesture)
+    on_gesture_made: Signal = Signal(BoardGesture)
 
     def __init__(self, game_view: GameView, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -57,9 +55,7 @@ class BoardWidget(QWidget):
         )
 
         click_gesture = BoardGestureClickVariant(click=tile_position)
-        gesture = Gesture(
-            root=GestureBoardVariant(board=BoardGesture(root=click_gesture))
-        )
+        gesture = BoardGesture(root=click_gesture)
 
         self.on_gesture_made.emit(gesture)
 

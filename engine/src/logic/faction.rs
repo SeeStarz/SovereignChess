@@ -30,6 +30,7 @@ pub fn real_faction_owners(game_state: &GameState) -> HashMap<FactionId, Faction
 
     let mut real_owners: HashMap<FactionId, FactionId> = HashMap::new();
     for &faction in direct_owners.keys() {
+        let mut faction = faction;
         while let Some(&owner) = direct_owners.get(&faction) {
             if game_state
                 .player_main_factions
@@ -39,6 +40,8 @@ pub fn real_faction_owners(game_state: &GameState) -> HashMap<FactionId, Faction
                 real_owners.insert(faction, owner);
                 break;
             }
+
+            faction = owner;
         }
     }
     for &main_faction in game_state.player_main_factions.values() {
