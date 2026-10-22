@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pydantic import BaseModel, RootModel
-from typing import Literal, Optional
+from typing import Literal, Optional, Self
 from adapter_py.model.engine.faction import FactionId
 from adapter_py.model.engine.geometry import Coordinate
 
@@ -19,6 +19,10 @@ class PieceType(RootModel):
 class PieceSimple(BaseModel):
     faction: FactionId
     piece_type: PieceType
+
+    @classmethod
+    def from_rich(cls, piece: PieceRich) -> Self:
+        return cls(faction=piece.faction, piece_type=piece.piece_type)
 
 
 class PieceRich(BaseModel):

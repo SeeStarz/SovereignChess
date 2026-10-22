@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import QRect, QSize, QPoint, QSizeF, QPointF, Signal
+from PySide6.QtCore import QRect, QSize, QPoint, QSizeF, QPointF, Signal, Slot
 from PySide6.QtGui import QMouseEvent, QPainter, QColor, QPaintEvent, QPen
 from adapter_py.model.engine import BoardView
 from adapter_py.model.adapter import (
@@ -9,7 +9,7 @@ from adapter_py.model.adapter import (
     BoardGesture,
     BoardGestureClickVariant,
 )
-from adapter_py.model.engine import Coordinate
+from adapter_py.model.engine import Coordinate, PieceSimple
 from frontend_pyqt.helper import faction_to_color, piece_image
 
 
@@ -20,6 +20,11 @@ class BoardWidget(QWidget):
     def __init__(self, game_view: GameView, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.game_view = game_view
+
+    @Slot(GameView)
+    def update_game_view(self, game_view: GameView):
+        self.game_view = game_view
+        self.repaint()
 
     def paintEvent(self, event: QPaintEvent):
         super().paintEvent(event)
@@ -188,7 +193,7 @@ def paint_pieces(board_view: BoardView, painter: QPainter, rect: QRect):
             piece.coordinate.col,
             rect,
         )
-        image = piece_image(piece)
+        image = piece_image(PieceSimple.from_rich(piece), piece.owner)
         painter.drawImage(subrect, image)
 
 
