@@ -12,11 +12,12 @@ from frontend_pyqt.helper import faction_to_color, piece_image
 
 
 class BoardWidget(QWidget):
+    MARGIN: int = 4
     game_view: GameView
     on_gesture_made: Signal = Signal(BoardGesture)
 
-    def __init__(self, game_view: GameView, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, game_view: GameView):
+        super().__init__()
         self.game_view = game_view
 
     @Slot(GameView)
@@ -27,10 +28,10 @@ class BoardWidget(QWidget):
     def paintEvent(self, event: QPaintEvent):
         super().paintEvent(event)
 
-        width = self.width() - 8
-        height = self.height() - 8
+        width = self.width() - BoardWidget.MARGIN * 2
+        height = self.height() - BoardWidget.MARGIN * 2
         size = QSize(width, height)
-        rect = QRect(QPoint(4, 4), size)
+        rect = QRect(QPoint(BoardWidget.MARGIN, BoardWidget.MARGIN), size)
         with QPainter(self) as painter:
             paint_board(
                 self.game_view.game_state.board_view,
@@ -39,16 +40,16 @@ class BoardWidget(QWidget):
             )
             paint_pieces(self.game_view.game_state.board_view, painter, rect)
 
-    def mouseReleaseEvent(self, event: QMouseEvent):
-        super().mouseReleaseEvent(event)
+    def mousePressEvent(self, event: QMouseEvent):
+        super().mousePressEvent(event)
 
-        width = self.width() - 8
-        height = self.height() - 8
+        width = self.width() - BoardWidget.MARGIN * 2
+        height = self.height() - BoardWidget.MARGIN * 2
         tile_width = width / self.game_view.game_state.board_view.width
         tile_height = height / self.game_view.game_state.board_view.height
 
         position = event.position()
-        position -= QPointF(4.0, 4.0)
+        position -= QPointF(BoardWidget.MARGIN, BoardWidget.MARGIN)
 
         tile_position = Coordinate(
             col=int(position.x() // tile_width), row=int(position.y() // tile_height)

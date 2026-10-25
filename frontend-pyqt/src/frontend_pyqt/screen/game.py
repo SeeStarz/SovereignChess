@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QHBoxLayout,
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from adapter_py.api.session import SessionAdapter
 from adapter_py.model.engine import VariantPreset
 from frontend_pyqt.widget import (
@@ -26,8 +26,14 @@ def game_screen(stack: QStackedWidget, preset: VariantPreset) -> QWidget:
     session = SessionAdapter.new_from_preset(preset)
     controller = GameController(session)
 
+    tile_size = 32
+    board_size = QSize(
+        tile_size * session.game_view().game_state.board_view.width,
+        tile_size * session.game_view().game_state.board_view.height,
+    )
+    board_size += QSize(BoardWidget.MARGIN * 2, BoardWidget.MARGIN * 2)
     board_widget = BoardWidget(session.game_view())
-    board_widget.setFixedSize(520, 520)
+    board_widget.setFixedSize(board_size)
     board_widget.on_gesture_made.connect(controller.do_board_gesture)
     controller.on_game_view_change.connect(board_widget.update_game_view)
     layout.addWidget(board_widget)
