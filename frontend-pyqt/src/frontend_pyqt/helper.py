@@ -5,6 +5,7 @@ from adapter_py.model.engine import (
     FactionId,
     PieceSimple,
 )
+from frontend_pyqt.setting import SettingLoader
 from typing import Optional
 
 
@@ -48,27 +49,12 @@ def tint_image(image: QImage, color: QColor) -> QImage:
 
 
 def faction_to_color(faction_id: FactionId) -> QColor:
-    DEFAULT = {
-        ColorStandard.WHITE: (255, 255, 255),
-        ColorStandard.PINK: (223, 159, 223),
-        ColorStandard.SLATE: (127, 127, 127),
-        ColorStandard.RED: (191, 31, 31),
-        ColorStandard.ORANGE: (223, 95, 31),
-        ColorStandard.YELLOW: (255, 255, 31),
-        ColorStandard.GREEN: (31, 159, 31),
-        ColorStandard.CYAN: (31, 191, 191),
-        ColorStandard.NAVY: (31, 31, 191),
-        ColorStandard.ASH: (207, 207, 207),
-        ColorStandard.VIOLET: (159, 0, 233),
-        ColorStandard.BLACK: (63, 63, 63),
-    }
-
-    color = DEFAULT.get(ColorStandard(faction_id.root))
+    color = SettingLoader.get().faction_color_map.get(ColorStandard(faction_id.root))
     if color is None:
         print(f"Faction id {faction_id} does not have a color")
         return QColor.fromRgb(255, 0, 0)
 
-    return QColor.fromRgb(*color)
+    return color
 
 
 def push_stack(stack: QStackedWidget, widget: QWidget):

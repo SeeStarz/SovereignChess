@@ -1,6 +1,13 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QRect, QSize, QPoint, QSizeF, QPointF, Signal, Slot
-from PySide6.QtGui import QMouseEvent, QPainter, QColor, QPaintEvent, QPen
+from PySide6.QtGui import (
+    QMouseEvent,
+    QPainter,
+    QPaintEvent,
+    QPen,
+    QImage,
+    QColorConstants,
+)
 from adapter_py.model.engine import BoardView
 from adapter_py.model.adapter import (
     GameView,
@@ -8,7 +15,8 @@ from adapter_py.model.adapter import (
     BoardGestureClickVariant,
 )
 from adapter_py.model.engine import Coordinate, PieceSimple
-from frontend_pyqt.helper import faction_to_color, piece_image
+from frontend_pyqt.helper import faction_to_color, piece_image, tint_image
+from frontend_pyqt.setting import SettingLoader
 
 
 class BoardWidget(QWidget):
@@ -16,8 +24,8 @@ class BoardWidget(QWidget):
     game_view: GameView
     on_gesture_made: Signal = Signal(BoardGesture)
 
-    def __init__(self, game_view: GameView):
-        super().__init__()
+    def __init__(self, game_view: GameView, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.game_view = game_view
 
     @Slot(GameView)
@@ -33,15 +41,17 @@ class BoardWidget(QWidget):
         size = QSize(width, height)
         rect = QRect(QPoint(BoardWidget.MARGIN, BoardWidget.MARGIN), size)
         with QPainter(self) as painter:
+            board_view = self.game_view.game_state.board_view
             paint_board(
-                self.game_view.game_state.board_view,
+                board_view,
                 painter,
                 rect,
             )
-            paint_pieces(self.game_view.game_state.board_view, painter, rect)
+            paint_pieces(board_view, painter, rect)
+            paint_highlights(self.game_view, painter, rect)
 
-    def mousePressEvent(self, event: QMouseEvent):
-        super().mousePressEvent(event)
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        super().mouseReleaseEvent(event)
 
         width = self.width() - BoardWidget.MARGIN * 2
         height = self.height() - BoardWidget.MARGIN * 2
@@ -64,15 +74,15 @@ class BoardWidget(QWidget):
 def paint_board(board_view: BoardView, painter: QPainter, rect: QRect):
     old_pen = painter.pen()
 
-    painter.setPen(QPen(QColor.fromRgb(0, 0, 0), 2))
+    painter.setPen(QPen(QColorConstants.Black, 2))
 
     paint_tiles(board_view, painter, rect)
     paint_tile_lines(board_view, painter, rect)
     paint_promotion_lines(
-        board_view, painter, rect, QPen(QColor.fromRgb(110, 38, 14), 4)
+        board_view, painter, rect, QPen(SettingLoader.get().promotion_line_color, 4)
     )
-    paint_promotion_area(board_view, painter, rect, QPen(QColor.fromRgb(0, 0, 0), 4))
-    paint_border(painter, rect, QPen(QColor.fromRgb(0, 0, 0), 4))
+    paint_promotion_area(board_view, painter, rect, QPen(QColorConstants.Black, 4))
+    paint_border(painter, rect, QPen(QColorConstants.Black, 4))
 
     painter.setPen(old_pen)
 
@@ -87,9 +97,9 @@ def paint_tiles(board_view: BoardView, painter: QPainter, rect: QRect):
             if special_tile is not None:
                 painter.fillRect(subrect, faction_to_color(special_tile.faction))
             elif (row + col) % 2 == 0:
-                painter.fillRect(subrect, QColor.fromRgb(255, 248, 220))
+                painter.fillRect(subrect, SettingLoader.get().light_tile_color)
             else:
-                painter.fillRect(subrect, QColor.fromRgb(222, 184, 135))
+                painter.fillRect(subrect, SettingLoader.get().dark_tile_color)
 
 
 def paint_tile_lines(board_view: BoardView, painter: QPainter, rect: QRect):
@@ -191,6 +201,21 @@ def paint_pieces(board_view: BoardView, painter: QPainter, rect: QRect):
             rect,
         )
         image = piece_image(PieceSimple.from_rich(piece), piece.owner)
+        painter.drawImage(subrect, image)
+
+
+def paint_highlights(game_view: GameView, painter: QPainter, rect: QRect):
+    board_view = game_view.game_state.board_view
+    for destination in game_view.intra_game_state.valid_destinations:
+        subrect = calculate_subrect(
+            board_view.height,
+            board_view.width,
+            destination.row,
+            destination.col,
+            rect,
+        )
+        image = QImage("assets/img/move_marker.png")
+        image = tint_image(image, SettingLoader.get().move_marker_color)
         painter.drawImage(subrect, image)
 
 

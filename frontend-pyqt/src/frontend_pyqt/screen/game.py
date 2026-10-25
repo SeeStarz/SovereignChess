@@ -17,6 +17,7 @@ from frontend_pyqt.widget import (
 )
 from frontend_pyqt.logic.game_controller import GameController
 from frontend_pyqt.helper import pop_stack
+from frontend_pyqt.setting import SettingLoader
 
 
 def game_screen(stack: QStackedWidget, preset: VariantPreset) -> QWidget:
@@ -26,10 +27,10 @@ def game_screen(stack: QStackedWidget, preset: VariantPreset) -> QWidget:
     session = SessionAdapter.new_from_preset(preset)
     controller = GameController(session)
 
-    tile_size = 32
     board_size = QSize(
-        tile_size * session.game_view().game_state.board_view.width,
-        tile_size * session.game_view().game_state.board_view.height,
+        SettingLoader.get().tile_size * session.game_view().game_state.board_view.width,
+        SettingLoader.get().tile_size
+        * session.game_view().game_state.board_view.height,
     )
     board_size += QSize(BoardWidget.MARGIN * 2, BoardWidget.MARGIN * 2)
     board_widget = BoardWidget(session.game_view())
