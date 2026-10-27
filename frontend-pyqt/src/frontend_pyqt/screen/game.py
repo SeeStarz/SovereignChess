@@ -94,7 +94,7 @@ def board_group(controller: GameController, game_view: GameView) -> QWidget:
 
     promotion = PromotionWidget()
     promotion.on_promotion_selected.connect(controller.do_promotion)
-    controller.on_promotion_options.connect(lambda l: promotion.setVisible(len(l) > 0))
+    controller.on_promotion_options.connect(promotion.update_active_promotions)
     stacked.addWidget(promotion)
     promotion.setVisible(False)
 

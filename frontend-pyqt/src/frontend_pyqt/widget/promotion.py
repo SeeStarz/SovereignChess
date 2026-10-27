@@ -37,5 +37,6 @@ class PromotionWidget(QWidget):
 
     @Slot(list)
     def update_active_promotions(self, active_promotions: list[PieceType]):
+        self.setVisible(len(active_promotions) > 0)
         for piece_type, button in self.widget_map.items():
-            button.setEnabled(piece_type in active_promotions)
+            button.setVisible(piece_type in active_promotions)
