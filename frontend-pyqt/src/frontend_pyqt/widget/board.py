@@ -227,7 +227,7 @@ def paint_greyed_overlay(game_view: GameView, painter: QPainter, rect: QRect):
     ):
         return
 
-    painter.fillRect(rect, SettingLoader().get().gray_board_overlay)
+    painter.fillRect(rect, SettingLoader().get().board_disable_color)
 
 
 def calculate_subrect(

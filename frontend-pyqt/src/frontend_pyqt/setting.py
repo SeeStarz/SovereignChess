@@ -11,7 +11,8 @@ class Setting:
     move_marker_color: QColor
     light_tile_color: QColor
     dark_tile_color: QColor
-    gray_board_overlay: QColor
+    board_disable_color: QColor
+    online_indicator_color: QColor
     close_spacing: int
 
 
@@ -44,7 +45,8 @@ class SettingLoader:
                 move_marker_color=QColor.fromRgb(0, 0, 255),
                 light_tile_color=QColor.fromRgb(255, 248, 220),
                 dark_tile_color=QColor.fromRgb(222, 184, 135),
-                gray_board_overlay=QColor.fromRgb(255, 255, 255, 127),
+                board_disable_color=QColor.fromRgb(255, 255, 255, 127),
+                online_indicator_color=QColor.fromRgb(0, 255, 0),
                 close_spacing=2,
             )
         return cls._value

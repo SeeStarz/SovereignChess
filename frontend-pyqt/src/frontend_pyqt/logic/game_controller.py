@@ -1,6 +1,6 @@
 from PySide6.QtCore import QObject, Slot, Signal
 from adapter_py.api.session import SessionAdapter
-from adapter_py.model.engine import PieceType, FactionId
+from adapter_py.model.engine import PieceType, FactionId, PlayerId
 from adapter_py.model.adapter import (
     Gesture,
     GestureBoardVariant,
@@ -24,6 +24,7 @@ class GameController(QObject):
     on_game_view_change: Signal = Signal(GameView)
     on_promotion_options: Signal = Signal(list)
     on_swap_prompt_enabled: Signal = Signal(bool)
+    on_player_turn: Signal = Signal(PlayerId)
 
     def __init__(self, session: SessionAdapter):
         super().__init__()
@@ -69,9 +70,13 @@ class GameController(QObject):
 
     def do_action(self, action: SessionAction):
         self.session.do_action(action)
+        self.emit_signals()
+
+    def emit_signals(self):
         self.cached_view = self.session.game_view()
         self.on_game_view_change.emit(self.cached_view)
         self.on_promotion_options.emit(
             self.cached_view.intra_game_state.promotion_options
         )
         self.on_swap_prompt_enabled.emit(self.cached_view.game_state.waiting_swap)
+        self.on_player_turn.emit(self.cached_view.game_state.turn_to_play)

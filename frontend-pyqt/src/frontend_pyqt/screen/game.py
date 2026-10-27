@@ -1,7 +1,6 @@
 from PySide6.QtWidgets import (
     QLayout,
     QVBoxLayout,
-    QLabel,
     QWidget,
     QStackedWidget,
     QPushButton,
@@ -18,6 +17,7 @@ from frontend_pyqt.widget import (
     PromotionWidget,
     DefectionWidget,
     get_castle_widget,
+    PlayerWidget,
 )
 from frontend_pyqt.logic.game_controller import GameController
 from frontend_pyqt.helper import pop_stack
@@ -34,26 +34,28 @@ def game_screen(stack: QStackedWidget, preset: VariantPreset) -> QWidget:
     board_widget = board_group(controller, session.game_view())
     horizontal.addWidget(board_widget)
 
-    menu = menu_group(stack, controller, session.game_view().game_state.factions)
+    menu = menu_group(stack, controller, session.game_view())
     horizontal.addWidget(menu)
 
     widget = QWidget()
     widget.setLayout(horizontal)
     controller.setParent(widget)
+    controller.emit_signals()
 
     return widget
 
 
 def menu_group(
-    stack: QStackedWidget, controller: GameController, faction_list: list[FactionId]
+    stack: QStackedWidget, controller: GameController, game_view: GameView
 ) -> QWidget:
     vertical = QVBoxLayout()
     vertical.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-    player_text = QLabel("## Player 1's Turn", textFormat=Qt.TextFormat.MarkdownText)
-    vertical.addWidget(player_text)
+    player = PlayerWidget(game_view)
+    controller.on_game_view_change.connect(player.update_game_view)
+    vertical.addWidget(player)
 
-    defection = defection_group(controller, faction_list)
+    defection = defection_group(controller, game_view.game_state.factions)
     vertical.addWidget(defection)
 
     castle = get_castle_widget()
@@ -62,13 +64,11 @@ def menu_group(
 
     back = QPushButton("Back")
     back.clicked.connect(lambda: pop_stack(stack))
-    # back.setFixedWidth(400)
     vertical.addWidget(back)
 
     panel = QWidget()
     panel.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
     panel.setLayout(vertical)
-    print(panel.sizeHint(), panel.minimumSizeHint())
 
     return panel
 
@@ -90,13 +90,11 @@ def board_group(controller: GameController, game_view: GameView) -> QWidget:
     swap_widget.setLayout(swap_group(controller))
     controller.on_swap_prompt_enabled.connect(swap_widget.setVisible)
     stacked.addWidget(swap_widget)
-    swap_widget.setVisible(False)
 
     promotion = PromotionWidget()
     promotion.on_promotion_selected.connect(controller.do_promotion)
     controller.on_promotion_options.connect(promotion.update_active_promotions)
     stacked.addWidget(promotion)
-    promotion.setVisible(False)
 
     board_widget.setLayout(stacked)
 
