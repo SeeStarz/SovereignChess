@@ -22,6 +22,8 @@ class GameController(QObject):
     cached_view: GameView
 
     on_game_view_change: Signal = Signal(GameView)
+    on_promotion_options: Signal = Signal(list)
+    on_swap_prompt_enabled: Signal = Signal(bool)
 
     def __init__(self, session: SessionAdapter):
         super().__init__()
@@ -69,3 +71,7 @@ class GameController(QObject):
         self.session.do_action(action)
         self.cached_view = self.session.game_view()
         self.on_game_view_change.emit(self.cached_view)
+        self.on_promotion_options.emit(
+            self.cached_view.intra_game_state.promotion_options
+        )
+        self.on_swap_prompt_enabled.emit(self.cached_view.game_state.waiting_swap)

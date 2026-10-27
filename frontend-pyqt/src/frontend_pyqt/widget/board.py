@@ -49,6 +49,7 @@ class BoardWidget(QWidget):
             )
             paint_pieces(board_view, painter, rect)
             paint_highlights(self.game_view, painter, rect)
+            paint_greyed_overlay(self.game_view, painter, rect)
 
     def mouseReleaseEvent(self, event: QMouseEvent):
         super().mouseReleaseEvent(event)
@@ -217,6 +218,16 @@ def paint_highlights(game_view: GameView, painter: QPainter, rect: QRect):
         image = QImage("assets/img/move_marker.png")
         image = tint_image(image, SettingLoader.get().move_marker_color)
         painter.drawImage(subrect, image)
+
+
+def paint_greyed_overlay(game_view: GameView, painter: QPainter, rect: QRect):
+    if (
+        len(game_view.intra_game_state.promotion_options) == 0
+        and not game_view.game_state.waiting_swap
+    ):
+        return
+
+    painter.fillRect(rect, SettingLoader().get().gray_board_overlay)
 
 
 def calculate_subrect(

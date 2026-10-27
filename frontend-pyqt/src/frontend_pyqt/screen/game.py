@@ -88,11 +88,15 @@ def board_group(controller: GameController, game_view: GameView) -> QWidget:
 
     swap_widget = QWidget()
     swap_widget.setLayout(swap_group(controller))
+    controller.on_swap_prompt_enabled.connect(swap_widget.setVisible)
     stacked.addWidget(swap_widget)
+    swap_widget.setVisible(False)
 
     promotion = PromotionWidget()
     promotion.on_promotion_selected.connect(controller.do_promotion)
+    controller.on_promotion_options.connect(lambda l: promotion.setVisible(len(l) > 0))
     stacked.addWidget(promotion)
+    promotion.setVisible(False)
 
     board_widget.setLayout(stacked)
 
