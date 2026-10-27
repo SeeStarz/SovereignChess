@@ -12,6 +12,8 @@ def handle_sigint(_signal, _frame, app: QApplication):
 
 def main():
     app = QApplication(sys.argv)
+    app.setStyle("fusion")
+
     signal.signal(
         signal.SIGINT, lambda signal, frame: handle_sigint(signal, frame, app)
     )
