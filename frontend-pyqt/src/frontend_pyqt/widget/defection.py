@@ -16,6 +16,7 @@ class DefectionWidget(QWidget):
         layout = QGridLayout()
         layout.setSpacing(SettingLoader.get().close_spacing)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.widget_map = {}
         for i, faction in enumerate(sorted(faction_list, key=lambda f: f.root)):
