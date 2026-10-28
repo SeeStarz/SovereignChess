@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject, Slot, Signal
+from PySide6.QtCore import QObject, Slot, Signal, QPoint
 from adapter_py.api.session import SessionAdapter
 from adapter_py.model.engine import PieceType, FactionId, PlayerId
 from adapter_py.model.adapter import (
@@ -14,6 +14,7 @@ from adapter_py.model.adapter import (
     SessionActionSwapVariant,
     GameView,
 )
+from frontend_pyside6.setting import SettingLoader
 
 
 class GameController(QObject):
@@ -22,6 +23,8 @@ class GameController(QObject):
 
     on_game_view_change: Signal = Signal(GameView)
     on_promotion_options: Signal = Signal(list)
+    on_promotion_faction_and_owner: Signal = Signal(FactionId, FactionId)
+    on_promotion_location: Signal = Signal(QPoint)
     on_swap_prompt_enabled: Signal = Signal(bool)
     on_player_turn: Signal = Signal(PlayerId)
 
@@ -75,3 +78,24 @@ class GameController(QObject):
         )
         self.on_swap_prompt_enabled.emit(self.cached_view.game_state.waiting_swap)
         self.on_player_turn.emit(self.cached_view.game_state.turn_to_play)
+        if self.cached_view.intra_game_state.promotion_at is not None:
+            board_margin = SettingLoader.get().board_margin
+            tile_size = SettingLoader.get().tile_size
+            promotion_coordinate = self.cached_view.intra_game_state.promotion_at
+            point = QPoint(
+                tile_size * promotion_coordinate.col + board_margin,
+                tile_size * promotion_coordinate.row + board_margin,
+            )
+            self.on_promotion_location.emit(point)
+
+            assert (
+                self.cached_view.intra_game_state.grabbed_piece is not None
+            ), "Grabbed piece is None despite being on promotion"
+
+            faction = self.cached_view.intra_game_state.grabbed_piece.faction
+            owner = self.cached_view.intra_game_state.grabbed_piece.owner
+            assert (
+                owner is not None
+            ), "Grabbed piece owner is None despite being on promotion"
+
+            self.on_promotion_faction_and_owner.emit(faction, owner)

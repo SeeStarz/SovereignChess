@@ -13,7 +13,7 @@ class Setting:
     dark_tile_color: QColor
     board_disable_color: QColor
     online_indicator_color: QColor
-    close_spacing: int
+    board_margin: int
 
 
 class SettingLoader:
@@ -47,6 +47,6 @@ class SettingLoader:
                 dark_tile_color=QColor.fromRgb(222, 184, 135),
                 board_disable_color=QColor.fromRgb(255, 255, 255, 127),
                 online_indicator_color=QColor.fromRgb(0, 255, 0),
-                close_spacing=2,
+                board_margin=4,
             )
         return cls._value

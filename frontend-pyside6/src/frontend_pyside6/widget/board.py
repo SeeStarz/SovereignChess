@@ -20,7 +20,6 @@ from frontend_pyside6.setting import SettingLoader
 
 
 class BoardWidget(QWidget):
-    MARGIN: int = 4
     game_view: GameView
     on_gesture_made: Signal = Signal(BoardGesture)
 
@@ -36,10 +35,12 @@ class BoardWidget(QWidget):
     def paintEvent(self, event: QPaintEvent):
         super().paintEvent(event)
 
-        width = self.width() - BoardWidget.MARGIN * 2
-        height = self.height() - BoardWidget.MARGIN * 2
+        board_margin = SettingLoader.get().board_margin
+
+        width = self.width() - board_margin * 2
+        height = self.height() - board_margin * 2
         size = QSize(width, height)
-        rect = QRect(QPoint(BoardWidget.MARGIN, BoardWidget.MARGIN), size)
+        rect = QRect(QPoint(board_margin, board_margin), size)
         with QPainter(self) as painter:
             board_view = self.game_view.game_state.board_view
             paint_board(
@@ -54,13 +55,15 @@ class BoardWidget(QWidget):
     def mouseReleaseEvent(self, event: QMouseEvent):
         super().mouseReleaseEvent(event)
 
-        width = self.width() - BoardWidget.MARGIN * 2
-        height = self.height() - BoardWidget.MARGIN * 2
+        board_margin = SettingLoader.get().board_margin
+
+        width = self.width() - board_margin * 2
+        height = self.height() - board_margin * 2
         tile_width = width / self.game_view.game_state.board_view.width
         tile_height = height / self.game_view.game_state.board_view.height
 
         position = event.position()
-        position -= QPointF(BoardWidget.MARGIN, BoardWidget.MARGIN)
+        position -= QPointF(board_margin, board_margin)
 
         tile_position = Coordinate(
             col=int(position.x() // tile_width), row=int(position.y() // tile_height)

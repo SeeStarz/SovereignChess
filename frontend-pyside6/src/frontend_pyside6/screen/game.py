@@ -5,9 +5,9 @@ from PySide6.QtWidgets import (
     QStackedWidget,
     QPushButton,
     QHBoxLayout,
-    QStackedLayout,
     QGroupBox,
     QSizePolicy,
+    QStackedLayout,
 )
 from PySide6.QtCore import Qt, QSize
 from adapter_py.api.session import SessionAdapter, GameView
@@ -69,18 +69,19 @@ def menu_group(
 
 
 def board_group(controller: GameController, game_view: GameView) -> QWidget:
+    board_margin = SettingLoader.get().board_margin
     board_size = QSize(
-        SettingLoader.get().tile_size * game_view.game_state.board_view.width,
-        SettingLoader.get().tile_size * game_view.game_state.board_view.height,
+        SettingLoader.get().tile_size * game_view.game_state.board_view.width
+        + board_margin * 2,
+        SettingLoader.get().tile_size * game_view.game_state.board_view.height
+        + board_margin * 2,
     )
-    board_size += QSize(BoardWidget.MARGIN * 2, BoardWidget.MARGIN * 2)
     board_widget = BoardWidget(game_view)
     board_widget.setFixedSize(board_size)
     board_widget.on_gesture_made.connect(controller.do_board_gesture)
     controller.on_game_view_change.connect(board_widget.update_game_view)
 
-    stacked = QStackedLayout(stackingMode=QStackedLayout.StackingMode.StackAll)
-
+    stacked = QStackedLayout()
     swap_widget = QWidget()
     swap_widget.setLayout(swap_group(controller))
     controller.on_swap_prompt_enabled.connect(swap_widget.setVisible)
@@ -89,7 +90,11 @@ def board_group(controller: GameController, game_view: GameView) -> QWidget:
     promotion = PromotionWidget()
     promotion.on_promotion_selected.connect(controller.do_promotion)
     controller.on_promotion_options.connect(promotion.update_active_promotions)
-    stacked.addWidget(promotion)
+    controller.on_promotion_location.connect(promotion.update_promotion_location)
+    controller.on_promotion_faction_and_owner.connect(
+        promotion.update_faction_and_owner
+    )
+    promotion.setParent(board_widget)
 
     board_widget.setLayout(stacked)
 

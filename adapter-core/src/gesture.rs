@@ -176,19 +176,21 @@ impl Adapter {
                 _ => None,
             };
 
-            let promotion_option = if let Some(promotion_data) = promotion_data {
-                valid_promotions(&self.game_state, promotion_data)
-                    .map(|m| match m {
-                        MoveRich::Promotion(promotion_move) => promotion_move.piece_type,
-                        MoveRich::RegimeChangePromotion(_promotion_move) => piece::King,
-                        _ => panic!("Got non-promotion move from valid_promotions"),
-                    })
-                    .collect()
+            if let Some(promotion_data) = promotion_data {
+                let coordinate = promotion_data.destination;
+                (
+                    valid_promotions(&self.game_state, promotion_data)
+                        .map(|m| match m {
+                            MoveRich::Promotion(promotion_move) => promotion_move.piece_type,
+                            MoveRich::RegimeChangePromotion(_promotion_move) => piece::King,
+                            _ => panic!("Got non-promotion move from valid_promotions"),
+                        })
+                        .collect(),
+                    Some(coordinate),
+                )
             } else {
-                Vec::new()
-            };
-
-            (promotion_option, None)
+                (Vec::new(), None)
+            }
         };
 
         let move_made = if let AdapterState::Done(move_made) = self.state.clone() {

@@ -14,7 +14,7 @@ class DefectionWidget(QWidget):
         super().__init__()
 
         layout = QGridLayout()
-        layout.setSpacing(SettingLoader.get().close_spacing)
+        layout.setSpacing(2)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.widget_map = {}
