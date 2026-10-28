@@ -1,11 +1,11 @@
 [project]
-name = "frontend-pyqt"
+name = "frontend-pyside6"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = ["adapter-py", "pyside6>=6.12.0"]
 
 [project.scripts]
-project = "frontend_pyqt:main"
+project = "frontend_pyside6:main"
 
 [build-system]
 requires = ["uv_build>=0.12.6,<0.13.0"]

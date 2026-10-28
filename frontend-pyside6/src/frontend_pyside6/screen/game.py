@@ -12,15 +12,15 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSize
 from adapter_py.api.session import SessionAdapter, GameView
 from adapter_py.model.engine import VariantPreset, FactionId
-from frontend_pyqt.widget import (
+from frontend_pyside6.widget import (
     BoardWidget,
     PromotionWidget,
     DefectionWidget,
     PlayerWidget,
 )
-from frontend_pyqt.logic.game_controller import GameController
-from frontend_pyqt.helper import pop_stack
-from frontend_pyqt.setting import SettingLoader
+from frontend_pyside6.logic.game_controller import GameController
+from frontend_pyside6.helper import pop_stack
+from frontend_pyside6.setting import SettingLoader
 
 
 def game_screen(stack: QStackedWidget, preset: VariantPreset) -> QWidget:

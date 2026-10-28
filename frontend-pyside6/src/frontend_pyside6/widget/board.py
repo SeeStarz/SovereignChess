@@ -15,8 +15,8 @@ from adapter_py.model.adapter import (
     BoardGestureClickVariant,
 )
 from adapter_py.model.engine import Coordinate, PieceSimple
-from frontend_pyqt.helper import faction_to_color, piece_image, tint_image
-from frontend_pyqt.setting import SettingLoader
+from frontend_pyside6.helper import faction_to_color, piece_image, tint_image
+from frontend_pyside6.setting import SettingLoader
 
 
 class BoardWidget(QWidget):

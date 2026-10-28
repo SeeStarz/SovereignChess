@@ -2,8 +2,8 @@ from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtCore import Slot, Signal, QSize
 from adapter_py.model.engine import PieceType, PieceSimple, FactionId
-from frontend_pyqt.helper import piece_image
-from frontend_pyqt.setting import SettingLoader
+from frontend_pyside6.helper import piece_image
+from frontend_pyside6.setting import SettingLoader
 
 
 class DefectionWidget(QWidget):

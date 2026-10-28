@@ -5,7 +5,7 @@ from adapter_py.model.engine import (
     FactionId,
     PieceSimple,
 )
-from frontend_pyqt.setting import SettingLoader
+from frontend_pyside6.setting import SettingLoader
 from typing import Optional
 
 

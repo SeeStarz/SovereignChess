@@ -7,8 +7,8 @@ from PySide6.QtWidgets import (
     QPushButton,
 )
 from adapter_py.model.engine import VariantPreset
-from frontend_pyqt.helper import push_stack
-from frontend_pyqt import screen
+from frontend_pyside6.helper import push_stack
+from frontend_pyside6 import screen
 
 
 def main_screen(stack: QStackedWidget):

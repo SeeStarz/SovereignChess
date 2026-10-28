@@ -8,8 +8,8 @@ from PySide6.QtGui import QPainter, QColor, QPen, QColorConstants
 from PySide6.QtCore import Slot, QSize, Qt, QRect, QPoint
 from adapter_py.model.engine import PlayerId
 from adapter_py.model.adapter import GameView
-from frontend_pyqt.helper import faction_to_color
-from frontend_pyqt.setting import SettingLoader
+from frontend_pyside6.helper import faction_to_color
+from frontend_pyside6.setting import SettingLoader
 
 
 class SquareColored(QWidget):

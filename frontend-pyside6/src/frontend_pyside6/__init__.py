@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QApplication, QStackedWidget
 from PySide6.QtCore import QTimer
-from frontend_pyqt.helper import push_stack
-from frontend_pyqt import screen
+from frontend_pyside6.helper import push_stack
+from frontend_pyside6 import screen
 import sys
 import signal
 

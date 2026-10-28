@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtCore import Slot, Signal
 from adapter_py.model.engine import PieceType, PieceSimple, FactionId
-from frontend_pyqt.helper import piece_image
+from frontend_pyside6.helper import piece_image
 
 
 class PromotionWidget(QWidget):
