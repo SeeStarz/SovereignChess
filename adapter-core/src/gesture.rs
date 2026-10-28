@@ -1,7 +1,7 @@
 use engine::{GameState, logic};
 use shared_model::definition::{
     adapter_core::{BoardGesture, Gesture, IntraGameStateStage, IntraGameStateView, MenuClick},
-    engine::{Coordinate, FactionId, MoveRich, PieceRich, chess_move::CastleRich, piece},
+    engine::{Coordinate, FactionId, MoveRich, PieceRich, Vec2, piece},
 };
 use std::collections::HashSet;
 
@@ -17,7 +17,6 @@ enum AdapterState {
 enum SelectedState {
     BoardSelection(PieceRich),
     DefectionSelection(FactionId),
-    CastleSelection,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -109,9 +108,6 @@ impl Adapter {
             (_, Gesture::MenuClick(MenuClick::Defection(faction))) => {
                 self.try_selected_do_defection_click(faction)
             }
-            (_, Gesture::MenuClick(MenuClick::Castle)) => {
-                AdapterState::Selected(SelectedState::CastleSelection)
-            }
 
             // Invalid pairings (e.g. Drop on PromotionStage)
             _ => AdapterState::Idle,
@@ -121,17 +117,6 @@ impl Adapter {
     pub fn view(&self) -> IntraGameStateView {
         let grabbable_pieces: Vec<PieceRich> = valid_select_pieces(&self.game_state).collect();
         let valid_defections: Vec<FactionId> = valid_defections(&self.game_state).collect();
-
-        let valid_castles: Vec<CastleRich> = logic::calculate_move(&self.game_state)
-            .into_iter()
-            .filter_map(|m| {
-                if let MoveRich::Castle(castle_move) = m {
-                    Some(castle_move)
-                } else {
-                    None
-                }
-            })
-            .collect();
 
         let grabbed_piece: Option<PieceRich> = match self.state.clone() {
             AdapterState::Selected(SelectedState::BoardSelection(piece)) => Some(piece),
@@ -155,18 +140,6 @@ impl Adapter {
             _ => None,
         };
 
-        let castle_selected: bool = match self.state.clone() {
-            AdapterState::Selected(SelectedState::CastleSelection) => true,
-            AdapterState::Done(move_made) => {
-                if let MoveRich::Castle(_castle_move) = move_made {
-                    true
-                } else {
-                    false
-                }
-            }
-            _ => false,
-        };
-
         let valid_destinations: HashSet<Coordinate> = if let Some(piece) = grabbed_piece {
             valid_advance_from_board_selection(&self.game_state, piece.coordinate)
                 .map(|r| match r {
@@ -178,18 +151,13 @@ impl Adapter {
             valid_advance_from_defection_selection(&self.game_state, faction)
                 .map(|m| ui_move_destination(m))
                 .collect()
-        } else if castle_selected {
-            valid_castles
-                .iter()
-                .map(|c| c.king_move.destination)
-                .collect()
         } else {
             HashSet::new()
         };
 
         let valid_destinations: Vec<Coordinate> = valid_destinations.into_iter().collect();
 
-        let promotion_options: Vec<piece::Type> = {
+        let (promotion_options, promotion_at): (Vec<piece::Type>, Option<Coordinate>) = {
             let promotion_data = match self.state.clone() {
                 AdapterState::Promotion(promotion_data) => Some(promotion_data),
                 AdapterState::Done(move_made) => (match move_made {
@@ -207,7 +175,8 @@ impl Adapter {
                 }),
                 _ => None,
             };
-            if let Some(promotion_data) = promotion_data {
+
+            let promotion_option = if let Some(promotion_data) = promotion_data {
                 valid_promotions(&self.game_state, promotion_data)
                     .map(|m| match m {
                         MoveRich::Promotion(promotion_move) => promotion_move.piece_type,
@@ -217,7 +186,9 @@ impl Adapter {
                     .collect()
             } else {
                 Vec::new()
-            }
+            };
+
+            (promotion_option, None)
         };
 
         let move_made = if let AdapterState::Done(move_made) = self.state.clone() {
@@ -231,12 +202,11 @@ impl Adapter {
         IntraGameStateView {
             grabbable_pieces,
             valid_defections,
-            valid_castles,
             grabbed_piece,
             selected_defection,
-            castle_selected,
             valid_destinations,
             promotion_options,
+            promotion_at,
             move_made,
             state,
         }
@@ -364,18 +334,6 @@ fn valid_advance_from_defection_selection(
         })
 }
 
-fn valid_advance_from_castle_selection(game_state: &GameState) -> impl Iterator<Item = MoveRich> {
-    logic::calculate_move(game_state)
-        .into_iter()
-        .filter_map(move |m| {
-            if let MoveRich::Castle(_castle_move) = m {
-                Some(m)
-            } else {
-                None
-            }
-        })
-}
-
 fn valid_promotions(
     game_state: &GameState,
     promotion_stage_data: PromotionState,
@@ -443,16 +401,6 @@ fn is_valid_selected_do_board_click(
                 }
             })
         }
-
-        SelectedState::CastleSelection => {
-            valid_advance_from_castle_selection(game_state).find_map(|m| {
-                if ui_move_destination(m) == destination {
-                    Some(SelectedStageResult::Done(m))
-                } else {
-                    None
-                }
-            })
-        }
     }
 }
 
@@ -473,7 +421,7 @@ fn is_valid_promotion_do_board_click(
 fn ui_move_origin(chess_move: MoveRich) -> Option<Coordinate> {
     match chess_move {
         MoveRich::NormalMove(normal_move) => Some(normal_move.origin),
-        MoveRich::Castle(_castle_move) => None,
+        MoveRich::Castle(castle_move) => Some(castle_move.king_move.origin),
         MoveRich::Defection(_defection_move) => None,
         MoveRich::RegimeChangePromotion(promotion_move) => Some(promotion_move.pawn_move.origin),
         MoveRich::Promotion(promotion_move) => Some(promotion_move.normal_move.origin),
@@ -483,7 +431,19 @@ fn ui_move_origin(chess_move: MoveRich) -> Option<Coordinate> {
 fn ui_move_destination(chess_move: MoveRich) -> Coordinate {
     match chess_move {
         MoveRich::NormalMove(normal_move) => normal_move.destination,
-        MoveRich::Castle(castle_move) => castle_move.king_move.destination,
+        MoveRich::Castle(castle_move) => {
+            if Vec2::from_coordinate_pair(
+                castle_move.king_move.origin,
+                castle_move.king_move.destination,
+            )
+            .manhattan_distance()
+                == 1
+            {
+                castle_move.rook_move.origin
+            } else {
+                castle_move.king_move.destination
+            }
+        }
         MoveRich::Defection(defection_move) => {
             defection_move.destination.unwrap_or(defection_move.origin)
         }

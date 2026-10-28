@@ -1,6 +1,4 @@
-use crate::definition::engine::{
-    Coordinate, FactionId, MoveRich, PieceRich, chess_move::CastleRich, piece,
-};
+use crate::definition::engine::{Coordinate, FactionId, MoveRich, PieceRich, piece};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -17,7 +15,6 @@ pub enum Gesture {
 pub enum MenuClick {
     Promotion(piece::Type),
     Defection(FactionId),
-    Castle,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -41,12 +38,11 @@ pub enum IntraGameStateStage {
 pub struct IntraGameStateView {
     pub grabbable_pieces: Vec<PieceRich>,
     pub valid_defections: Vec<FactionId>,
-    pub valid_castles: Vec<CastleRich>,
     pub grabbed_piece: Option<PieceRich>,
     pub selected_defection: Option<FactionId>,
-    pub castle_selected: bool,
     pub valid_destinations: Vec<Coordinate>,
     pub promotion_options: Vec<piece::Type>,
+    pub promotion_at: Option<Coordinate>,
     pub move_made: Option<MoveRich>,
     pub state: IntraGameStateStage,
 }
