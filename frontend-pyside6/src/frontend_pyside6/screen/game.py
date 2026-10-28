@@ -127,6 +127,9 @@ def defection_group(
 
     defection = DefectionWidget(faction_list)
     defection.on_defection_selected.connect(controller.do_defection)
+    defection.on_deselect.connect(controller.do_cancel)
+    controller.on_defection_deselect.connect(defection.deselect_all)
+    controller.on_defection_options.connect(defection.update_active_defections)
     layout.addWidget(defection)
 
     box.setLayout(layout)
