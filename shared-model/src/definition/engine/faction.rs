@@ -12,17 +12,17 @@ pub struct FactionId(pub u32);
 #[repr(u32)]
 pub enum ColorStandard {
     White = 0,
-    Pink = 1,
+    Ash = 1,
     Slate = 2,
-    Red = 3,
-    Orange = 4,
-    Yellow = 5,
-    Green = 6,
-    Cyan = 7,
-    Navy = 8,
-    Ash = 9,
-    Violet = 10,
-    Black = 11,
+    Black = 3,
+    Pink = 4,
+    Red = 5,
+    Orange = 6,
+    Yellow = 7,
+    Green = 8,
+    Navy = 9,
+    Cyan = 10,
+    Violet = 11,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

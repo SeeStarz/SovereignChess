@@ -32,30 +32,9 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(11, 11),
+            Coordinate::new(6, 0),
             PieceSimple {
-                faction: FactionId::from(faction::Orange),
-                piece_type: piece::Queen,
-            },
-        ),
-        (
-            Coordinate::new(6, 11),
-            PieceSimple {
-                faction: FactionId::from(faction::Green),
-                piece_type: piece::Queen,
-            },
-        ),
-        (
-            Coordinate::new(5, 11),
-            PieceSimple {
-                faction: FactionId::from(faction::Yellow),
-                piece_type: piece::Queen,
-            },
-        ),
-        (
-            Coordinate::new(0, 11),
-            PieceSimple {
-                faction: FactionId::from(faction::Cyan),
+                faction: FactionId::from(faction::Pink),
                 piece_type: piece::Queen,
             },
         ),
@@ -67,16 +46,23 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(5, 0),
+            Coordinate::new(11, 11),
             PieceSimple {
-                faction: FactionId::from(faction::Violet),
+                faction: FactionId::from(faction::Orange),
                 piece_type: piece::Queen,
             },
         ),
         (
-            Coordinate::new(6, 0),
+            Coordinate::new(5, 11),
             PieceSimple {
-                faction: FactionId::from(faction::Pink),
+                faction: FactionId::from(faction::Yellow),
+                piece_type: piece::Queen,
+            },
+        ),
+        (
+            Coordinate::new(6, 11),
+            PieceSimple {
+                faction: FactionId::from(faction::Green),
                 piece_type: piece::Queen,
             },
         ),
@@ -84,6 +70,20 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             Coordinate::new(11, 0),
             PieceSimple {
                 faction: FactionId::from(faction::Navy),
+                piece_type: piece::Queen,
+            },
+        ),
+        (
+            Coordinate::new(0, 11),
+            PieceSimple {
+                faction: FactionId::from(faction::Cyan),
+                piece_type: piece::Queen,
+            },
+        ),
+        (
+            Coordinate::new(5, 0),
+            PieceSimple {
+                faction: FactionId::from(faction::Violet),
                 piece_type: piece::Queen,
             },
         ),
@@ -102,14 +102,14 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(0, 2),
+            Coordinate::new(0, 9),
             PieceSimple {
                 faction: FactionId::from(faction::Black),
                 piece_type: piece::Rook,
             },
         ),
         (
-            Coordinate::new(0, 9),
+            Coordinate::new(0, 2),
             PieceSimple {
                 faction: FactionId::from(faction::Black),
                 piece_type: piece::Rook,
@@ -123,9 +123,9 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(9, 11),
+            Coordinate::new(9, 0),
             PieceSimple {
-                faction: FactionId::from(faction::Cyan),
+                faction: FactionId::from(faction::Red),
                 piece_type: piece::Rook,
             },
         ),
@@ -137,16 +137,16 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(1, 11),
+            Coordinate::new(1, 0),
             PieceSimple {
-                faction: FactionId::from(faction::Violet),
+                faction: FactionId::from(faction::Yellow),
                 piece_type: piece::Rook,
             },
         ),
         (
-            Coordinate::new(1, 0),
+            Coordinate::new(10, 0),
             PieceSimple {
-                faction: FactionId::from(faction::Yellow),
+                faction: FactionId::from(faction::Green),
                 piece_type: piece::Rook,
             },
         ),
@@ -158,16 +158,16 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(9, 0),
+            Coordinate::new(9, 11),
             PieceSimple {
-                faction: FactionId::from(faction::Red),
+                faction: FactionId::from(faction::Cyan),
                 piece_type: piece::Rook,
             },
         ),
         (
-            Coordinate::new(10, 0),
+            Coordinate::new(1, 11),
             PieceSimple {
-                faction: FactionId::from(faction::Green),
+                faction: FactionId::from(faction::Violet),
                 piece_type: piece::Rook,
             },
         ),
@@ -186,13 +186,6 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(0, 4),
-            PieceSimple {
-                faction: FactionId::from(faction::Black),
-                piece_type: piece::Bishop,
-            },
-        ),
-        (
             Coordinate::new(0, 7),
             PieceSimple {
                 faction: FactionId::from(faction::Black),
@@ -200,44 +193,9 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(11, 10),
+            Coordinate::new(0, 4),
             PieceSimple {
-                faction: FactionId::from(faction::Red),
-                piece_type: piece::Bishop,
-            },
-        ),
-        (
-            Coordinate::new(7, 11),
-            PieceSimple {
-                faction: FactionId::from(faction::Green),
-                piece_type: piece::Bishop,
-            },
-        ),
-        (
-            Coordinate::new(4, 11),
-            PieceSimple {
-                faction: FactionId::from(faction::Yellow),
-                piece_type: piece::Bishop,
-            },
-        ),
-        (
-            Coordinate::new(0, 10),
-            PieceSimple {
-                faction: FactionId::from(faction::Navy),
-                piece_type: piece::Bishop,
-            },
-        ),
-        (
-            Coordinate::new(0, 1),
-            PieceSimple {
-                faction: FactionId::from(faction::Orange),
-                piece_type: piece::Bishop,
-            },
-        ),
-        (
-            Coordinate::new(4, 0),
-            PieceSimple {
-                faction: FactionId::from(faction::Violet),
+                faction: FactionId::from(faction::Black),
                 piece_type: piece::Bishop,
             },
         ),
@@ -249,9 +207,51 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
+            Coordinate::new(11, 10),
+            PieceSimple {
+                faction: FactionId::from(faction::Red),
+                piece_type: piece::Bishop,
+            },
+        ),
+        (
+            Coordinate::new(0, 1),
+            PieceSimple {
+                faction: FactionId::from(faction::Orange),
+                piece_type: piece::Bishop,
+            },
+        ),
+        (
+            Coordinate::new(4, 11),
+            PieceSimple {
+                faction: FactionId::from(faction::Yellow),
+                piece_type: piece::Bishop,
+            },
+        ),
+        (
+            Coordinate::new(7, 11),
+            PieceSimple {
+                faction: FactionId::from(faction::Green),
+                piece_type: piece::Bishop,
+            },
+        ),
+        (
+            Coordinate::new(0, 10),
+            PieceSimple {
+                faction: FactionId::from(faction::Navy),
+                piece_type: piece::Bishop,
+            },
+        ),
+        (
             Coordinate::new(11, 1),
             PieceSimple {
                 faction: FactionId::from(faction::Cyan),
+                piece_type: piece::Bishop,
+            },
+        ),
+        (
+            Coordinate::new(4, 0),
+            PieceSimple {
+                faction: FactionId::from(faction::Violet),
                 piece_type: piece::Bishop,
             },
         ),
@@ -270,13 +270,6 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(0, 3),
-            PieceSimple {
-                faction: FactionId::from(faction::Black),
-                piece_type: piece::Knight,
-            },
-        ),
-        (
             Coordinate::new(0, 8),
             PieceSimple {
                 faction: FactionId::from(faction::Black),
@@ -284,30 +277,9 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(10, 10),
+            Coordinate::new(0, 3),
             PieceSimple {
-                faction: FactionId::from(faction::Yellow),
-                piece_type: piece::Knight,
-            },
-        ),
-        (
-            Coordinate::new(8, 11),
-            PieceSimple {
-                faction: FactionId::from(faction::Cyan),
-                piece_type: piece::Knight,
-            },
-        ),
-        (
-            Coordinate::new(3, 11),
-            PieceSimple {
-                faction: FactionId::from(faction::Orange),
-                piece_type: piece::Knight,
-            },
-        ),
-        (
-            Coordinate::new(1, 10),
-            PieceSimple {
-                faction: FactionId::from(faction::Green),
+                faction: FactionId::from(faction::Black),
                 piece_type: piece::Knight,
             },
         ),
@@ -319,6 +291,34 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
+            Coordinate::new(8, 0),
+            PieceSimple {
+                faction: FactionId::from(faction::Red),
+                piece_type: piece::Knight,
+            },
+        ),
+        (
+            Coordinate::new(3, 11),
+            PieceSimple {
+                faction: FactionId::from(faction::Orange),
+                piece_type: piece::Knight,
+            },
+        ),
+        (
+            Coordinate::new(10, 10),
+            PieceSimple {
+                faction: FactionId::from(faction::Yellow),
+                piece_type: piece::Knight,
+            },
+        ),
+        (
+            Coordinate::new(1, 10),
+            PieceSimple {
+                faction: FactionId::from(faction::Green),
+                piece_type: piece::Knight,
+            },
+        ),
+        (
             Coordinate::new(3, 0),
             PieceSimple {
                 faction: FactionId::from(faction::Navy),
@@ -326,9 +326,9 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(8, 0),
+            Coordinate::new(8, 11),
             PieceSimple {
-                faction: FactionId::from(faction::Red),
+                faction: FactionId::from(faction::Cyan),
                 piece_type: piece::Knight,
             },
         ),
@@ -396,42 +396,7 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(1, 2),
-            PieceSimple {
-                faction: FactionId::from(faction::Black),
-                piece_type: piece::Pawn,
-            },
-        ),
-        (
-            Coordinate::new(1, 3),
-            PieceSimple {
-                faction: FactionId::from(faction::Black),
-                piece_type: piece::Pawn,
-            },
-        ),
-        (
-            Coordinate::new(1, 4),
-            PieceSimple {
-                faction: FactionId::from(faction::Black),
-                piece_type: piece::Pawn,
-            },
-        ),
-        (
-            Coordinate::new(1, 5),
-            PieceSimple {
-                faction: FactionId::from(faction::Black),
-                piece_type: piece::Pawn,
-            },
-        ),
-        (
-            Coordinate::new(1, 6),
-            PieceSimple {
-                faction: FactionId::from(faction::Black),
-                piece_type: piece::Pawn,
-            },
-        ),
-        (
-            Coordinate::new(1, 7),
+            Coordinate::new(1, 9),
             PieceSimple {
                 faction: FactionId::from(faction::Black),
                 piece_type: piece::Pawn,
@@ -445,93 +410,44 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             },
         ),
         (
-            Coordinate::new(1, 9),
+            Coordinate::new(1, 7),
             PieceSimple {
                 faction: FactionId::from(faction::Black),
                 piece_type: piece::Pawn,
             },
         ),
         (
-            Coordinate::new(9, 10),
+            Coordinate::new(1, 6),
             PieceSimple {
-                faction: FactionId::from(faction::Cyan),
+                faction: FactionId::from(faction::Black),
                 piece_type: piece::Pawn,
             },
         ),
         (
-            Coordinate::new(8, 10),
+            Coordinate::new(1, 5),
             PieceSimple {
-                faction: FactionId::from(faction::Cyan),
+                faction: FactionId::from(faction::Black),
                 piece_type: piece::Pawn,
             },
         ),
         (
-            Coordinate::new(7, 10),
+            Coordinate::new(1, 4),
             PieceSimple {
-                faction: FactionId::from(faction::Green),
+                faction: FactionId::from(faction::Black),
                 piece_type: piece::Pawn,
             },
         ),
         (
-            Coordinate::new(6, 10),
+            Coordinate::new(1, 3),
             PieceSimple {
-                faction: FactionId::from(faction::Green),
+                faction: FactionId::from(faction::Black),
                 piece_type: piece::Pawn,
             },
         ),
         (
-            Coordinate::new(5, 10),
+            Coordinate::new(1, 2),
             PieceSimple {
-                faction: FactionId::from(faction::Yellow),
-                piece_type: piece::Pawn,
-            },
-        ),
-        (
-            Coordinate::new(4, 10),
-            PieceSimple {
-                faction: FactionId::from(faction::Yellow),
-                piece_type: piece::Pawn,
-            },
-        ),
-        (
-            Coordinate::new(3, 10),
-            PieceSimple {
-                faction: FactionId::from(faction::Orange),
-                piece_type: piece::Pawn,
-            },
-        ),
-        (
-            Coordinate::new(2, 10),
-            PieceSimple {
-                faction: FactionId::from(faction::Orange),
-                piece_type: piece::Pawn,
-            },
-        ),
-        (
-            Coordinate::new(2, 1),
-            PieceSimple {
-                faction: FactionId::from(faction::Navy),
-                piece_type: piece::Pawn,
-            },
-        ),
-        (
-            Coordinate::new(3, 1),
-            PieceSimple {
-                faction: FactionId::from(faction::Navy),
-                piece_type: piece::Pawn,
-            },
-        ),
-        (
-            Coordinate::new(4, 1),
-            PieceSimple {
-                faction: FactionId::from(faction::Violet),
-                piece_type: piece::Pawn,
-            },
-        ),
-        (
-            Coordinate::new(5, 1),
-            PieceSimple {
-                faction: FactionId::from(faction::Violet),
+                faction: FactionId::from(faction::Black),
                 piece_type: piece::Pawn,
             },
         ),
@@ -560,6 +476,90 @@ pub fn generate() -> HashMap<Coordinate, PieceSimple> {
             Coordinate::new(9, 1),
             PieceSimple {
                 faction: FactionId::from(faction::Red),
+                piece_type: piece::Pawn,
+            },
+        ),
+        (
+            Coordinate::new(3, 10),
+            PieceSimple {
+                faction: FactionId::from(faction::Orange),
+                piece_type: piece::Pawn,
+            },
+        ),
+        (
+            Coordinate::new(2, 10),
+            PieceSimple {
+                faction: FactionId::from(faction::Orange),
+                piece_type: piece::Pawn,
+            },
+        ),
+        (
+            Coordinate::new(5, 10),
+            PieceSimple {
+                faction: FactionId::from(faction::Yellow),
+                piece_type: piece::Pawn,
+            },
+        ),
+        (
+            Coordinate::new(4, 10),
+            PieceSimple {
+                faction: FactionId::from(faction::Yellow),
+                piece_type: piece::Pawn,
+            },
+        ),
+        (
+            Coordinate::new(7, 10),
+            PieceSimple {
+                faction: FactionId::from(faction::Green),
+                piece_type: piece::Pawn,
+            },
+        ),
+        (
+            Coordinate::new(6, 10),
+            PieceSimple {
+                faction: FactionId::from(faction::Green),
+                piece_type: piece::Pawn,
+            },
+        ),
+        (
+            Coordinate::new(2, 1),
+            PieceSimple {
+                faction: FactionId::from(faction::Navy),
+                piece_type: piece::Pawn,
+            },
+        ),
+        (
+            Coordinate::new(3, 1),
+            PieceSimple {
+                faction: FactionId::from(faction::Navy),
+                piece_type: piece::Pawn,
+            },
+        ),
+        (
+            Coordinate::new(9, 10),
+            PieceSimple {
+                faction: FactionId::from(faction::Cyan),
+                piece_type: piece::Pawn,
+            },
+        ),
+        (
+            Coordinate::new(8, 10),
+            PieceSimple {
+                faction: FactionId::from(faction::Cyan),
+                piece_type: piece::Pawn,
+            },
+        ),
+        (
+            Coordinate::new(4, 1),
+            PieceSimple {
+                faction: FactionId::from(faction::Violet),
+                piece_type: piece::Pawn,
+            },
+        ),
+        (
+            Coordinate::new(5, 1),
+            PieceSimple {
+                faction: FactionId::from(faction::Violet),
                 piece_type: piece::Pawn,
             },
         ),
