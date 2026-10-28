@@ -25,7 +25,7 @@ class GestureCancelVariant(RootModel):
 
 
 class MenuClick(RootModel):
-    root: MenuClickPromotionVariant | MenuClickDefectionVariant | MenuClickCastleVariant
+    root: MenuClickPromotionVariant | MenuClickDefectionVariant
 
 
 class MenuClickPromotionVariant(EnumVariant):
@@ -34,10 +34,6 @@ class MenuClickPromotionVariant(EnumVariant):
 
 class MenuClickDefectionVariant(EnumVariant):
     defection: FactionId
-
-
-class MenuClickCastleVariant(RootModel):
-    root: Literal["Castle"]
 
 
 class BoardGesture(RootModel):
@@ -59,12 +55,11 @@ class IntraGameStateStage(RootModel):
 class IntraGameStateView(BaseModel):
     grabbable_pieces: list[PieceRich]
     valid_defections: list[FactionId]
-    valid_castles: list[CastleMoveRich]
     grabbed_piece: Optional[PieceRich]
     selected_defection: Optional[FactionId]
-    castle_selected: bool
     valid_destinations: list[Coordinate]
     promotion_options: list[PieceType]
+    promotion_at: Optional[Coordinate]
     move_made: Optional[MoveRich]
     state: IntraGameStateStage
 
@@ -77,7 +72,6 @@ __all__ = [
     "MenuClick",
     "MenuClickPromotionVariant",
     "MenuClickDefectionVariant",
-    "MenuClickCastleVariant",
     "BoardGesture",
     "BoardGestureClickVariant",
     "BoardGestureDropVariant",

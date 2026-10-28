@@ -8,7 +8,6 @@ from adapter_py.model.adapter import (
     GestureMenuClickVariant,
     MenuClick,
     MenuClickPromotionVariant,
-    MenuClickCastleVariant,
     MenuClickDefectionVariant,
     SessionAction,
     SessionActionGestureVariant,
@@ -54,10 +53,6 @@ class GameController(QObject):
     @Slot(FactionId)
     def do_defection(self, faction: FactionId):
         self.do_menu_click(MenuClick(root=MenuClickDefectionVariant(defection=faction)))
-
-    @Slot()
-    def do_castle(self):
-        self.do_menu_click(MenuClick(root=MenuClickCastleVariant(root="Castle")))
 
     def do_menu_click(self, menu_click: MenuClick):
         self.do_action(

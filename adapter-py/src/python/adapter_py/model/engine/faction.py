@@ -12,17 +12,17 @@ class FactionId(RootModel):
 
 class ColorStandard(Enum):
     WHITE = 0
-    PINK = 1
+    ASH = 1
     SLATE = 2
-    RED = 3
-    ORANGE = 4
-    YELLOW = 5
-    GREEN = 6
-    CYAN = 7
-    NAVY = 8
-    ASH = 9
-    VIOLET = 10
-    BLACK = 11
+    BLACK = 3
+    PINK = 4
+    RED = 5
+    ORANGE = 6
+    YELLOW = 7
+    GREEN = 8
+    NAVY = 9
+    CYAN = 10
+    VIOLET = 11
 
 
 class Allegiance(RootModel):

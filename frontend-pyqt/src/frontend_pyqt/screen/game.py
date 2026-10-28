@@ -16,7 +16,6 @@ from frontend_pyqt.widget import (
     BoardWidget,
     PromotionWidget,
     DefectionWidget,
-    get_castle_widget,
     PlayerWidget,
 )
 from frontend_pyqt.logic.game_controller import GameController
@@ -57,10 +56,6 @@ def menu_group(
 
     defection = defection_group(controller, game_view.game_state.factions)
     vertical.addWidget(defection)
-
-    castle = get_castle_widget()
-    castle.clicked.connect(controller.do_castle)
-    vertical.addWidget(castle)
 
     back = QPushButton("Back")
     back.clicked.connect(lambda: pop_stack(stack))
