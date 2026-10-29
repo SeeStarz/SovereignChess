@@ -3,39 +3,39 @@ use shared_model::definition::{
     adapter_core::{BoardGesture, Gesture, IntraGameStateStage, IntraGameStateView, MenuClick},
     engine::{Coordinate, FactionId, MoveRich, PieceRich, Vec2, piece},
 };
-use std::collections::HashSet;
+use std::{collections::HashSet, mem};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum AdapterState {
     Idle,
-    Selected(SelectedState),
-    Promotion(PromotionState),
+    Selected(SelectionData),
+    WaitingPromotion(WaitingPromotionData),
     Done(MoveRich),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum SelectedState {
+enum SelectionData {
     BoardSelection(PieceRich),
     DefectionSelection(FactionId),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct PromotionState {
+struct WaitingPromotionData {
     pub origin: Coordinate,
     pub destination: Coordinate,
 }
 
 enum SelectedStageResult {
     Done(MoveRich),
-    Promotion(PromotionState),
+    Promotion(WaitingPromotionData),
 }
 
 impl From<SelectedStageResult> for AdapterState {
     fn from(selected_data: SelectedStageResult) -> Self {
         match selected_data {
-            SelectedStageResult::Done(game_state_change) => Self::Done(game_state_change),
-            SelectedStageResult::Promotion(promotion_stage_data) => {
-                Self::Promotion(promotion_stage_data)
+            SelectedStageResult::Done(chess_move) => Self::Done(chess_move),
+            SelectedStageResult::Promotion(waiting_promotion_data) => {
+                Self::WaitingPromotion(waiting_promotion_data)
             }
         }
     }
@@ -45,9 +45,11 @@ impl From<AdapterState> for IntraGameStateStage {
     fn from(state: AdapterState) -> Self {
         match state {
             AdapterState::Idle => IntraGameStateStage::Idle,
-            AdapterState::Selected(_) => IntraGameStateStage::Selected,
-            AdapterState::Promotion(_) => IntraGameStateStage::Promotion,
-            AdapterState::Done(_) => IntraGameStateStage::Done,
+            AdapterState::Selected(_selection_data) => IntraGameStateStage::Selected,
+            AdapterState::WaitingPromotion(_waiting_promotion_data) => {
+                IntraGameStateStage::Promotion
+            }
+            AdapterState::Done(_chess_move) => IntraGameStateStage::Done,
         }
     }
 }
@@ -71,46 +73,47 @@ impl Adapter {
     }
 
     pub fn apply(&mut self, gesture: Gesture) {
-        self.state = match (self.state.clone(), gesture) {
-            // Freeze the state on Done
-            (AdapterState::Done(game_state_change), _) => AdapterState::Done(game_state_change),
+        let state = mem::replace(&mut self.state, AdapterState::Idle);
+        self.state = self.apply_internal(state, gesture);
+    }
 
-            // This is not really needed, but just so you get the intention
-            (_, Gesture::Cancel) => AdapterState::Idle,
-
-            // Try advancing with board click
-            // If failed, try re-selecting
-            // Else go back to Idle
-            (
-                AdapterState::Selected(selected_data),
-                Gesture::Board(BoardGesture::Click(coordinate)),
-            ) => self.try_advance_from_selected_do_board_click(selected_data, coordinate),
-
-            // Try advancing with board drop
-            // If failed immediately go back to Idle (no reselecting)
-            (
-                AdapterState::Selected(selected_data),
-                Gesture::Board(BoardGesture::Drop(coordinate)),
-            ) => self.try_advance_from_selected_do_board_drop(selected_data, coordinate),
-
-            // Try advancing
-            // If failed, try re-selecting
-            // Else go back to idle
-            (
-                AdapterState::Promotion(promotion_stage_data),
-                Gesture::MenuClick(MenuClick::Promotion(piece_type)),
-            ) => self.try_advance_from_promotion_do_board_click(promotion_stage_data, piece_type),
-
-            // From any non-done state re-selecting is allowed
-            (_, Gesture::Board(BoardGesture::Click(coordinate))) => {
-                self.try_selected_do_board_click(coordinate)
-            }
-            (_, Gesture::MenuClick(MenuClick::Defection(faction))) => {
-                self.try_selected_do_defection_click(faction)
-            }
-
-            // Invalid pairings (e.g. Drop on PromotionStage)
-            _ => AdapterState::Idle,
+    fn apply_internal(&self, state: AdapterState, gesture: Gesture) -> AdapterState {
+        match state {
+            AdapterState::Done(move_made) => AdapterState::Done(move_made),
+            AdapterState::WaitingPromotion(waiting_promotion_data) => match gesture {
+                Gesture::MenuClick(MenuClick::Promotion(piece_type)) => self
+                    .advance_or_idle_from_promotion_do_board_click(
+                        waiting_promotion_data,
+                        piece_type,
+                    ),
+                Gesture::MenuClick(MenuClick::Defection(faction)) => {
+                    self.advance_or_idle_from_idle_do_defection_click(faction)
+                }
+                _ => AdapterState::Idle,
+            },
+            AdapterState::Selected(selection_data) => match gesture {
+                Gesture::Board(BoardGesture::Click(coordinate)) => self
+                    .advance_or_selected_or_idle_from_selected_do_board_click(
+                        selection_data,
+                        coordinate,
+                    ),
+                Gesture::Board(BoardGesture::Drop(coordinate)) => {
+                    self.advance_or_idle_from_selected_do_board_drop(selection_data, coordinate)
+                }
+                Gesture::MenuClick(MenuClick::Defection(faction)) => {
+                    self.advance_or_idle_from_idle_do_defection_click(faction)
+                }
+                _ => AdapterState::Idle,
+            },
+            AdapterState::Idle => match gesture {
+                Gesture::Board(BoardGesture::Click(coordinate)) => {
+                    self.advance_or_idle_from_idle_do_board_click(coordinate, None)
+                }
+                Gesture::MenuClick(MenuClick::Defection(faction)) => {
+                    self.advance_or_idle_from_idle_do_defection_click(faction)
+                }
+                _ => AdapterState::Idle,
+            },
         }
     }
 
@@ -119,8 +122,8 @@ impl Adapter {
         let valid_defections: Vec<FactionId> = valid_defections(&self.game_state).collect();
 
         let grabbed_piece: Option<PieceRich> = match self.state.clone() {
-            AdapterState::Selected(SelectedState::BoardSelection(piece)) => Some(piece),
-            AdapterState::Promotion(promotion_data) => {
+            AdapterState::Selected(SelectionData::BoardSelection(piece)) => Some(piece),
+            AdapterState::WaitingPromotion(promotion_data) => {
                 logic::board_piece_at_rich(&self.game_state, promotion_data.origin)
             }
             AdapterState::Done(move_made) => ui_move_origin(move_made)
@@ -129,7 +132,7 @@ impl Adapter {
         };
 
         let selected_defection: Option<FactionId> = match self.state.clone() {
-            AdapterState::Selected(SelectedState::DefectionSelection(faction)) => Some(faction),
+            AdapterState::Selected(SelectionData::DefectionSelection(faction)) => Some(faction),
             AdapterState::Done(move_made) => {
                 if let MoveRich::Defection(defection_move) = move_made {
                     Some(defection_move.faction)
@@ -144,7 +147,9 @@ impl Adapter {
             valid_advance_from_board_selection(&self.game_state, piece.coordinate)
                 .map(|r| match r {
                     SelectedStageResult::Done(move_made) => ui_move_destination(move_made),
-                    SelectedStageResult::Promotion(promotion_data) => promotion_data.destination,
+                    SelectedStageResult::Promotion(waiting_promotion_data) => {
+                        waiting_promotion_data.destination
+                    }
                 })
                 .collect()
         } else if let Some(faction) = selected_defection {
@@ -159,7 +164,7 @@ impl Adapter {
 
         let (promotion_options, promotion_at): (Vec<piece::Type>, Option<Coordinate>) = {
             let promotion_data = match self.state.clone() {
-                AdapterState::Promotion(promotion_data) => Some(promotion_data),
+                AdapterState::WaitingPromotion(promotion_data) => Some(promotion_data),
                 AdapterState::Done(move_made) => (match move_made {
                     MoveRich::Promotion(promotion_move) => Some(promotion_move.normal_move),
                     MoveRich::RegimeChangePromotion(promotion_move) => {
@@ -168,7 +173,7 @@ impl Adapter {
                     _ => None,
                 })
                 .and_then(|m| {
-                    Some(PromotionState {
+                    Some(WaitingPromotionData {
                         origin: m.origin,
                         destination: m.destination,
                     })
@@ -214,9 +219,9 @@ impl Adapter {
         }
     }
 
-    fn try_advance_from_selected_do_board_click(
+    fn advance_or_selected_or_idle_from_selected_do_board_click(
         &self,
-        selected_data: SelectedState,
+        selected_data: SelectionData,
         coordinate: Coordinate,
     ) -> AdapterState {
         if let Some(selected_stage_result) =
@@ -224,13 +229,19 @@ impl Adapter {
         {
             AdapterState::from(selected_stage_result)
         } else {
-            self.try_selected_do_board_click(coordinate)
+            match selected_data {
+                SelectionData::BoardSelection(piece) => self
+                    .advance_or_idle_from_idle_do_board_click(coordinate, Some(piece.coordinate)),
+                SelectionData::DefectionSelection(_faction) => {
+                    self.advance_or_idle_from_idle_do_board_click(coordinate, None)
+                }
+            }
         }
     }
 
-    fn try_advance_from_selected_do_board_drop(
+    fn advance_or_idle_from_selected_do_board_drop(
         &self,
-        selected_data: SelectedState,
+        selected_data: SelectionData,
         coordinate: Option<Coordinate>,
     ) -> AdapterState {
         if let Some(coordinate) = coordinate
@@ -243,9 +254,9 @@ impl Adapter {
         }
     }
 
-    fn try_advance_from_promotion_do_board_click(
+    fn advance_or_idle_from_promotion_do_board_click(
         &self,
-        waiting_promotion_data: PromotionState,
+        waiting_promotion_data: WaitingPromotionData,
         piece_type: piece::Type,
     ) -> AdapterState {
         if let Some(game_state_change) =
@@ -257,17 +268,25 @@ impl Adapter {
         }
     }
 
-    fn try_selected_do_board_click(&self, coordinate: Coordinate) -> AdapterState {
+    fn advance_or_idle_from_idle_do_board_click(
+        &self,
+        coordinate: Coordinate,
+        previous_coordinate: Option<Coordinate>,
+    ) -> AdapterState {
+        if Some(coordinate) == previous_coordinate {
+            return AdapterState::Idle;
+        }
+
         if let Some(piece) = is_valid_idle_do_board_click(&self.game_state, coordinate) {
-            AdapterState::Selected(SelectedState::BoardSelection(piece))
+            AdapterState::Selected(SelectionData::BoardSelection(piece))
         } else {
             AdapterState::Idle
         }
     }
 
-    fn try_selected_do_defection_click(&self, faction: FactionId) -> AdapterState {
+    fn advance_or_idle_from_idle_do_defection_click(&self, faction: FactionId) -> AdapterState {
         if let Some(faction) = is_valid_idle_do_defection_click(&self.game_state, faction) {
-            AdapterState::Selected(SelectedState::DefectionSelection(faction))
+            AdapterState::Selected(SelectionData::DefectionSelection(faction))
         } else {
             AdapterState::Idle
         }
@@ -306,7 +325,7 @@ fn valid_advance_from_board_selection(
             if move_origin == origin {
                 match m {
                     MoveRich::Promotion(_) | MoveRich::RegimeChangePromotion(_) => {
-                        Some(SelectedStageResult::Promotion(PromotionState {
+                        Some(SelectedStageResult::Promotion(WaitingPromotionData {
                             origin,
                             destination: ui_move_destination(m),
                         }))
@@ -338,7 +357,7 @@ fn valid_advance_from_defection_selection(
 
 fn valid_promotions(
     game_state: &GameState,
-    promotion_stage_data: PromotionState,
+    promotion_stage_data: WaitingPromotionData,
 ) -> impl Iterator<Item = MoveRich> {
     logic::calculate_move(game_state)
         .into_iter()
@@ -371,15 +390,15 @@ fn is_valid_idle_do_defection_click(
 
 fn is_valid_selected_do_board_click(
     game_state: &GameState,
-    selected_data: SelectedState,
+    selected_data: SelectionData,
     destination: Coordinate,
 ) -> Option<SelectedStageResult> {
     match selected_data {
-        SelectedState::BoardSelection(piece) => {
+        SelectionData::BoardSelection(piece) => {
             valid_advance_from_board_selection(game_state, piece.coordinate).find(|r| match r {
-                SelectedStageResult::Promotion(promotion_stage_data) => {
-                    promotion_stage_data.origin == piece.coordinate
-                        && promotion_stage_data.destination == destination
+                SelectedStageResult::Promotion(waiting_promotion_data) => {
+                    waiting_promotion_data.origin == piece.coordinate
+                        && waiting_promotion_data.destination == destination
                 }
                 &SelectedStageResult::Done(move_made) => {
                     ui_move_origin(move_made) == Some(piece.coordinate)
@@ -388,7 +407,7 @@ fn is_valid_selected_do_board_click(
             })
         }
 
-        SelectedState::DefectionSelection(faction) => {
+        SelectionData::DefectionSelection(faction) => {
             valid_advance_from_defection_selection(game_state, faction).find_map(|m| {
                 if let MoveRich::Defection(defection_move) = m {
                     if defection_move.faction == faction && ui_move_destination(m) == destination {
@@ -408,7 +427,7 @@ fn is_valid_selected_do_board_click(
 
 fn is_valid_promotion_do_board_click(
     game_state: &GameState,
-    promotion_stage_data: PromotionState,
+    promotion_stage_data: WaitingPromotionData,
     piece_type: piece::Type,
 ) -> Option<MoveRich> {
     valid_promotions(game_state, promotion_stage_data).find(|m| {
